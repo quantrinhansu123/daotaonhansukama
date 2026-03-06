@@ -64,4 +64,9 @@ export interface UserProfile {
 
   // Thông tin employment đồng bộ từ hệ thống khác (optional)
   employment?: EmploymentInfo;
+
+  // Dự án
+  projects?: string[]; // Array of project IDs
+  projectNames?: string[]; // Array of project names for display
+  docId?: string; // Firestore document ID
 }
