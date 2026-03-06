@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,21 +18,21 @@ import {
   X,
   GraduationCap,
   Clock,
-  Fingerprint
+  Fingerprint,
+  FolderKanban
 } from 'lucide-react';
 import { PermissionAction } from '@/types/permission';
 import { ProfileModal } from '@/components/ProfileModal';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  activeMenu: string;
-  onMenuChange: (menu: string) => void;
 }
 
-export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, onMenuChange }) => {
+export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { userProfile, signOut } = useAuth();
   const { hasPermission } = usePermissions();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [departments, setDepartments] = useState<Array<{ id: string, managerId?: string }>>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -55,6 +57,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
       id: 'checkin',
       label: 'Chấm công',
       icon: Fingerprint,
+      href: '/admin/checkin',
       permission: null, // Không cần quyền
       hideForStaff: false, // Staff luôn thấy
       hideForAdmin: true, // Admin KHÔNG thấy
@@ -64,6 +67,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
       id: 'dashboard',
       label: 'Tổng quan',
       icon: LayoutDashboard,
+      href: '/admin',
       permission: 'view_dashboard' as const,
       hideForStaff: false,
       hideForManager: true // Trưởng phòng KHÔNG thấy
@@ -72,6 +76,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
       id: 'learning',
       label: 'Học bài',
       icon: GraduationCap,
+      href: '/admin/learning',
       permission: null,
       hideForStaff: false,
       hideForAdmin: true
@@ -80,6 +85,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
       id: 'users',
       label: 'Quản lý người dùng',
       icon: Users,
+      href: '/admin/users',
       permission: 'view_users' as const,
       hideForStaff: false
     },
@@ -87,6 +93,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
       id: 'courses',
       label: 'Quản lý khóa học',
       icon: BookOpen,
+      href: '/admin/courses',
       permission: 'view_courses' as const,
       hideForStaff: false
     },
@@ -94,13 +101,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
       id: 'departments',
       label: 'Quản lý phòng ban',
       icon: Building2,
+      href: '/admin/departments',
       permission: 'view_departments' as const,
+      hideForStaff: false
+    },
+    {
+      id: 'projects',
+      label: 'Quản lý Dự án',
+      icon: FolderKanban,
+      href: '/admin/projects',
+      permission: 'view_projects' as const,
       hideForStaff: false
     },
     {
       id: 'attendance',
       label: 'Quản lý chấm công',
       icon: Clock,
+      href: '/admin/attendance',
       permission: 'view_salary' as const,
       hideForStaff: false,
       hidden: true // TẠM THỜI ẨN
@@ -164,11 +181,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
             }
 
             const Icon = item.icon;
-            const isActive = activeMenu === item.id;
+            const isActive = pathname === item.href || (item.href === '/admin' && pathname === '/admin');
             return (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => onMenuChange(item.id)}
+                href={item.href}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
                   ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/20'
                   : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -180,7 +197,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeMenu, 
                 {isActive && sidebarOpen && (
                   <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                 )}
-              </button>
+              </Link>
             );
           })}
         </nav>

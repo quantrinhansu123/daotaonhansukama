@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "create-admin": "tsx scripts/createAdmin.ts",
-    "seed": "tsx scripts/seedData.ts"
+    "seed": "tsx scripts/seedData.ts",
+    "check-user": "tsx scripts/checkUser.ts"
   },
   "engines": {
     "node": ">=20.0.0"

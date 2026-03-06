@@ -60,5 +60,10 @@ service cloud.firestore {
     match /monthlySalaries/{salaryId} {
       allow read, write: if true;
     }
+    
+    // Collection projects - Quản lý project
+    match /projects/{projectId} {
+      allow read, write: if true;
+    }
   }
 }

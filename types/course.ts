@@ -14,6 +14,8 @@ export interface Course {
   departmentId?: string; // Phòng ban được xem khóa học này ('all' = chung, undefined = không ai, hoặc ID phòng ban cụ thể)
   students: string[]; // Danh sách UID học viên được tự động cập nhật dựa trên departmentId
   pendingStudents?: string[]; // Danh sách UID học viên chờ phê duyệt
+  projects?: string[]; // Danh sách ID dự án liên quan đến khóa học này
+  projectNames?: string[]; // Tên dự án để hiển thị (không lưu vào DB)
   createdAt: Date;
   updatedAt: Date;
 }

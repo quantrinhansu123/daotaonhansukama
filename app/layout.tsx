@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SSOProvider } from "@/components/SSOProvider";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import { CleanupAttributes } from "@/components/CleanupAttributes";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin", "vietnamese"],
+  weight: ["300", "400", "500", "700", "900"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,9 +29,98 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function removeBrowserExtensionAttributes() {
+                  const attributesToRemove = ['bis_skin_checked', 'bis_register'];
+                  const regexPatterns = [/^__processed_.*__$/];
+                  
+                  function removeFromElement(el) {
+                    attributesToRemove.forEach(function(attr) {
+                      if (el.hasAttribute && el.hasAttribute(attr)) {
+                        el.removeAttribute(attr);
+                      }
+                    });
+                    if (el.attributes) {
+                      Array.from(el.attributes).forEach(function(attr) {
+                        regexPatterns.forEach(function(pattern) {
+                          if (pattern.test(attr.name)) {
+                            el.removeAttribute(attr.name);
+                          }
+                        });
+                      });
+                    }
+                  }
+                  
+                  function cleanup() {
+                    var all = document.querySelectorAll('*');
+                    for (var i = 0; i < all.length; i++) {
+                      removeFromElement(all[i]);
+                    }
+                    if (document.body) removeFromElement(document.body);
+                    if (document.documentElement) removeFromElement(document.documentElement);
+                  }
+                  
+                  // Run immediately
+                  if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', cleanup);
+                  } else {
+                    cleanup();
+                  }
+                  
+                  // Run periodically
+                  setInterval(cleanup, 200);
+                  
+                  // Watch for changes
+                  if (window.MutationObserver) {
+                    var observer = new MutationObserver(function(mutations) {
+                      mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                          if (node.nodeType === 1) {
+                            removeFromElement(node);
+                            var children = node.querySelectorAll('*');
+                            for (var i = 0; i < children.length; i++) {
+                              removeFromElement(children[i]);
+                            }
+                          }
+                        });
+                        if (mutation.type === 'attributes' && mutation.target.nodeType === 1) {
+                          removeFromElement(mutation.target);
+                        }
+                      });
+                    });
+                    if (document.body) {
+                      observer.observe(document.body, {
+                        childList: true,
+                        subtree: true,
+                        attributes: true,
+                        attributeFilter: ['bis_skin_checked', 'bis_register']
+                      });
+                    }
+                    if (document.documentElement) {
+                      observer.observe(document.documentElement, {
+                        childList: true,
+                        subtree: true,
+                        attributes: true,
+                        attributeFilter: ['bis_skin_checked', 'bis_register']
+                      });
+                    }
+                  }
+                }
+                removeBrowserExtensionAttributes();
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
+        className={`${roboto.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
+        <CleanupAttributes />
         <AuthProvider>
           <SSOProvider>
             {children}

@@ -14,22 +14,25 @@ interface Department {
   name: string;
   managerId?: string;
   managerName?: string;
+  projects?: string[];
 }
 
 export const UserManagement: React.FC = () => {
   const { userProfile: currentUser } = useAuth(); // User hiện tại đang đăng nhập
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<(UserProfile & { docId?: string })[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<(UserProfile & { docId?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPosition, setFilterPosition] = useState<Position | 'all' | 'none'>('all');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterBranch, setFilterBranch] = useState('all');
+  const [filterProjectId, setFilterProjectId] = useState<string>('');
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [viewingUser, setViewingUser] = useState<UserProfile | null>(null);
-  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [viewingUser, setViewingUser] = useState<(UserProfile & { docId?: string }) | null>(null);
+  const [editingUser, setEditingUser] = useState<(UserProfile & { docId?: string }) | null>(null);
   const [showBirthdays, setShowBirthdays] = useState(false);
   const [userLearningStats, setUserLearningStats] = useState<{
     totalCourses: number;
@@ -66,6 +69,7 @@ export const UserManagement: React.FC = () => {
     employmentTeam: '',
     employmentSalaryPercentage: 100,
     employmentActive: true,
+    projects: [] as string[],
   });
 
   const POSITIONS: Position[] = [
@@ -83,7 +87,7 @@ export const UserManagement: React.FC = () => {
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, filterPosition, filterDepartment, filterBranch, departments, currentUser]);
+  }, [users, searchTerm, filterPosition, filterDepartment, filterBranch, filterProjectId, departments, currentUser]);
 
   // Function to calculate total learning time from progress
   const calculateLearningTime = async (userId: string | undefined): Promise<number> => {
@@ -127,11 +131,24 @@ export const UserManagement: React.FC = () => {
       // Load users
       const usersRef = collection(db, 'users');
       const snapshot = await getDocs(usersRef);
-      const usersData = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
-      })) as UserProfile[];
+      const usersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          uid: data.uid || doc.id, // Ensure uid exists, fallback to doc.id
+          docId: doc.id, // Store document ID for direct updates
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        };
+      }) as (UserProfile & { docId?: string })[];
+
+      // Load projects first
+      const projectsSnapshot = await getDocs(collection(db, 'projects'));
+      const projectsData = projectsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name || '',
+      }));
+      setProjects(projectsData);
 
       // Calculate learning time for each user
       const usersWithLearningTime = await Promise.all(
@@ -144,15 +161,28 @@ export const UserManagement: React.FC = () => {
         })
       );
 
-      setUsers(usersWithLearningTime);
+      // Enrich users with project names
+      const usersWithProjects = usersWithLearningTime.map(user => {
+        const projectNames = user.projects?.map(projectId => {
+          const project = projectsData.find(p => p.id === projectId);
+          return project?.name || '';
+        }).filter(Boolean) || [];
+        return {
+          ...user,
+          projectNames,
+        };
+      });
 
-      // Load departments - Load đầy đủ thông tin bao gồm managerId
+      setUsers(usersWithProjects);
+
+      // Load departments - Load đầy đủ thông tin bao gồm managerId và projects
       const deptSnapshot = await getDocs(collection(db, 'departments'));
       const depts = deptSnapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name,
         managerId: doc.data().managerId,
-        managerName: doc.data().managerName
+        managerName: doc.data().managerName,
+        projects: doc.data().projects || []
       }));
       setDepartments(depts);
     } catch (error) {
@@ -215,6 +245,22 @@ export const UserManagement: React.FC = () => {
       );
     }
 
+    // Project filter - Lọc users dựa trên projects của chính họ hoặc department của họ có chứa project đó
+    if (filterProjectId) {
+      filtered = filtered.filter(user => {
+        // Kiểm tra projects trực tiếp của user
+        if (user.projects && user.projects.includes(filterProjectId)) {
+          return true;
+        }
+        // Kiểm tra projects của department
+        if (user.departmentId) {
+          const userDept = departments.find(d => d.id === user.departmentId);
+          return userDept && userDept.projects && userDept.projects.includes(filterProjectId);
+        }
+        return false;
+      });
+    }
+
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(user =>
@@ -253,14 +299,22 @@ export const UserManagement: React.FC = () => {
       employmentTeam: '',
       employmentSalaryPercentage: 100,
       employmentActive: true,
+      projects: [],
     });
     setShowModal(true);
   };
 
-  const handleEdit = (user: UserProfile) => {
+  const handleEdit = (user: UserProfile & { docId?: string }) => {
     // Không cho sửa admin
     if (user.role === 'admin') {
       alert('Không thể chỉnh sửa tài khoản Admin!');
+      return;
+    }
+
+    // Ensure user has uid
+    if (!user.uid) {
+      console.error('User missing uid:', user);
+      alert('Lỗi: Người dùng không có UID! Vui lòng refresh trang và thử lại.');
       return;
     }
 
@@ -294,6 +348,7 @@ export const UserManagement: React.FC = () => {
           : typeof user.employment?.active === 'boolean'
             ? user.employment.active
             : true,
+      projects: Array.isArray(user.projects) ? user.projects : [],
     });
     setShowModal(true);
   };
@@ -418,6 +473,24 @@ export const UserManagement: React.FC = () => {
     }
   };
 
+  // Helper function to remove undefined values from object
+  const removeUndefined = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object' || obj instanceof Date || Array.isArray(obj)) {
+      return obj;
+    }
+
+    const cleaned: Record<string, any> = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const value = obj[key];
+        if (value !== undefined) {
+          cleaned[key] = removeUndefined(value);
+        }
+      }
+    }
+    return cleaned;
+  };
+
   const handleSave = async () => {
     try {
       if (!formData.email || !formData.password || !formData.displayName) {
@@ -426,24 +499,38 @@ export const UserManagement: React.FC = () => {
       }
 
       if (editingUser) {
-        // Update existing user - Find document by uid field
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('uid', '==', editingUser.uid));
-        const snapshot = await getDocs(q);
+        // Update existing user - Use document ID directly if available, otherwise query by uid
+        let userDocId: string | null = null;
 
-        if (snapshot.empty) {
-          alert('Không tìm thấy người dùng!');
+        if (editingUser.docId) {
+          // Use stored document ID directly
+          userDocId = editingUser.docId;
+        } else if (editingUser.uid) {
+          // Fallback: Query by uid field
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('uid', '==', editingUser.uid));
+          const snapshot = await getDocs(q);
+
+          if (snapshot.empty) {
+            console.error('User not found by uid:', editingUser.uid);
+            alert('Không tìm thấy người dùng! Vui lòng refresh trang và thử lại.');
+            return;
+          }
+
+          userDocId = snapshot.docs[0].id;
+        } else {
+          alert('Lỗi: Không tìm thấy thông tin người dùng!');
+          console.error('Editing user missing both docId and uid:', editingUser);
           return;
         }
 
-        const userDocId = snapshot.docs[0].id;
         const userRef = doc(db, 'users', userDocId);
 
-        const updateData: any = {
-          email: formData.email,
-          password: formData.password,
-          displayName: formData.displayName,
-          role: formData.role,
+        const updateData: Record<string, any> = {
+          email: String(formData.email || ''),
+          password: String(formData.password || ''),
+          displayName: String(formData.displayName || ''),
+          role: String(formData.role || 'staff'),
           updatedAt: new Date()
         };
 
@@ -500,13 +587,32 @@ export const UserManagement: React.FC = () => {
         if (typeof formData.employmentActive === 'boolean') {
           updateData.employmentActive = formData.employmentActive;
         }
+        if (Array.isArray(formData.projects)) {
+          updateData.projects = formData.projects;
+        }
 
-        await updateDoc(userRef, updateData);
+        // Remove undefined values before saving
+        const cleanedData = removeUndefined(updateData);
+        
+        // Final check - remove any keys with undefined values
+        const finalData: Record<string, any> = {};
+        for (const key in cleanedData) {
+          if (cleanedData[key] !== undefined) {
+            finalData[key] = cleanedData[key];
+          }
+        }
+
+        await updateDoc(userRef, finalData);
         alert('Cập nhật người dùng thành công!');
       } else {
         // Check if email exists
+        if (!formData.email || formData.email.trim() === '') {
+          alert('Email không được để trống!');
+          return;
+        }
+
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', formData.email));
+        const q = query(usersRef, where('email', '==', formData.email.trim()));
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
@@ -516,12 +622,12 @@ export const UserManagement: React.FC = () => {
 
         // Add new user with uid as custom field
         const newUserId = `user_${Date.now()}`;
-        const newUser: any = {
+        const newUser: Record<string, any> = {
           uid: newUserId,
-          email: formData.email,
-          password: formData.password,
-          displayName: formData.displayName,
-          role: formData.role,
+          email: String(formData.email || ''),
+          password: String(formData.password || ''),
+          displayName: String(formData.displayName || ''),
+          role: String(formData.role || 'staff'),
           approved: formData.role === 'admin' ? true : false, // Admin tự động duyệt
           totalLearningHours: 0, // Mặc định 0 giờ
           createdAt: new Date(),
@@ -577,9 +683,23 @@ export const UserManagement: React.FC = () => {
         if (typeof formData.employmentActive === 'boolean') {
           newUser.employmentActive = formData.employmentActive;
         }
+        if (Array.isArray(formData.projects)) {
+          newUser.projects = formData.projects;
+        }
+
+        // Remove undefined values before saving
+        const cleanedNewUser = removeUndefined(newUser);
+        
+        // Final check - remove any keys with undefined values
+        const finalNewUser: Record<string, any> = {};
+        for (const key in cleanedNewUser) {
+          if (cleanedNewUser[key] !== undefined) {
+            finalNewUser[key] = cleanedNewUser[key];
+          }
+        }
 
         // Use setDoc with custom ID instead of addDoc
-        await setDoc(doc(db, 'users', newUserId), newUser);
+        await setDoc(doc(db, 'users', newUserId), finalNewUser);
         alert('Thêm người dùng thành công!');
       }
 
@@ -591,7 +711,7 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (user: UserProfile) => {
+  const handleDelete = async (user: UserProfile & { docId?: string }) => {
     // Không cho xóa admin
     if (user.role === 'admin') {
       alert('Không thể xóa tài khoản Admin!');
@@ -609,17 +729,27 @@ export const UserManagement: React.FC = () => {
     }
 
     try {
-      // Find document by uid field
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('uid', '==', user.uid));
-      const snapshot = await getDocs(q);
+      // Use document ID directly if available, otherwise query by uid
+      let userDocId: string | null = null;
 
-      if (snapshot.empty) {
-        alert('Không tìm thấy người dùng!');
+      if (user.docId) {
+        userDocId = user.docId;
+      } else if (user.uid) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('uid', '==', user.uid));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          alert('Không tìm thấy người dùng!');
+          return;
+        }
+
+        userDocId = snapshot.docs[0].id;
+      } else {
+        alert('Lỗi: Không tìm thấy thông tin người dùng!');
         return;
       }
 
-      const userDocId = snapshot.docs[0].id;
       await deleteDoc(doc(db, 'users', userDocId));
       alert('Xóa người dùng thành công!');
       loadUsers();
@@ -647,18 +777,29 @@ export const UserManagement: React.FC = () => {
     );
   };
 
-  const handleApprove = async (user: UserProfile, approve: boolean) => {
+  const handleApprove = async (user: UserProfile & { docId?: string }, approve: boolean) => {
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('uid', '==', user.uid));
-      const snapshot = await getDocs(q);
+      // Use document ID directly if available, otherwise query by uid
+      let userDocId: string | null = null;
 
-      if (snapshot.empty) {
-        alert('Không tìm thấy người dùng!');
+      if (user.docId) {
+        userDocId = user.docId;
+      } else if (user.uid) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('uid', '==', user.uid));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          alert('Không tìm thấy người dùng!');
+          return;
+        }
+
+        userDocId = snapshot.docs[0].id;
+      } else {
+        alert('Lỗi: Không tìm thấy thông tin người dùng!');
         return;
       }
 
-      const userDocId = snapshot.docs[0].id;
       const userRef = doc(db, 'users', userDocId);
 
       await updateDoc(userRef, {
@@ -763,6 +904,18 @@ export const UserManagement: React.FC = () => {
             )
           ).map(branch => (
             <option key={branch} value={branch}>{branch}</option>
+          ))}
+        </select>
+        <select
+          value={filterProjectId}
+          onChange={(e) => setFilterProjectId(e.target.value)}
+          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+        >
+          <option value="">Tất cả dự án</option>
+          {projects.map(project => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
           ))}
         </select>
       </div>
@@ -951,6 +1104,7 @@ export const UserManagement: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Vai trò</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Chức vụ</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Phòng ban</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Dự án</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase">Giờ học</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase">Lương</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Ngày tạo</th>
@@ -994,6 +1148,22 @@ export const UserManagement: React.FC = () => {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">
                         {getDepartmentName(user.departmentId)}
+                      </td>
+                      <td className="px-4 py-4">
+                        {user.projectNames && user.projectNames.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {user.projectNames.map((projectName, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
+                              >
+                                {projectName}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-sm">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-center">
                         <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
@@ -1130,7 +1300,7 @@ export const UserManagement: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Left Column */}
-                <div className="space-y-4">
+                <div className="space-y-4 md:col-span-1">
                   <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">Thông tin tài khoản</h4>
 
                   <div>
@@ -1387,6 +1557,80 @@ export const UserManagement: React.FC = () => {
                       </label>
                     </div>
                   </div>
+
+                  {/* Projects Section */}
+                  <div className="mt-6 pt-6 border-t border-white/10">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-4">Dự án</h4>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Chọn dự án
+                        {formData.projects.length > 0 && (
+                          <span className="ml-2 text-xs text-[#53cafd]">
+                            ({formData.projects.length} dự án đã chọn)
+                          </span>
+                        )}
+                      </label>
+                      <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
+                        {projects.length === 0 ? (
+                          <p className="text-xs text-slate-400 text-center py-4">Chưa có dự án nào. Vui lòng tạo dự án trước.</p>
+                        ) : (
+                          projects.map(project => {
+                            const isChecked = formData.projects.includes(project.id);
+                            return (
+                              <label
+                                key={project.id}
+                                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                                  isChecked 
+                                    ? 'bg-[#53cafd]/20 border border-[#53cafd]/30' 
+                                    : 'hover:bg-white/10 border border-transparent'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setFormData({
+                                        ...formData,
+                                        projects: [...formData.projects, project.id],
+                                      });
+                                    } else {
+                                      setFormData({
+                                        ...formData,
+                                        projects: formData.projects.filter(id => id !== project.id),
+                                      });
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-[#53cafd] bg-white/5 border-white/20 rounded focus:ring-[#53cafd] focus:ring-2"
+                                />
+                                <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
+                                  {project.name}
+                                </span>
+                                {isChecked && (
+                                  <span className="text-xs text-[#53cafd]">✓</span>
+                                )}
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                      {formData.projects.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {formData.projects.map(projectId => {
+                            const project = projects.find(p => p.id === projectId);
+                            return project ? (
+                              <span
+                                key={projectId}
+                                className="inline-flex items-center px-2 py-1 bg-[#53cafd]/20 text-[#53cafd] rounded-md text-xs font-medium"
+                              >
+                                {project.name}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1576,7 +1820,7 @@ export const UserManagement: React.FC = () => {
                         <h5 className="text-sm font-bold text-slate-300 mb-3">Khóa học gần đây</h5>
                         <div className="space-y-2">
                           {userLearningStats.recentCourses.map((course, index) => (
-                            <div key={index} className="bg-white/5 p-3 rounded-lg border border-white/10">
+                            <div key={course.courseId || `course-${index}`} className="bg-white/5 p-3 rounded-lg border border-white/10">
                               <div className="flex items-center justify-between mb-2">
                                 <p className="text-sm font-medium text-white line-clamp-1">{course.title}</p>
                                 <span className="text-sm font-bold text-[#53cafd]">{course.progress.toFixed(0)}%</span>

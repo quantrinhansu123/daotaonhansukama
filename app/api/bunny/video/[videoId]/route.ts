@@ -9,11 +9,18 @@ export async function GET(
 ) {
   const { videoId } = await params;
   try {
+    if (!BUNNY_API_KEY || !LIBRARY_ID) {
+      return NextResponse.json(
+        { error: 'Thiếu cấu hình Bunny Stream API' },
+        { status: 500 }
+      );
+    }
+
     const response = await fetch(
       `https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`,
       {
         headers: {
-          'AccessKey': BUNNY_API_KEY!,
+          'AccessKey': BUNNY_API_KEY,
         },
       }
     );
@@ -38,12 +45,19 @@ export async function DELETE(
 ) {
   const { videoId } = await params;
   try {
+    if (!BUNNY_API_KEY || !LIBRARY_ID) {
+      return NextResponse.json(
+        { error: 'Thiếu cấu hình Bunny Stream API' },
+        { status: 500 }
+      );
+    }
+
     const response = await fetch(
       `https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`,
       {
         method: 'DELETE',
         headers: {
-          'AccessKey': BUNNY_API_KEY!,
+          'AccessKey': BUNNY_API_KEY,
         },
       }
     );

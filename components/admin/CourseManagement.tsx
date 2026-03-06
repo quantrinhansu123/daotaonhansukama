@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
 import { Search, Plus, Edit2, Trash2, X, Save, BookOpen, Users } from 'lucide-react';
@@ -22,6 +22,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLevel, setFilterLevel] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterProjectId, setFilterProjectId] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [detailCourse, setDetailCourse] = useState<Course | null>(null);
@@ -36,10 +37,12 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
     thumbnail: '',
     banner: '',
     demoVideoId: '',
-    departmentId: ''
+    departmentId: '',
+    projects: [] as string[]
   });
   const [departments, setDepartments] = useState<Array<{ id: string, name: string, managerId?: string, managerName?: string }>>([]);
   const [users, setUsers] = useState<Array<{ uid: string, departmentId?: string }>>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -49,11 +52,19 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
   useEffect(() => {
     filterCourses();
-  }, [courses, searchTerm, filterLevel, filterCategory, users]);
+  }, [courses, searchTerm, filterLevel, filterCategory, filterProjectId, users]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+
+      // Load projects first
+      const projectsSnapshot = await getDocs(collection(db, 'projects'));
+      const projectsData = projectsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name || '',
+      }));
+      setProjects(projectsData);
 
       const coursesRef = collection(db, 'courses');
       const coursesSnapshot = await getDocs(coursesRef);
@@ -62,7 +73,20 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate()
       })) as Course[];
-      setCourses(coursesData);
+
+      // Enrich courses with project names
+      const enrichedCourses = coursesData.map(course => {
+        const projectNames = course.projects?.map(projectId => {
+          const project = projectsData.find(p => p.id === projectId);
+          return project?.name || '';
+        }).filter(Boolean) || [];
+        return {
+          ...course,
+          projectNames,
+        };
+      });
+
+      setCourses(enrichedCourses);
 
       // Load departments
       const deptSnapshot = await getDocs(collection(db, 'departments'));
@@ -122,6 +146,13 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       filtered = filtered.filter(course => course.category === filterCategory);
     }
 
+    // Project filter
+    if (filterProjectId) {
+      filtered = filtered.filter(course =>
+        course.projects && course.projects.includes(filterProjectId)
+      );
+    }
+
     setFilteredCourses(filtered);
   };
 
@@ -149,7 +180,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       thumbnail: '',
       banner: '',
       demoVideoId: '',
-      departmentId: defaultDepartmentId || ''
+      departmentId: defaultDepartmentId || '',
+      projects: []
     });
     setShowModal(true);
   };
@@ -157,16 +189,17 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const handleEdit = (course: Course) => {
     setEditingCourse(course);
     setFormData({
-      title: course.title,
-      description: course.description,
-      category: course.category,
-      level: course.level,
-      duration: course.duration,
-      price: course.price,
-      thumbnail: course.thumbnail,
+      title: course.title || '',
+      description: course.description || '',
+      category: course.category || '',
+      level: course.level || 'beginner',
+      duration: course.duration || 0,
+      price: course.price || 0,
+      thumbnail: course.thumbnail || '',
       banner: course.banner || '',
       demoVideoId: course.demoVideoId || '',
-      departmentId: course.departmentId || ''
+      departmentId: course.departmentId || '',
+      projects: Array.isArray(course.projects) ? course.projects : []
     });
     setShowModal(true);
   };
@@ -210,6 +243,33 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
     }
   };
 
+  // Helper function to remove undefined values from object - improved version
+  const removeUndefined = (obj: any): any => {
+    if (obj === null || obj === undefined) {
+      return null;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => removeUndefined(item));
+    }
+    if (obj instanceof Date) {
+      return obj;
+    }
+    if (typeof obj !== 'object') {
+      return obj;
+    }
+    
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
+        if (value !== undefined) {
+          cleaned[key] = removeUndefined(value);
+        }
+      }
+    }
+    return cleaned;
+  };
+
   const handleSave = async () => {
     try {
       if (!formData.title || !formData.category) {
@@ -223,54 +283,88 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       console.log('📦 Full formData:', formData);
 
       // Tự động cập nhật danh sách students dựa trên departmentId
-      const students = await getStudentsForDepartment(formData.departmentId);
+      const students = await getStudentsForDepartment(formData.departmentId || '');
 
       console.log('✅ Students to be saved:', students.length, students);
 
       if (editingCourse) {
         const courseRef = doc(db, 'courses', editingCourse.id);
-        const updateData: any = {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          level: formData.level,
-          duration: formData.duration,
-          price: formData.price,
-          thumbnail: formData.thumbnail,
-          banner: formData.banner || null,
-          demoVideoId: formData.demoVideoId,
-          students: students,
-          updatedAt: new Date()
-        };
-        if (formData.departmentId) {
-          updateData.departmentId = formData.departmentId;
-        } else {
-          updateData.departmentId = null;
+        
+        // Build updateData with explicit values, no undefined allowed
+        const updateData: Record<string, any> = {};
+        
+        // Required fields
+        updateData.title = String(formData.title || '');
+        updateData.description = String(formData.description || '');
+        updateData.category = String(formData.category || '');
+        updateData.level = String(formData.level || 'beginner');
+        updateData.duration = Number(formData.duration) || 0;
+        updateData.price = Number(formData.price) || 0;
+        updateData.thumbnail = String(formData.thumbnail || '');
+        updateData.students = Array.isArray(students) ? students : [];
+        updateData.projects = Array.isArray(formData.projects) ? formData.projects : [];
+        updateData.updatedAt = new Date();
+        
+        // Optional fields - explicitly set to null if empty
+        updateData.banner = formData.banner && formData.banner.trim() !== '' ? String(formData.banner) : null;
+        updateData.demoVideoId = formData.demoVideoId && formData.demoVideoId.trim() !== '' ? String(formData.demoVideoId) : null;
+        updateData.departmentId = formData.departmentId && formData.departmentId.trim() !== '' ? String(formData.departmentId) : null;
+        
+        // Final cleanup - remove any undefined that might have slipped through
+        const cleanedData = removeUndefined(updateData);
+        
+        // Double check - remove any keys with undefined values
+        const finalData: Record<string, any> = {};
+        for (const key in cleanedData) {
+          if (cleanedData[key] !== undefined) {
+            finalData[key] = cleanedData[key];
+          }
         }
-        await updateDoc(courseRef, updateData);
+        
+        console.log('🧹 Final updateData:', finalData);
+        console.log('🔍 Checking for undefined:', Object.keys(finalData).some(k => finalData[k] === undefined));
+        
+        await updateDoc(courseRef, finalData);
         alert('Cập nhật khóa học thành công!');
       } else {
-        const newCourse: any = {
-          id: `course_${Date.now()}`,
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          level: formData.level,
-          duration: formData.duration,
-          price: formData.price,
-          thumbnail: formData.thumbnail,
-          banner: formData.banner || null,
-          demoVideoId: formData.demoVideoId,
-          teacherId: 'admin',
-          teacherName: 'Admin',
-          students: students,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        if (formData.departmentId) {
-          newCourse.departmentId = formData.departmentId;
+        // Build newCourse with explicit values
+        const newCourse: Record<string, any> = {};
+        
+        newCourse.id = `course_${Date.now()}`;
+        newCourse.title = String(formData.title || '');
+        newCourse.description = String(formData.description || '');
+        newCourse.category = String(formData.category || '');
+        newCourse.level = String(formData.level || 'beginner');
+        newCourse.duration = Number(formData.duration) || 0;
+        newCourse.price = Number(formData.price) || 0;
+        newCourse.thumbnail = String(formData.thumbnail || '');
+        newCourse.teacherId = 'admin';
+        newCourse.teacherName = 'Admin';
+        newCourse.students = Array.isArray(students) ? students : [];
+        newCourse.projects = Array.isArray(formData.projects) ? formData.projects : [];
+        newCourse.createdAt = new Date();
+        newCourse.updatedAt = new Date();
+        
+        // Optional fields
+        newCourse.banner = formData.banner && formData.banner.trim() !== '' ? String(formData.banner) : null;
+        newCourse.demoVideoId = formData.demoVideoId && formData.demoVideoId.trim() !== '' ? String(formData.demoVideoId) : null;
+        newCourse.departmentId = formData.departmentId && formData.departmentId.trim() !== '' ? String(formData.departmentId) : null;
+        
+        // Final cleanup
+        const cleanedCourse = removeUndefined(newCourse);
+        
+        // Double check
+        const finalCourse: Record<string, any> = {};
+        for (const key in cleanedCourse) {
+          if (cleanedCourse[key] !== undefined) {
+            finalCourse[key] = cleanedCourse[key];
+          }
         }
-        await setDoc(doc(db, 'courses', newCourse.id), newCourse);
+        
+        console.log('🧹 Final newCourse:', finalCourse);
+        console.log('🔍 Checking for undefined:', Object.keys(finalCourse).some(k => finalCourse[k] === undefined));
+        
+        await setDoc(doc(db, 'courses', finalCourse.id), finalCourse);
         alert('Thêm khóa học thành công!');
       }
 
@@ -381,37 +475,63 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Tìm kiếm khóa học..."
+            placeholder="Tìm kiếm khóa học theo tên, mô tả, danh mục..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
           />
         </div>
-        <select
-          value={filterLevel}
-          onChange={(e) => setFilterLevel(e.target.value as any)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
-        >
-          <option value="all">Tất cả cấp độ</option>
-          <option value="beginner">Cơ bản</option>
-          <option value="intermediate">Trung cấp</option>
-          <option value="advanced">Nâng cao</option>
-        </select>
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
-        >
-          <option value="all">Tất cả danh mục</option>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo cấp độ</label>
+          <select
+            value={filterLevel}
+            onChange={(e) => setFilterLevel(e.target.value as any)}
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          >
+            <option value="all">Tất cả cấp độ</option>
+            <option value="beginner">Cơ bản</option>
+            <option value="intermediate">Trung cấp</option>
+            <option value="advanced">Nâng cao</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo danh mục</label>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          >
+            <option value="all">Tất cả danh mục</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo dự án</label>
+          <select
+            value={filterProjectId}
+            onChange={(e) => setFilterProjectId(e.target.value)}
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          >
+            <option value="">Tất cả dự án</option>
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -450,6 +570,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Đối tượng
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  Dự án
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Học viên
@@ -490,6 +613,22 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-sm font-medium">
                         🔒 Nháp
                       </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {course.projectNames && course.projectNames.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {course.projectNames.map((projectName, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
+                          >
+                            {projectName}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 text-sm">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -542,7 +681,11 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         {filteredCourses.length === 0 && (
           <div className="text-center py-12">
             <BookOpen className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-300">Không tìm thấy khóa học nào</p>
+            <p className="text-slate-300">
+              {searchTerm || filterProjectId || filterCategory !== 'all' || filterLevel !== 'all'
+                ? 'Không tìm thấy khóa học nào phù hợp với bộ lọc'
+                : 'Không tìm thấy khóa học nào'}
+            </p>
           </div>
         )}
       </div>
@@ -615,6 +758,76 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     • <strong>Phòng ban cụ thể</strong>: Chỉ nhân viên phòng ban đó thấy<br />
                     • <strong>Không chọn</strong>: Không ai thấy (nháp)
                   </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Dự án
+                  {formData.projects.length > 0 && (
+                    <span className="ml-2 text-xs text-[#53cafd]">
+                      ({formData.projects.length} dự án đã chọn)
+                    </span>
+                  )}
+                </label>
+                <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
+                  {projects.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-4">Chưa có dự án nào. Vui lòng tạo dự án trước.</p>
+                  ) : (
+                    projects.map(project => {
+                      const isChecked = formData.projects.includes(project.id);
+                      return (
+                        <label
+                          key={project.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                            isChecked 
+                              ? 'bg-[#53cafd]/20 border border-[#53cafd]/30' 
+                              : 'hover:bg-white/10 border border-transparent'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  projects: [...formData.projects, project.id],
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  projects: formData.projects.filter(id => id !== project.id),
+                                });
+                              }
+                            }}
+                            className="w-4 h-4 text-[#53cafd] bg-white/5 border-white/20 rounded focus:ring-[#53cafd] focus:ring-2"
+                          />
+                          <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
+                            {project.name}
+                          </span>
+                          {isChecked && (
+                            <span className="text-xs text-[#53cafd]">✓</span>
+                          )}
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                {formData.projects.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {formData.projects.map(projectId => {
+                      const project = projects.find(p => p.id === projectId);
+                      return project ? (
+                        <span
+                          key={projectId}
+                          className="inline-flex items-center px-2 py-1 bg-[#53cafd]/20 text-[#53cafd] rounded-md text-xs font-medium"
+                        >
+                          {project.name}
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
                 )}
               </div>
 

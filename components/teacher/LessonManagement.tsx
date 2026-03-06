@@ -161,35 +161,66 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     try {
       setUploading(true);
 
+      console.log('[LessonManagement] Starting video upload for lesson:', lesson.title);
+      console.log('[LessonManagement] File size:', file.size, 'bytes');
+      console.log('[LessonManagement] File type:', file.type);
+
       // Create video in Bunny.net
       const createResponse = await fetch('/api/bunny/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: lesson.title })
+        body: JSON.stringify({ title: lesson.title || 'Untitled Video' })
       });
 
       if (!createResponse.ok) {
-        throw new Error('Failed to create video');
+        const errorData = await createResponse.json().catch(() => ({ error: 'Unknown error' }));
+        const errorMessage = errorData.error || `HTTP ${createResponse.status}: ${createResponse.statusText}`;
+        console.error('[LessonManagement] Failed to create video:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const videoData = await createResponse.json();
-      const videoId = videoData.guid;
+      const videoId = videoData.guid || videoData.id;
+      
+      if (!videoId) {
+        console.error('[LessonManagement] No video ID in response:', videoData);
+        throw new Error('Không nhận được video ID từ Bunny API');
+      }
+      
+      console.log('[LessonManagement] Video created with ID:', videoId);
+
+      // Check environment variables
+      const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID;
+      const apiKey = process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY;
+      
+      if (!libraryId || !apiKey) {
+        console.error('[LessonManagement] Missing Bunny Stream environment variables');
+        throw new Error('Thiếu cấu hình Bunny Stream. Vui lòng kiểm tra NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID và NEXT_PUBLIC_BUNNY_STREAM_API_KEY.');
+      }
 
       // Upload video file
+      console.log('[LessonManagement] Uploading video file to Bunny...');
       const uploadResponse = await fetch(
-        `https://video.bunnycdn.com/library/${process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID}/videos/${videoId}`,
+        `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
         {
           method: 'PUT',
           headers: {
-            'AccessKey': process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY!,
+            'AccessKey': apiKey,
           },
           body: file
         }
       );
 
+      const uploadResponseText = await uploadResponse.text();
+      console.log('[LessonManagement] Upload response status:', uploadResponse.status);
+      
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload video');
+        const errorMessage = uploadResponseText || `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
+        console.error('[LessonManagement] Failed to upload video file:', errorMessage);
+        throw new Error(`Lỗi khi upload video file: ${errorMessage}`);
       }
+
+      console.log('[LessonManagement] Video file uploaded successfully');
 
       // Update lesson with video info
       const lessonRef = doc(db, 'lessons', lesson.id);
@@ -202,9 +233,10 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
       alert('Upload video thành công!');
       loadLessons();
-    } catch (error) {
-      console.error('Error uploading video:', error);
-      alert('Lỗi khi upload video');
+    } catch (error: any) {
+      console.error('[LessonManagement] Error uploading video:', error);
+      const errorMessage = error.message || 'Lỗi không xác định khi upload video';
+      alert(`Lỗi khi upload video: ${errorMessage}`);
     } finally {
       setUploading(false);
     }

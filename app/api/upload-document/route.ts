@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const storageHostname = process.env.NEXT_PUBLIC_BUNNY_STORAGE_HOSTNAME;
     const cdnUrl = process.env.NEXT_PUBLIC_BUNNY_STORAGE_CDN_URL;
 
-    if (!storageZone || !storagePassword || !storageHostname) {
+    if (!storageZone || !storagePassword || !storageHostname || !cdnUrl) {
       console.error('[Upload API] Missing Bunny config');
       return NextResponse.json(
         { error: 'Thiếu cấu hình Bunny Storage' },

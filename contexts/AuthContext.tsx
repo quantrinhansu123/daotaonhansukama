@@ -38,132 +38,121 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Bước 1: Thử đăng nhập qua API hệ thống nhân sự trước
-      // API hỗ trợ cả employeeId (VD: NV001) và email
-      let hrEmployee: any = null;
-      try {
-        const hrRes = await fetch('https://checkin-ten-gamma.vercel.app/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ employeeId: email, password }), // API dùng employeeId, có thể là email hoặc mã NV
-        });
-
-        console.log('HR API response status:', hrRes.status);
-
-        if (hrRes.ok) {
-          const hrData = await hrRes.json();
-          console.log('HR API response:', hrData);
-          if (hrData.success && hrData.employee) {
-            hrEmployee = hrData.employee;
-          }
-        } else if (hrRes.status === 401) {
-          // Mật khẩu sai từ hệ thống HR - không throw, để fallback về local
-          console.log('HR API: Invalid credentials, trying local auth');
-        } else if (hrRes.status === 403) {
-          const errorData = await hrRes.json();
-          throw new Error(errorData.error || 'Tài khoản đã bị vô hiệu hóa');
-        } else if (hrRes.status === 404) {
-          // User không tồn tại trong HR - không throw, để fallback về local
-          console.log('HR API: User not found, trying local auth');
-        } else if (hrRes.status === 500) {
-          // Lỗi server - fallback về local
-          console.log('HR API: Server error (500), trying local auth');
-        }
-      } catch (err: any) {
-        // Nếu lỗi từ HR API là lỗi nghiêm trọng (vô hiệu hóa), throw luôn
-        if (err.message && err.message.includes('vô hiệu')) {
-          throw err;
-        }
-        console.log('HR API không khả dụng hoặc lỗi, thử đăng nhập local:', err.message);
-      }
-
-      // Bước 2: Tìm user trong Firestore
+      // Chuẩn hóa email và password (trim whitespace, lowercase email)
+      const normalizedEmail = email.trim().toLowerCase();
+      const originalEmail = email.trim();
+      const normalizedPassword = password.trim();
+      
+      console.log('[Login] Attempting login for email:', normalizedEmail);
+      console.log('[Login] Original email:', originalEmail);
+      
+      // Tìm user trong Firestore - sử dụng fallback method ngay từ đầu để đảm bảo tìm thấy
       const usersRef = collection(db, 'users');
-      let q = query(usersRef, where('email', '==', email));
-      let querySnapshot = await getDocs(q);
-
-      // Nếu có thông tin từ HR và chưa có user trong Firestore -> tạo mới
-      if (querySnapshot.empty && hrEmployee) {
-        const newUserId = `staff_${hrEmployee.id || Date.now()}`;
-        const newUser: UserProfile = {
-          uid: newUserId,
-          email: hrEmployee.email,
-          password: password,
-          displayName: hrEmployee.fullName || hrEmployee.email,
-          role: 'staff',
-          approved: true,
-          totalLearningHours: 0,
-          phoneNumber: hrEmployee.phone,
-          address: hrEmployee.address,
-          country: hrEmployee.country,
-          photoURL: hrEmployee.avatarURL,
-          dateOfBirth: hrEmployee.birthday,
-          monthlySalary: hrEmployee.baseSalary,
-          employmentStatus: hrEmployee.employmentStatus,
-          employmentStartDate: hrEmployee.startDate,
-          employmentMaritalStatus: hrEmployee.maritalStatus,
-          employmentBranch: hrEmployee.branch,
-          employmentTeam: hrEmployee.team,
-          employmentSalaryPercentage: hrEmployee.salaryPercentage,
-          employmentActive: hrEmployee.active,
-          employment: hrEmployee,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
-        await setDoc(doc(db, 'users', newUserId), newUser);
-        localStorage.setItem('currentUser', JSON.stringify(newUser));
-        setUserProfile(newUser);
-        return newUser;
+      let querySnapshot: any = { empty: true, docs: [], size: 0 };
+      
+      // Phương pháp 1: Query với where clause (nhanh hơn nhưng có thể không hoạt động)
+      try {
+        console.log('[Login] Method 1: Trying Firestore query...');
+        const q = query(usersRef, where('email', '==', normalizedEmail));
+        const result = await Promise.race([
+          getDocs(q),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 5000))
+        ]) as any;
+        
+        if (!result.empty) {
+          console.log('[Login] ✅ Found user via Firestore query');
+          querySnapshot = result;
+        } else {
+          console.log('[Login] Query returned empty, trying fallback...');
+        }
+      } catch (queryError: any) {
+        console.warn('[Login] Firestore query failed:', queryError.message);
+        console.log('[Login] Falling back to fetch-all method...');
+      }
+      
+      // Phương pháp 2: Fallback - lấy tất cả users và tìm trong memory (luôn hoạt động)
+      if (querySnapshot.empty) {
+        console.log('[Login] Method 2: Fetching all users and searching in memory...');
+        try {
+          const allUsersSnapshot = await Promise.race([
+            getDocs(usersRef),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch timeout')), 10000))
+          ]) as any;
+          
+          console.log('[Login] Total users fetched:', allUsersSnapshot.size);
+          
+          // Log tất cả emails để debug
+          console.log('[Login] All emails in database:');
+          allUsersSnapshot.docs.forEach((doc: any, index: number) => {
+            const userEmail = doc.data().email || '';
+            console.log(`  ${index + 1}. "${userEmail}" (normalized: "${userEmail.trim().toLowerCase()}")`);
+          });
+          
+          // Tìm user bằng cách so sánh email không phân biệt hoa thường
+          const foundDoc = allUsersSnapshot.docs.find((doc: any) => {
+            const userEmail = doc.data().email?.trim().toLowerCase() || '';
+            const matches = userEmail === normalizedEmail;
+            if (matches) {
+              console.log('[Login] ✅ Match found! Email:', doc.data().email);
+            }
+            return matches;
+          });
+          
+          if (foundDoc) {
+            console.log('[Login] ✅ Found user via fallback method');
+            querySnapshot = {
+              empty: false,
+              docs: [foundDoc],
+              size: 1
+            };
+          } else {
+            console.log('[Login] ❌ User not found even in fallback method');
+            console.log('[Login] Looking for:', normalizedEmail);
+            console.log('[Login] Available emails:', allUsersSnapshot.docs.map((d: any) => d.data().email?.trim().toLowerCase()));
+          }
+        } catch (fallbackError: any) {
+          console.error('[Login] Fallback method failed:', fallbackError.message);
+          console.error('[Login] Error details:', fallbackError);
+        }
       }
 
-      // Nếu không có user và không có HR data -> kiểm tra password local
+      // Nếu không tìm thấy user
       if (querySnapshot.empty) {
+        console.error('[Login] User not found with email:', normalizedEmail);
+        console.error('[Login] Also tried:', originalEmail);
         throw new Error('Email hoặc mật khẩu không đúng');
       }
 
       const userDoc = querySnapshot.docs[0];
-      let userData = userDoc.data() as UserProfile;
+      const userData = userDoc.data() as UserProfile;
 
-      // Nếu không có HR data, kiểm tra password local
-      if (!hrEmployee && userData.password !== password) {
+      console.log('[Login] User found:', {
+        email: userData.email,
+        role: userData.role,
+        approved: userData.approved,
+        hasPassword: !!userData.password,
+        passwordLength: userData.password?.length
+      });
+
+      // Kiểm tra mật khẩu (so sánh đã trim)
+      const storedPassword = userData.password?.trim() || '';
+      if (storedPassword !== normalizedPassword) {
+        console.error('[Login] Password mismatch:', {
+          storedLength: storedPassword.length,
+          inputLength: normalizedPassword.length,
+          storedPassword: storedPassword.substring(0, 3) + '...',
+          inputPassword: normalizedPassword.substring(0, 3) + '...'
+        });
         throw new Error('Email hoặc mật khẩu không đúng');
       }
       
       // Kiểm tra tài khoản đã được duyệt chưa (trừ admin)
       if (userData.role !== 'admin' && userData.approved === false) {
+        console.warn('[Login] Account not approved:', userData.role);
         throw new Error('Tài khoản của bạn chưa được duyệt. Vui lòng liên hệ quản trị viên.');
       }
-      
-      // Nếu có HR data, cập nhật thông tin
-      if (hrEmployee) {
-        const updateData: Record<string, unknown> = {
-          employment: hrEmployee,
-          password: password, // Cập nhật password từ HR
-          updatedAt: new Date(),
-        };
 
-        if (hrEmployee.phone) updateData.phoneNumber = hrEmployee.phone;
-        if (hrEmployee.address) updateData.address = hrEmployee.address;
-        if (hrEmployee.country) updateData.country = hrEmployee.country;
-        if (hrEmployee.avatarURL) updateData.photoURL = hrEmployee.avatarURL;
-        if (hrEmployee.birthday) updateData.dateOfBirth = hrEmployee.birthday;
-        if (typeof hrEmployee.baseSalary === 'number') updateData.monthlySalary = hrEmployee.baseSalary;
-        if (hrEmployee.employmentStatus) updateData.employmentStatus = hrEmployee.employmentStatus;
-        if (hrEmployee.startDate) updateData.employmentStartDate = hrEmployee.startDate;
-        if (hrEmployee.maritalStatus) updateData.employmentMaritalStatus = hrEmployee.maritalStatus;
-        if (hrEmployee.branch) updateData.employmentBranch = hrEmployee.branch;
-        if (hrEmployee.team) updateData.employmentTeam = hrEmployee.team;
-        if (typeof hrEmployee.salaryPercentage === 'number') updateData.employmentSalaryPercentage = hrEmployee.salaryPercentage;
-        if (typeof hrEmployee.active === 'boolean') updateData.employmentActive = hrEmployee.active;
-
-        await updateDoc(userDoc.ref, updateData);
-
-        userData = {
-          ...userData,
-          ...updateData,
-        } as UserProfile;
-      }
+      console.log('[Login] Login successful for:', normalizedEmail);
 
       // Lưu vào localStorage
       localStorage.setItem('currentUser', JSON.stringify(userData));
@@ -171,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return userData;
     } catch (error: any) {
+      console.error('[Login] Error:', error.message);
       throw new Error(error.message || 'Đăng nhập thất bại');
     }
   };
