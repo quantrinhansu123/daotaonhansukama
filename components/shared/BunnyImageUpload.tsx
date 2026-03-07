@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface BunnyImageUploadProps {
@@ -21,7 +21,37 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
   onUploadEnd
 }) => {
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(currentImage || null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // Convert storage.bunnycdn.com URL to proxy API URL (avoids CDN suspension)
+  const convertToProxyUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    // If already proxy URL, return as is
+    if (url.includes('/api/banner')) {
+      return url;
+    }
+    
+    // Convert storage.bunnycdn.com to proxy API URL (no CDN needed)
+    if (url.includes('storage.bunnycdn.com')) {
+      const proxyUrl = `/api/banner?url=${encodeURIComponent(url)}`;
+      console.log('🔄 Converted storage URL to proxy:', url, '→', proxyUrl);
+      return proxyUrl;
+    }
+    
+    // If CDN URL, try to use it, but will fallback via onError if it fails
+    return url;
+  };
+
+  // Sync preview with currentImage prop
+  useEffect(() => {
+    if (currentImage) {
+      const proxyUrl = convertToProxyUrl(currentImage);
+      setPreview(proxyUrl);
+      console.log('🖼️ Preview updated from currentImage:', currentImage, '→', proxyUrl);
+    } else {
+      setPreview(null);
+    }
+  }, [currentImage]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,35 +80,45 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
       };
       reader.readAsDataURL(file);
 
-      // Upload to Bunny Storage
-      const fileName = `${folder}/${Date.now()}_${file.name}`;
-      const storageZone = process.env.NEXT_PUBLIC_BUNNY_STORAGE_ZONE;
-      const storagePassword = process.env.NEXT_PUBLIC_BUNNY_STORAGE_PASSWORD;
-      const storageHostname = process.env.NEXT_PUBLIC_BUNNY_STORAGE_HOSTNAME;
-      const cdnUrl = process.env.NEXT_PUBLIC_BUNNY_STORAGE_CDN_URL;
+      // Upload to Bunny Storage via API route (server-side, no CORS issues)
+      const timestamp = Date.now();
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${timestamp}_${sanitizedFileName}`;
+      const filePath = `${folder}/${fileName}`;
 
-      const uploadUrl = `https://${storageHostname}/${storageZone}/${fileName}`;
+      // Upload via API route
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', filePath);
 
-      const response = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'AccessKey': storagePassword!,
-          'Content-Type': file.type,
-        },
-        body: file,
+      const response = await fetch('/api/upload-document', {
+        method: 'POST',
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
 
-      const imageUrl = `https://${cdnUrl}/${fileName}`;
-      onUploadComplete(imageUrl);
+      const data = await response.json();
+      const uploadedUrl = data.url;
+      
+      // Update preview with uploaded URL (convert to proxy if needed)
+      const previewUrl = convertToProxyUrl(uploadedUrl) || uploadedUrl;
+      setPreview(previewUrl);
+      
+      console.log('✅ Upload successful, URL:', uploadedUrl);
+      console.log('🖼️ Preview URL:', previewUrl);
+      
+      onUploadComplete(uploadedUrl);
       alert('Tải ảnh lên thành công!');
     } catch (error) {
       console.error('Error uploading image:', error);
       alert('Lỗi khi tải ảnh lên');
-      setPreview(currentImage || null);
+      // Restore previous preview
+      const previousPreview = convertToProxyUrl(currentImage) || currentImage || null;
+      setPreview(previousPreview);
     } finally {
       setUploading(false);
       onUploadEnd?.();
@@ -95,19 +135,61 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
       <label className="block text-sm font-medium text-slate-700">{label}</label>
       
       {preview ? (
-        <div className="relative">
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-full h-48 object-cover rounded-lg border border-slate-200"
-          />
-          <button
-            onClick={handleRemove}
-            className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-            type="button"
-          >
-            <X size={16} />
-          </button>
+        <div className="space-y-2">
+          <div className="relative">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-full h-48 object-cover rounded-lg border border-slate-200"
+              onError={(e) => {
+                // preview is guaranteed to be non-null here because of the {preview ? ...} check
+                const previewUrl = preview as string;
+                console.error('❌ Preview image load error:', previewUrl);
+                // Try to use proxy if direct URL fails
+                if (previewUrl.includes('storage.bunnycdn.com')) {
+                  e.currentTarget.src = `/api/banner?url=${encodeURIComponent(previewUrl)}`;
+                } else if (previewUrl.includes('b-cdn.net')) {
+                  // CDN URL failed, try proxy with original storage URL
+                  const originalUrl = currentImage || previewUrl;
+                  if (originalUrl && originalUrl.includes('storage.bunnycdn.com')) {
+                    e.currentTarget.src = `/api/banner?url=${encodeURIComponent(originalUrl)}`;
+                  }
+                }
+              }}
+              onLoad={() => {
+                if (preview) {
+                  console.log('✅ Preview image loaded:', preview);
+                }
+              }}
+            />
+            <button
+              onClick={handleRemove}
+              className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+              type="button"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          {/* Display URL below image */}
+          <div className="p-2 bg-slate-50 rounded border border-slate-200">
+            <p className="text-xs text-slate-500 mb-1">URL:</p>
+            <p className="text-xs text-slate-700 break-all font-mono">
+              {currentImage || preview}
+            </p>
+            <button
+              onClick={() => {
+                const urlToCopy = currentImage || preview;
+                if (urlToCopy) {
+                  navigator.clipboard.writeText(urlToCopy);
+                  alert('Đã copy URL!');
+                }
+              }}
+              className="mt-1 text-xs text-blue-600 hover:text-blue-700 underline"
+              type="button"
+            >
+              Copy URL
+            </button>
+          </div>
         </div>
       ) : (
         <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-brand-500 hover:bg-slate-50 transition-colors">

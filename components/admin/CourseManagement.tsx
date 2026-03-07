@@ -403,7 +403,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       advanced: 'Nâng cao'
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[level as keyof typeof styles]}`}>
+      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${styles[level as keyof typeof styles]}`}>
         {labels[level as keyof typeof labels]}
       </span>
     );
@@ -420,6 +420,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         course={detailCourse}
         onBack={() => setDetailCourse(null)}
         isAdmin={true}
+        onDelete={() => {
+          setDetailCourse(null);
+          loadData();
+        }}
       />
     );
   }
@@ -496,7 +500,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value as any)}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white [&>option]:whitespace-nowrap"
           >
             <option value="all">Tất cả cấp độ</option>
             <option value="beginner">Cơ bản</option>

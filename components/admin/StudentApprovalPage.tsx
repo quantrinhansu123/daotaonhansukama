@@ -48,10 +48,13 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
 
       // Load all users
       const usersSnapshot = await getDocs(collection(db, 'users'));
-      const users = usersSnapshot.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      })) as UserProfile[];
+      const users = usersSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          uid: data.uid || doc.id // Ensure uid is always present
+        };
+      }) as UserProfile[];
 
       // Build pending requests list
       const pendingRequests: PendingRequest[] = [];
@@ -59,14 +62,17 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
       courses.forEach(course => {
         if (course.pendingStudents && course.pendingStudents.length > 0) {
           course.pendingStudents.forEach(userId => {
-            const user = users.find(u => u.uid === userId);
-            if (user) {
+            // Filter out undefined or empty userIds
+            if (!userId || userId.trim() === '') return;
+            
+            const user = users.find(u => u.uid === userId.trim());
+            if (user && user.uid) {
               pendingRequests.push({
-                courseId: course.id,
-                courseTitle: course.title,
+                courseId: course.id || '',
+                courseTitle: course.title || '',
                 userId: user.uid,
-                userName: user.displayName || user.email,
-                userEmail: user.email,
+                userName: user.displayName || user.email || '',
+                userEmail: user.email || '',
               });
             }
           });
@@ -94,13 +100,19 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
   };
 
   const handleApprove = async (request: PendingRequest) => {
+    if (!request.userId || request.userId.trim() === '' || !request.courseId || request.courseId.trim() === '') {
+      alert('Lỗi: Thông tin yêu cầu không hợp lệ');
+      return;
+    }
+
     try {
       setProcessing(request.userId + request.courseId);
       const courseRef = doc(db, 'courses', request.courseId);
+      const validUserId = request.userId.trim();
 
       await updateDoc(courseRef, {
-        students: arrayUnion(request.userId),
-        pendingStudents: arrayRemove(request.userId)
+        students: arrayUnion(validUserId),
+        pendingStudents: arrayRemove(validUserId)
       });
 
       alert('Đã duyệt yêu cầu!');
@@ -114,14 +126,20 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
   };
 
   const handleReject = async (request: PendingRequest) => {
+    if (!request.userId || request.userId.trim() === '' || !request.courseId || request.courseId.trim() === '') {
+      alert('Lỗi: Thông tin yêu cầu không hợp lệ');
+      return;
+    }
+
     if (!confirm(`Từ chối yêu cầu của ${request.userName}?`)) return;
 
     try {
       setProcessing(request.userId + request.courseId);
       const courseRef = doc(db, 'courses', request.courseId);
+      const validUserId = request.userId.trim();
 
       await updateDoc(courseRef, {
-        pendingStudents: arrayRemove(request.userId)
+        pendingStudents: arrayRemove(validUserId)
       });
 
       alert('Đã từ chối yêu cầu!');

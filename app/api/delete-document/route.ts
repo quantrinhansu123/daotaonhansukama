@@ -23,12 +23,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete from Bunny Storage
+    // Use AccessKey header (same as upload)
     const deleteUrl = `https://${storageHostname}/${storageZone}/${path}`;
     
     const deleteResponse = await fetch(deleteUrl, {
       method: 'DELETE',
       headers: {
-        'AccessKey': storagePassword,
+        'AccessKey': storagePassword.trim(),
       },
     });
 

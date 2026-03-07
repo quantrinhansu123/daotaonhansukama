@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, arrayRemove, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
 import { UserProfile } from '@/types/user';
@@ -17,26 +17,70 @@ interface CourseStudentsProps {
 
 export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose, onUpdate }) => {
   const { userProfile: currentUser } = useAuth();
+  const [currentCourse, setCurrentCourse] = useState<Course>(course);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [pendingStudents, setPendingStudents] = useState<UserProfile[]>([]);
   const [enrolledStudents, setEnrolledStudents] = useState<UserProfile[]>([]);
   const [availableStudents, setAvailableStudents] = useState<UserProfile[]>([]);
+  const [departments, setDepartments] = useState<Array<{ id: string; projects?: string[] }>>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
 
   useEffect(() => {
-    loadStudents();
-  }, [course]);
+    setCurrentCourse(course);
+    loadStudents(course);
+  }, [course.id]);
 
-  const loadStudents = async () => {
+  const loadCourseData = async (courseId: string): Promise<Course | null> => {
+    try {
+      const courseRef = doc(db, 'courses', courseId);
+      const courseSnap = await getDoc(courseRef);
+      if (courseSnap.exists()) {
+        const courseData = {
+          id: courseSnap.id,
+          ...courseSnap.data()
+        } as Course;
+        return courseData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error loading course:', error);
+      return null;
+    }
+  };
+
+  const loadStudents = async (courseToLoad?: Course) => {
     try {
       setLoading(true);
+      
+      // Use provided course or current course
+      const courseData = courseToLoad || currentCourse;
+      
+      // Load departments to check department projects
+      const departmentsRef = collection(db, 'departments');
+      const departmentsSnapshot = await getDocs(departmentsRef);
+      const departmentsData = departmentsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Array<{ id: string; projects?: string[] }>;
+      setDepartments(departmentsData);
+      
       const usersRef = collection(db, 'users');
       const snapshot = await getDocs(usersRef);
-      const allUsersData = snapshot.docs.map(doc => doc.data()) as UserProfile[];
+      const allUsersData = snapshot.docs.map(doc => {
+        const data = doc.data() as UserProfile;
+        // Ensure uid is always present and store doc.id for comparison
+        return {
+          ...data,
+          uid: data.uid || doc.id,
+          docId: doc.id // Store doc.id for comparison
+        } as UserProfile & { docId: string };
+      });
 
-      // Filter for staff and student roles only
-      let studentsData = allUsersData.filter(u => u.role === 'staff' || u.role === 'student');
+      // Filter for staff and student roles only, ensure uid exists, and only approved users (for available list)
+      let studentsData = allUsersData.filter(u => 
+        (u.role === 'staff' || u.role === 'student') && u.uid && (u.approved || u.role === 'admin')
+      );
 
       // Nếu không phải admin, chỉ hiển thị nhân viên trong phòng của trưởng phòng
       if (currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && currentUser?.departmentId) {
@@ -45,15 +89,160 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
       setAllStudents(studentsData);
 
-      const pending = studentsData.filter(s => course.pendingStudents?.includes(s.uid));
-      const enrolled = studentsData.filter(s => course.students?.includes(s.uid));
-      const available = studentsData.filter(s =>
-        !course.students?.includes(s.uid) && !course.pendingStudents?.includes(s.uid)
-      );
+      // Get ALL users who are enrolled or pending (regardless of role)
+      // This ensures we show all students that were added to the course
+      // Normalize all IDs from course (both original and trimmed versions)
+      const enrolledIdsFromCourse = courseData.students || [];
+      const pendingIdsFromCourse = courseData.pendingStudents || [];
+      
+      // Create sets with all possible ID variations
+      const allEnrolledIds = new Set<string>();
+      const allPendingIds = new Set<string>();
+      
+      enrolledIdsFromCourse.forEach(id => {
+        const idStr = String(id).trim();
+        if (idStr) {
+          allEnrolledIds.add(idStr);
+          allEnrolledIds.add(String(id)); // Also add original
+        }
+      });
+      
+      pendingIdsFromCourse.forEach(id => {
+        const idStr = String(id).trim();
+        if (idStr) {
+          allPendingIds.add(idStr);
+          allPendingIds.add(String(id)); // Also add original
+        }
+      });
+      
+      // Create a map of all users by their possible IDs (uid and docId)
+      const userMap = new Map<string, UserProfile>();
+      allUsersData.forEach(user => {
+        const uid = user.uid || '';
+        const docId = (user as any).docId || '';
+        if (uid) {
+          userMap.set(String(uid).trim(), user);
+          userMap.set(String(uid), user);
+        }
+        if (docId && docId !== uid) {
+          userMap.set(String(docId).trim(), user);
+          userMap.set(String(docId), user);
+        }
+      });
+      
+      // Find enrolled students - check all possible ID variations
+      const enrolled: UserProfile[] = [];
+      const enrolledSet = new Set<string>(); // Track to avoid duplicates
+      
+      allEnrolledIds.forEach(id => {
+        const user = userMap.get(id);
+        if (user && user.uid && !enrolledSet.has(user.uid)) {
+          enrolled.push(user);
+          enrolledSet.add(user.uid);
+        }
+      });
+      
+      // Find pending students - check all possible ID variations
+      const pending: UserProfile[] = [];
+      const pendingSet = new Set<string>(); // Track to avoid duplicates
+      
+      allPendingIds.forEach(id => {
+        const user = userMap.get(id);
+        if (user && user.uid && !pendingSet.has(user.uid)) {
+          pending.push(user);
+          pendingSet.add(user.uid);
+        }
+      });
+      
+      // Available students: only staff/student roles that are not enrolled or pending
+      // AND have projects matching course projects (if course has projects)
+      const courseProjects = courseData.projects || [];
+      const courseProjectsNormalized = courseProjects.map(p => String(p).trim()).filter(Boolean);
+      
+      const available = studentsData.filter(s => {
+        if (!s.uid) return false;
+        const uid = String(s.uid).trim();
+        
+        // Check if already enrolled or pending
+        if (allEnrolledIds.has(uid) || allEnrolledIds.has(String(s.uid)) ||
+            allPendingIds.has(uid) || allPendingIds.has(String(s.uid))) {
+          return false;
+        }
+        
+        // If course has no projects, show all available students
+        if (courseProjectsNormalized.length === 0) {
+          return true;
+        }
+        
+        // Check if user has projects matching course projects
+        const userProjects = (s.projects || []).map(p => String(p).trim()).filter(Boolean);
+        let hasMatchingProject = false;
+        
+        // Check user's direct projects
+        if (userProjects.length > 0) {
+          hasMatchingProject = userProjects.some(projectId => {
+            const normalizedProjectId = String(projectId).trim();
+            return courseProjectsNormalized.includes(normalizedProjectId) || 
+                   courseProjectsNormalized.some(cp => String(cp).trim() === normalizedProjectId) ||
+                   courseProjects.some(cp => String(cp).trim() === normalizedProjectId);
+          });
+        }
+        
+        // Also check department projects if user doesn't have direct projects
+        if (!hasMatchingProject && s.departmentId) {
+          const userDept = departments.find(d => d.id === s.departmentId);
+          if (userDept?.projects && userDept.projects.length > 0) {
+            const deptProjects = (userDept.projects || []).map(p => String(p).trim()).filter(Boolean);
+            hasMatchingProject = deptProjects.some(projectId => {
+              const normalizedProjectId = String(projectId).trim();
+              return courseProjectsNormalized.includes(normalizedProjectId) ||
+                     courseProjectsNormalized.some(cp => String(cp).trim() === normalizedProjectId) ||
+                     courseProjects.some(cp => String(cp).trim() === normalizedProjectId);
+            });
+            }
+          }
+        
+        // Chỉ hiển thị nhân viên có dự án khớp với dự án của khóa học
+        return hasMatchingProject;
+      });
 
+      // Debug logging
+      console.log('[CourseStudents] Course ID:', courseData.id);
+      console.log('[CourseStudents] Course projects (raw):', courseProjects);
+      console.log('[CourseStudents] Course projects (normalized):', courseProjectsNormalized);
+      console.log('[CourseStudents] Enrolled IDs from course:', Array.from(allEnrolledIds));
+      console.log('[CourseStudents] Pending IDs from course:', Array.from(allPendingIds));
+      console.log('[CourseStudents] Total users in DB:', allUsersData.length);
+      console.log('[CourseStudents] Users with staff/student role:', studentsData.length);
+      console.log('[CourseStudents] Found enrolled students:', enrolled.length);
+      console.log('[CourseStudents] Found pending students:', pending.length);
+      console.log('[CourseStudents] Found available students:', available.length);
+      console.log('[CourseStudents] Departments loaded:', departments.length);
+      console.log('[CourseStudents] Available students details:', available.map(s => ({
+        uid: s.uid,
+        name: s.displayName,
+        email: s.email,
+        userProjects: s.projects || [],
+        departmentId: s.departmentId,
+        deptProjects: departments.find(d => d.id === s.departmentId)?.projects || []
+      })));
+      console.log('[CourseStudents] All studentsData (before filter):', studentsData.map(s => ({
+        uid: s.uid,
+        name: s.displayName,
+        userProjects: s.projects || [],
+        departmentId: s.departmentId,
+        isEnrolled: allEnrolledIds.has(String(s.uid).trim()) || allEnrolledIds.has(s.uid || ''),
+        isPending: allPendingIds.has(String(s.uid).trim()) || allPendingIds.has(s.uid || '')
+      })));
+      
       setPendingStudents(pending);
       setEnrolledStudents(enrolled);
       setAvailableStudents(available);
+      
+      // Update current course state only if new data was provided
+      if (courseToLoad && courseToLoad.id === currentCourse.id) {
+        setCurrentCourse(courseToLoad);
+      }
     } catch (error) {
       console.error('Error loading students:', error);
     } finally {
@@ -62,16 +251,26 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
   };
 
   const handleApprove = async (studentId: string) => {
+    if (!studentId || studentId.trim() === '') {
+      alert('Lỗi: ID học viên không hợp lệ');
+      return;
+    }
+
     try {
       setProcessing(studentId);
-      const courseRef = doc(db, 'courses', course.id);
+      const courseRef = doc(db, 'courses', currentCourse.id);
+      const validStudentId = studentId.trim();
       await updateDoc(courseRef, {
-        pendingStudents: arrayRemove(studentId),
-        students: arrayUnion(studentId)
+        pendingStudents: arrayRemove(validStudentId),
+        students: arrayUnion(validStudentId)
       });
       alert('Đã phê duyệt nhân viên!');
+      // Reload course data and students list
+      const updatedCourse = await loadCourseData(currentCourse.id);
+      if (updatedCourse) {
+        await loadStudents(updatedCourse);
+      }
       onUpdate();
-      loadStudents();
     } catch (error) {
       console.error('Error approving:', error);
       alert('Lỗi khi phê duyệt');
@@ -81,15 +280,24 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
   };
 
   const handleReject = async (studentId: string) => {
+    if (!studentId || studentId.trim() === '') {
+      alert('Lỗi: ID học viên không hợp lệ');
+      return;
+    }
+
     try {
       setProcessing(studentId);
-      const courseRef = doc(db, 'courses', course.id);
+      const courseRef = doc(db, 'courses', currentCourse.id);
       await updateDoc(courseRef, {
-        pendingStudents: arrayRemove(studentId)
+        pendingStudents: arrayRemove(studentId.trim())
       });
       alert('Đã từ chối yêu cầu!');
+      // Reload course data and students list
+      const updatedCourse = await loadCourseData(currentCourse.id);
+      if (updatedCourse) {
+        await loadStudents(updatedCourse);
+      }
       onUpdate();
-      loadStudents();
     } catch (error) {
       console.error('Error rejecting:', error);
       alert('Lỗi khi từ chối');
@@ -99,17 +307,26 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
   };
 
   const handleRemove = async (studentId: string) => {
+    if (!studentId || studentId.trim() === '') {
+      alert('Lỗi: ID học viên không hợp lệ');
+      return;
+    }
+
     if (!confirm('Bạn có chắc muốn xóa học sinh này khỏi khóa học?')) return;
 
     try {
       setProcessing(studentId);
-      const courseRef = doc(db, 'courses', course.id);
+      const courseRef = doc(db, 'courses', currentCourse.id);
       await updateDoc(courseRef, {
-        students: arrayRemove(studentId)
+        students: arrayRemove(studentId.trim())
       });
       alert('Đã xóa nhân viên!');
+      // Reload course data and students list
+      const updatedCourse = await loadCourseData(currentCourse.id);
+      if (updatedCourse) {
+        await loadStudents(updatedCourse);
+      }
       onUpdate();
-      loadStudents();
     } catch (error) {
       console.error('Error removing:', error);
       alert('Lỗi khi xóa học sinh');
@@ -119,15 +336,24 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
   };
 
   const handleAddStudent = async (studentId: string) => {
+    if (!studentId || studentId.trim() === '') {
+      alert('Lỗi: ID học viên không hợp lệ');
+      return;
+    }
+
     try {
       setProcessing(studentId);
-      const courseRef = doc(db, 'courses', course.id);
+      const courseRef = doc(db, 'courses', currentCourse.id);
       await updateDoc(courseRef, {
-        students: arrayUnion(studentId)
+        students: arrayUnion(studentId.trim())
       });
       alert('Đã thêm nhân viên vào khóa học!');
+      // Reload course data and students list
+      const updatedCourse = await loadCourseData(currentCourse.id);
+      if (updatedCourse) {
+        await loadStudents(updatedCourse);
+      }
       onUpdate();
-      loadStudents();
     } catch (error) {
       console.error('Error adding student:', error);
       alert('Lỗi khi thêm học sinh');
@@ -151,7 +377,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       <div className="bg-[#311898] border border-white/10 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-2xl font-bold text-white">{course.title}</h3>
+            <h3 className="text-2xl font-bold text-white">{currentCourse.title}</h3>
             <p className="text-slate-300">Quản lý nhân viên</p>
             {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
               <p className="text-sm text-[#53cafd] mt-1">

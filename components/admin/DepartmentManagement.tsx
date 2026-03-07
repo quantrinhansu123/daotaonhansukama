@@ -40,10 +40,12 @@ export const DepartmentManagement: React.FC = () => {
     let filtered = departments;
 
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(dept =>
-        dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        dept.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        dept.managerName?.toLowerCase().includes(searchTerm.toLowerCase())
+        dept.name?.toLowerCase().includes(searchLower) ||
+        dept.description?.toLowerCase().includes(searchLower) ||
+        dept.managerName?.toLowerCase().includes(searchLower) ||
+        dept.id?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -107,7 +109,7 @@ export const DepartmentManagement: React.FC = () => {
   };
 
   const getStaffCount = (deptId: string) => {
-    return users.filter(u => u.departmentId === deptId).length;
+    return users.filter(u => u.departmentId === deptId && u.approved).length;
   };
 
   const handleAdd = () => {
@@ -518,15 +520,24 @@ export const DepartmentManagement: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-              {users.filter(u => u.departmentId === viewStaffDept.id).length === 0 ? (
+              {users.filter(u => u.departmentId === viewStaffDept.id && u.approved).length === 0 ? (
                 <div className="text-center py-12">
                   <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-                  <p className="text-slate-300">Chưa có nhân viên nào trong phòng ban này</p>
+                  <p className="text-slate-300">
+                    {users.filter(u => u.departmentId === viewStaffDept.id).length === 0
+                      ? 'Chưa có nhân viên nào trong phòng ban này'
+                      : 'Chưa có nhân viên nào được duyệt trong phòng ban này'}
+                  </p>
+                  {users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length > 0 && (
+                    <p className="text-xs text-slate-400 mt-2">
+                      ({users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length} nhân viên chờ duyệt)
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {users
-                    .filter(u => u.departmentId === viewStaffDept.id)
+                    .filter(u => u.departmentId === viewStaffDept.id && u.approved)
                     .map((user) => (
                       <div
                         key={user.uid}
@@ -562,7 +573,14 @@ export const DepartmentManagement: React.FC = () => {
 
             <div className="p-6 border-t border-white/10 bg-[#5e3ed0]/20">
               <div className="flex items-center justify-between text-sm text-slate-300">
-                <span>Tổng số nhân viên: <strong className="text-white">{users.filter(u => u.departmentId === viewStaffDept.id).length}</strong></span>
+                <div>
+                  <span>Tổng số nhân viên đã duyệt: <strong className="text-white">{users.filter(u => u.departmentId === viewStaffDept.id && u.approved).length}</strong></span>
+                  {users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length > 0 && (
+                    <span className="ml-4 text-orange-300">
+                      ({users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length} chờ duyệt)
+                    </span>
+                  )}
+                </div>
                 <Button onClick={() => setViewStaffDept(null)} className="bg-white/10 hover:bg-white/20 text-white border-none">
                   Đóng
                 </Button>

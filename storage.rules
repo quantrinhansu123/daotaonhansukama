@@ -9,6 +9,27 @@ service firebase.storage {
       allow delete: if request.auth != null; // In production, check if user is teacher
     }
     
+    // Courses folder - banners and thumbnails
+    match /courses/{folder}/{fileName} {
+      allow read: if true; // Public read for banners and thumbnails
+      allow write: if request.auth != null; // Only authenticated users can upload
+      allow delete: if request.auth != null;
+    }
+    
+    // Avatars folder
+    match /avatars/{userId}/{fileName} {
+      allow read: if true; // Public read for avatars
+      allow write: if request.auth != null && request.auth.uid == userId; // Users can only upload their own avatar
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Attendance photos
+    match /attendance/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null;
+    }
+    
     // Default: deny all
     match /{allPaths=**} {
       allow read, write: if false;

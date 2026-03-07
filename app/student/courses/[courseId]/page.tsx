@@ -34,6 +34,17 @@ export default function CourseDetailPage() {
     }
   }, [courseId, userProfile]);
 
+  // Reload course when window gets focus (to get latest banner)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (courseId && userProfile) {
+        loadCourse();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [courseId, userProfile]);
+
   const loadCourse = async () => {
     try {
       setLoading(true);
@@ -49,9 +60,24 @@ export default function CourseDetailPage() {
 
       const courseData = {
         ...courseSnap.data(),
+        id: courseSnap.id,
         createdAt: courseSnap.data().createdAt?.toDate(),
-        updatedAt: courseSnap.data().updatedAt?.toDate()
+        updatedAt: courseSnap.data().updatedAt?.toDate(),
+        banner: courseSnap.data().banner || undefined // Ensure banner is preserved
       } as Course;
+
+      // Debug: Log banner info
+      console.log('📚 Course loaded:', {
+        id: courseData.id,
+        title: courseData.title,
+        banner: courseData.banner,
+        bannerType: typeof courseData.banner,
+        bannerLength: courseData.banner?.length || 0,
+        hasBanner: !!courseData.banner,
+        bannerTrimmed: courseData.banner?.trim() || '',
+        updatedAt: courseData.updatedAt,
+        rawBanner: courseSnap.data().banner
+      });
 
       // Check if user is enrolled (staff can access all courses)
       if (userProfile?.role !== 'staff' && !courseData.students?.includes(userProfile?.uid || '')) {

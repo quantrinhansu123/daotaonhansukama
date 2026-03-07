@@ -1,29 +1,38 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, getDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
 import { Lesson } from '@/types/lesson';
 import { LessonProgress } from '@/types/progress';
 import { UserProfile } from '@/types/user';
-import { ArrowLeft, Users, Clock, CheckCircle, TrendingUp, BookOpen } from 'lucide-react';
+import { ArrowLeft, Users, Clock, CheckCircle, TrendingUp, BookOpen, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CourseDetailProps {
   course: Course;
   onBack: () => void;
+  onStudentUnenrolled?: () => void;
 }
 
-export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack }) => {
+export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onStudentUnenrolled }) => {
+  const { userProfile: currentUser } = useAuth();
+  const [currentCourse, setCurrentCourse] = useState<Course>(course);
   const [students, setStudents] = useState<UserProfile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Record<string, LessonProgress[]>>({});
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<UserProfile | null>(null);
+  const [removingStudentId, setRemovingStudentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentCourse(course);
+  }, [course]);
 
   useEffect(() => {
     loadData();
-  }, [course.id]);
+  }, [currentCourse.id, currentCourse.students?.length]);
 
   const loadData = async () => {
     try {
@@ -32,17 +41,55 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack }) =>
       // Load students and staff
       const usersRef = collection(db, 'users');
       const usersSnapshot = await getDocs(usersRef);
-      const allUsers = usersSnapshot.docs.map(doc => doc.data()) as UserProfile[];
-      // Filter for staff and students who are enrolled in this course
-      const enrolledUsers = allUsers.filter(u =>
-        (u.role === 'staff' || u.role === 'student') &&
-        course.students?.includes(u.uid)
-      );
+      const allUsers = usersSnapshot.docs.map(doc => {
+        const data = doc.data() as UserProfile;
+        return {
+          ...data,
+          uid: data.uid || doc.id,
+          docId: doc.id // Store doc.id for comparison
+        } as UserProfile & { docId: string };
+      });
+      
+      // Get enrolled student IDs from course (normalize all variations)
+      const enrolledIdsFromCourse = (currentCourse.students || []).map(id => String(id).trim()).filter(Boolean);
+      const enrolledIdSet = new Set<string>();
+      enrolledIdsFromCourse.forEach(id => {
+        enrolledIdSet.add(id);
+        enrolledIdSet.add(String(id)); // Also add original
+      });
+      
+      // Find ALL enrolled users (regardless of role) by checking both uid and docId
+      const enrolledUsers: UserProfile[] = [];
+      const enrolledSet = new Set<string>(); // Track to avoid duplicates
+      
+      allUsers.forEach(user => {
+        const uid = user.uid || '';
+        const uidStr = String(uid).trim();
+        const docId = (user as any).docId || '';
+        
+        // Check if user is enrolled (by uid or docId)
+        const isEnrolled = uid && (
+          enrolledIdSet.has(uidStr) || 
+          enrolledIdSet.has(uid) ||
+          (docId && enrolledIdSet.has(docId))
+        );
+        
+        if (isEnrolled && uid && !enrolledSet.has(uid)) {
+          enrolledUsers.push(user);
+          enrolledSet.add(uid);
+        }
+      });
+      
+      console.log('[CourseDetail] Course ID:', currentCourse.id);
+      console.log('[CourseDetail] Enrolled IDs from course:', enrolledIdsFromCourse);
+      console.log('[CourseDetail] Found enrolled students:', enrolledUsers.length);
+      console.log('[CourseDetail] Total users in DB:', allUsers.length);
+      
       setStudents(enrolledUsers);
 
       // Load lessons
       const lessonsRef = collection(db, 'lessons');
-      const lessonsQuery = query(lessonsRef, where('courseId', '==', course.id));
+      const lessonsQuery = query(lessonsRef, where('courseId', '==', currentCourse.id));
       const lessonsSnapshot = await getDocs(lessonsQuery);
       const lessonsData = lessonsSnapshot.docs.map(doc => ({
         ...doc.data(),
@@ -54,7 +101,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack }) =>
 
       // Load progress
       const progressRef = collection(db, 'progress');
-      const progressQuery = query(progressRef, where('courseId', '==', course.id));
+      const progressQuery = query(progressRef, where('courseId', '==', currentCourse.id));
       const progressSnapshot = await getDocs(progressQuery);
 
       const progressMap: Record<string, LessonProgress[]> = {};
@@ -97,6 +144,59 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack }) =>
       totalLessons,
       completionRate
     };
+  };
+
+  const handleUnenrollStudent = async (studentId: string, studentName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent selecting the student when clicking the button
+    
+    if (!confirm(`Bạn có chắc muốn hủy đăng ký của "${studentName}" khỏi khóa học này?`)) {
+      return;
+    }
+
+    try {
+      setRemovingStudentId(studentId);
+      
+      // Remove from UI immediately for better UX
+      setStudents(prev => prev.filter(s => s.uid !== studentId));
+      
+      // Clear selected student if it was the one removed
+      if (selectedStudent?.uid === studentId) {
+        setSelectedStudent(null);
+      }
+      
+      // Update Firestore
+      const courseRef = doc(db, 'courses', currentCourse.id);
+      await updateDoc(courseRef, {
+        students: arrayRemove(studentId.trim())
+      });
+      
+      // Reload course data from Firestore
+      const courseSnap = await getDoc(courseRef);
+      if (courseSnap.exists()) {
+        const updatedCourseData = {
+          id: courseSnap.id,
+          ...courseSnap.data()
+        } as Course;
+        setCurrentCourse(updatedCourseData);
+      }
+      
+      // Reload all data to ensure consistency
+      await loadData();
+      
+      // Notify parent component to reload course data
+      if (onStudentUnenrolled) {
+        onStudentUnenrolled();
+      }
+      
+      alert('Đã hủy đăng ký thành công!');
+    } catch (error) {
+      console.error('Error unenrolling student:', error);
+      alert('Lỗi khi hủy đăng ký');
+      // Reload on error to restore correct state
+      await loadData();
+    } finally {
+      setRemovingStudentId(null);
+    }
   };
 
   if (loading) {
@@ -170,42 +270,60 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack }) =>
                 {students.map((student) => {
                   const stats = getStudentStats(student.uid);
                   const isSelected = selectedStudent?.uid === student.uid;
+                  const isRemoving = removingStudentId === student.uid;
 
                   return (
-                    <button
+                    <div
                       key={student.uid}
-                      onClick={() => setSelectedStudent(student)}
-                      className={`w-full p-4 text-left hover:bg-white/5 transition-colors ${isSelected ? 'bg-[#53cafd]/10 border-l-4 border-[#53cafd]' : ''
+                      className={`w-full p-4 hover:bg-white/5 transition-colors ${isSelected ? 'bg-[#53cafd]/10 border-l-4 border-[#53cafd]' : ''
                         }`}
                     >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-green-500/30">
-                          {student.displayName.charAt(0).toUpperCase()}
+                      <button
+                        onClick={() => setSelectedStudent(student)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-green-500/30">
+                            {student.displayName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-white truncate">{student.displayName}</p>
+                            <p className="text-xs text-slate-400 truncate">{student.email}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">{student.displayName}</p>
-                          <p className="text-xs text-slate-400 truncate">{student.email}</p>
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="flex items-center gap-1 text-[#53cafd]">
+                            <Clock size={12} />
+                            {formatDuration(stats.totalWatched)}
+                          </span>
+                          <span className="flex items-center gap-1 text-green-400">
+                            <CheckCircle size={12} />
+                            {stats.completedLessons}/{stats.totalLessons}
+                          </span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs">
-                        <span className="flex items-center gap-1 text-[#53cafd]">
-                          <Clock size={12} />
-                          {formatDuration(stats.totalWatched)}
-                        </span>
-                        <span className="flex items-center gap-1 text-green-400">
-                          <CheckCircle size={12} />
-                          {stats.completedLessons}/{stats.totalLessons}
-                        </span>
-                      </div>
-                      <div className="mt-2">
-                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-green-500 to-green-400"
-                            style={{ width: `${stats.completionRate}%` }}
-                          />
+                        <div className="mt-2">
+                          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-green-500 to-green-400"
+                              style={{ width: `${stats.completionRate}%` }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                      {/* Unenroll Button */}
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'teacher') && (
+                        <div className="mt-2 pt-2 border-t border-white/10">
+                          <button
+                            onClick={(e) => handleUnenrollStudent(student.uid, student.displayName, e)}
+                            disabled={isRemoving}
+                            className="w-full px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-colors flex items-center justify-center gap-2 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <X size={14} />
+                            {isRemoving ? 'Đang xử lý...' : 'Hủy đăng ký'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

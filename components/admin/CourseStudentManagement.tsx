@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
 import { UserProfile } from '@/types/user';
@@ -17,6 +17,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
   course,
   onUpdate
 }) => {
+  const [currentCourse, setCurrentCourse] = useState<Course>(course);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [courseStudents, setCourseStudents] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,27 +26,61 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   useEffect(() => {
-    loadData();
+    setCurrentCourse(course);
+    loadData(course);
   }, [course.id]);
 
-  const loadData = async () => {
+  const loadCourseData = async (courseId: string): Promise<Course | null> => {
+    try {
+      const courseRef = doc(db, 'courses', courseId);
+      const courseSnap = await getDoc(courseRef);
+      if (courseSnap.exists()) {
+        const courseData = {
+          id: courseSnap.id,
+          ...courseSnap.data()
+        } as Course;
+        return courseData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error loading course:', error);
+      return null;
+    }
+  };
+
+  const loadData = async (courseToLoad?: Course) => {
     try {
       setLoading(true);
+
+      // Use provided course or current course
+      const courseData = courseToLoad || currentCourse;
 
       // Load all users (không phân biệt role)
       const usersRef = collection(db, 'users');
       const usersSnapshot = await getDocs(usersRef);
-      const usersData = usersSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
-      })) as UserProfile[];
-      setAllUsers(usersData);
+      const usersData = usersSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          uid: data.uid || doc.id, // Ensure uid is always present
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        };
+      }) as UserProfile[];
+      
+      // Filter out users without uid
+      const validUsersData = usersData.filter(user => user.uid);
+      setAllUsers(validUsersData);
 
       // Load current course students
-      const currentStudentIds = course.students || [];
-      const currentStudents = usersData.filter(user => currentStudentIds.includes(user.uid));
+      const currentStudentIds = courseData.students || [];
+      const currentStudents = validUsersData.filter(user => currentStudentIds.includes(user.uid));
       setCourseStudents(currentStudents);
+      
+      // Update current course state only if new data was provided
+      if (courseToLoad && courseToLoad.id === currentCourse.id) {
+        setCurrentCourse(courseToLoad);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
       alert('Lỗi khi tải danh sách người dùng');
@@ -60,21 +95,33 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
       return;
     }
 
+    // Filter out any undefined or empty values
+    const validUserIds = selectedUserIds.filter(id => id && id.trim() !== '');
+    if (validUserIds.length === 0) {
+      alert('Không có ID người dùng hợp lệ');
+      return;
+    }
+
     try {
-      const courseRef = doc(db, 'courses', course.id);
+      const courseRef = doc(db, 'courses', currentCourse.id);
 
       // Thêm từng user vào mảng students
-      for (const userId of selectedUserIds) {
+      for (const userId of validUserIds) {
+        const validUserId = userId.trim();
         await updateDoc(courseRef, {
-          students: arrayUnion(userId),
+          students: arrayUnion(validUserId),
           updatedAt: new Date()
         });
       }
 
-      alert(`Đã thêm ${selectedUserIds.length} học viên vào khóa học!`);
+      alert(`Đã thêm ${validUserIds.length} học viên vào khóa học!`);
       setShowModal(false);
       setSelectedUserIds([]);
-      loadData();
+      // Reload course data and students list
+      const updatedCourse = await loadCourseData(currentCourse.id);
+      if (updatedCourse) {
+        await loadData(updatedCourse);
+      }
       onUpdate();
     } catch (error) {
       console.error('Error adding students:', error);
@@ -83,19 +130,28 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
   };
 
   const handleRemoveStudent = async (userId: string) => {
+    if (!userId || userId.trim() === '') {
+      alert('Lỗi: ID người dùng không hợp lệ');
+      return;
+    }
+
     if (!confirm('Bạn có chắc muốn xóa học viên này khỏi khóa học?')) {
       return;
     }
 
     try {
-      const courseRef = doc(db, 'courses', course.id);
+      const courseRef = doc(db, 'courses', currentCourse.id);
       await updateDoc(courseRef, {
-        students: arrayRemove(userId),
+        students: arrayRemove(userId.trim()),
         updatedAt: new Date()
       });
 
       alert('Đã xóa học viên khỏi khóa học!');
-      loadData();
+      // Reload course data and students list
+      const updatedCourse = await loadCourseData(currentCourse.id);
+      if (updatedCourse) {
+        await loadData(updatedCourse);
+      }
       onUpdate();
     } catch (error) {
       console.error('Error removing student:', error);
