@@ -79,7 +79,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
       // Filter for staff and student roles only, ensure uid exists, and only approved users (for available list)
       let studentsData = allUsersData.filter(u => 
-        (u.role === 'staff' || u.role === 'student') && u.uid && (u.approved || u.role === 'admin')
+        (u.role === 'staff' || u.role === 'student') && u.uid && u.approved
       );
 
       // Nếu không phải admin, chỉ hiển thị nhân viên trong phòng của trưởng phòng
