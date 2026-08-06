@@ -1,0 +1,146 @@
+export const landing = {
+  nav: {
+    login: 'Đăng nhập',
+    register: 'Đăng Ký Ngay',
+    backToDashboard: 'Quay lại Dashboard',
+  },
+  hero: {
+    badge: 'Nền tảng Đào Tạo Nội Bộ',
+    title1: 'Đẩy Nhanh',
+    title2: 'Sự Nghiệp',
+    title3: 'Của Bạn',
+    description:
+      'Không chỉ là thư viện video đơn thuần—đây là công cụ thúc đẩy sự nghiệp tối ưu cho mọi nhân viên. Các khóa học thực hành giúp bạn nâng cao kỹ năng nhanh chóng, tự tin hơn trong công việc và nắm bắt cơ hội thăng tiến sớm hơn.',
+    currentCourse: 'Khóa học đang học',
+    leadership: 'Kỹ Năng Lãnh Đạo',
+    rating: 'Đánh giá',
+    stars: '4.9 Stars',
+    learningStaff: 'Nhân viên đang học',
+  },
+  features: {
+    eyebrow: 'Tại sao chọn chúng tôi?',
+    title: 'Nền Tảng Đào Tạo Nội Bộ Toàn Diện',
+    subtitle:
+      'Không chỉ là thư viện video—đây là công cụ thúc đẩy sự nghiệp cho mọi nhân viên trong tổ chức.',
+    items: {
+      practical: {
+        title: 'Học Thực Hành',
+        description: 'Các khóa học tập trung vào kỹ năng thực tế, áp dụng ngay vào công việc hàng ngày.',
+      },
+      video: {
+        title: 'Video Chất Lượng Cao',
+        description: 'Nội dung được sản xuất chuyên nghiệp, dễ hiểu và thu hút người học.',
+      },
+      anytime: {
+        title: 'Học Mọi Lúc Mọi Nơi',
+        description: 'Truy cập khóa học 24/7 trên mọi thiết bị, phù hợp với lịch làm việc của bạn.',
+      },
+      department: {
+        title: 'Học Theo Phòng Ban',
+        description: 'Khóa học được phân bổ theo phòng ban, phù hợp với nhu cầu công việc cụ thể.',
+      },
+      progress: {
+        title: 'Theo Dõi Tiến Độ',
+        description: 'Hệ thống theo dõi chi tiết giúp bạn và quản lý nắm rõ quá trình học tập.',
+      },
+      growth: {
+        title: 'Nâng Cao Nhanh Chóng',
+        description: 'Đầu tư vào kỹ năng hôm nay, thăng tiến sự nghiệp ngày mai.',
+      },
+    },
+  },
+  footer: {
+    description:
+      'Nền tảng đào tạo nội bộ giúp nhân viên phát triển kỹ năng, nâng cao năng lực và thăng tiến trong sự nghiệp.',
+    explore: 'Khám Phá',
+    about: 'Về chúng tôi',
+    courses: 'Khóa học đào tạo',
+    roadmap: 'Lộ trình phát triển',
+    news: 'Tin tức nội bộ',
+    support: 'Hỗ Trợ',
+    guide: 'Hướng dẫn sử dụng',
+    faq: 'Câu hỏi thường gặp',
+    policy: 'Chính sách nội bộ',
+    contactIT: 'Liên hệ IT Support',
+    contact: 'Liên Hệ',
+    address: 'Phòng Đào Tạo - Tầng 5',
+    copyright: '© 2024 Nền Tảng Đào Tạo Nội Bộ. Phát triển nhân viên - Thúc đẩy sự nghiệp.',
+  },
+  pricing: {
+    title: 'Đầu Tư Vào Kỹ Năng Hôm Nay',
+    subtitle: 'Thăng tiến sự nghiệp ngày mai với các gói đào tạo phù hợp.',
+    mostPopular: 'Phổ biến nhất',
+    basic: {
+      name: 'Cơ Bản',
+      price: '0đ',
+      description: 'Trải nghiệm miễn phí các tính năng cơ bản.',
+      features: {
+        f1: 'Truy cập 5 khóa học miễn phí',
+        f2: 'Cộng đồng hỗ trợ cơ bản',
+        f3: 'Xem video HD 720p',
+        f4: 'Hỗ trợ qua Email',
+      },
+      cta: 'Đăng Ký Miễn Phí',
+    },
+    pro: {
+      name: 'Chuyên Nghiệp',
+      price: '199k',
+      period: '/tháng',
+      description: 'Dành cho người học nghiêm túc muốn bứt phá.',
+      features: {
+        f1: 'Truy cập TOÀN BỘ khóa học',
+        f2: 'AI Mentor hỗ trợ 24/7',
+        f3: 'Chứng chỉ xác thực',
+        f4: 'Tải video offline',
+        f5: 'Hỗ trợ ưu tiên',
+      },
+      cta: 'Thử Ngay 7 Ngày',
+    },
+    enterprise: {
+      name: 'Doanh Nghiệp',
+      price: 'Liên hệ',
+      description: 'Giải pháp đào tạo nhân sự toàn diện.',
+      features: {
+        f1: 'Tài khoản quản trị viên',
+        f2: 'Báo cáo tiến độ nhân viên',
+        f3: 'Lộ trình đào tạo riêng',
+        f4: 'Hỗ trợ kỹ thuật 1:1',
+        f5: 'API tích hợp',
+      },
+      cta: 'Liên Hệ Tư Vấn',
+    },
+  },
+  courses: {
+    title: 'Khóa Học Đào Tạo',
+    subtitle: 'Các khóa học phát triển kỹ năng cho nhân viên trong tổ chức.',
+    viewAll: 'Xem tất cả khóa học',
+    viewDetails: 'Xem chi tiết',
+    staffCount: '({count} nhân viên)',
+    internal: 'Nội bộ',
+    c1: {
+      title: 'Kỹ Năng Lãnh Đạo và Quản Lý Nhóm',
+      instructor: 'Phòng Nhân Sự',
+      duration: '2 tháng',
+      tag: 'Phổ biến',
+    },
+    c2: {
+      title: 'Kỹ Năng Giao Tiếp và Thuyết Trình',
+      instructor: 'Phòng Đào Tạo',
+      duration: '1 tháng',
+      tag: 'Mới',
+    },
+    c3: {
+      title: 'Quản Lý Thời Gian và Năng Suất',
+      instructor: 'Phòng Đào Tạo',
+      duration: '3 tuần',
+      tag: 'Thiết yếu',
+    },
+  },
+  chatbot: {
+    greeting: 'Chào bạn! Mình là EduBot. Bạn đang quan tâm đến lĩnh vực nào? Mình có thể tư vấn lộ trình học cho bạn.',
+    error: 'Xin lỗi, có lỗi xảy ra.',
+    label: 'Tư vấn AI',
+    thinking: 'Đang suy nghĩ...',
+    placeholder: 'Hỏi về khóa học...',
+  },
+};

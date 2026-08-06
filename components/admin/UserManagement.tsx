@@ -7,6 +7,7 @@ import { UserProfile, UserRole, Position } from '@/types/user';
 import { Search, Plus, Edit2, Trash2, X, Save, CheckCircle, XCircle, Shield, Users, BookOpen } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { syncEmploymentToUsers } from '@/lib/syncEmployment';
 
 interface Department {
@@ -18,7 +19,8 @@ interface Department {
 }
 
 export const UserManagement: React.FC = () => {
-  const { userProfile: currentUser } = useAuth(); // User hiện tại đang đăng nhập
+  const { userProfile: currentUser } = useAuth();
+  const { t, dateLocale } = useLanguage(); // User hiện tại đang đăng nhập
   const [users, setUsers] = useState<(UserProfile & { docId?: string })[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<(UserProfile & { docId?: string })[]>([]);
@@ -80,6 +82,18 @@ export const UserManagement: React.FC = () => {
     'Phó giám đốc',
     'Giám đốc'
   ];
+
+  const getPositionLabel = (pos?: string) => {
+    const map: Record<string, string> = {
+      'Nhân viên': t('admin.users.positions.staff'),
+      'Trưởng nhóm': t('admin.users.positions.teamLead'),
+      'Phó phòng': t('admin.users.positions.deputyManager'),
+      'Trưởng phòng': t('admin.users.positions.manager'),
+      'Phó giám đốc': t('admin.users.positions.deputyDirector'),
+      'Giám đốc': t('admin.users.positions.director'),
+    };
+    return pos ? (map[pos] || pos) : t('admin.users.noPosition');
+  };
 
   useEffect(() => {
     loadUsers();
@@ -187,7 +201,7 @@ export const UserManagement: React.FC = () => {
       setDepartments(depts);
     } catch (error) {
       console.error('Error loading users:', error);
-      alert('Lỗi khi tải danh sách người dùng');
+      alert(t('admin.users.loadError'));
     } finally {
       setLoading(false);
     }
@@ -198,11 +212,11 @@ export const UserManagement: React.FC = () => {
     try {
       setSyncingEmployment(true);
       await syncEmploymentToUsers();
-      alert('Đồng bộ dữ liệu nhân sự thành công!');
+      alert(t('admin.users.syncSuccess'));
       await loadUsers();
     } catch (error) {
       console.error('Error syncing employment:', error);
-      alert('Lỗi khi đồng bộ dữ liệu nhân sự');
+      alert(t('admin.users.syncError'));
     } finally {
       setSyncingEmployment(false);
     }
@@ -307,14 +321,14 @@ export const UserManagement: React.FC = () => {
   const handleEdit = (user: UserProfile & { docId?: string }) => {
     // Không cho sửa admin
     if (user.role === 'admin') {
-      alert('Không thể chỉnh sửa tài khoản Admin!');
+      alert(t('admin.users.cannotEditAdmin'));
       return;
     }
 
     // Ensure user has uid
     if (!user.uid) {
       console.error('User missing uid:', user);
-      alert('Lỗi: Người dùng không có UID! Vui lòng refresh trang và thử lại.');
+      alert(t('admin.users.missingUid'));
       return;
     }
 
@@ -408,7 +422,7 @@ export const UserManagement: React.FC = () => {
           .map(e => {
             const course = courses.find(c => c.id === e.courseId);
             return {
-              title: course?.title || 'Khóa học không xác định',
+              title: course?.title || t('admin.users.unknownCourse'),
               progress: e.progress || 0,
               courseId: e.courseId
             };
@@ -432,7 +446,7 @@ export const UserManagement: React.FC = () => {
 
           const course = courses.find(c => c.id === courseId);
           recentCourses.push({
-            title: course?.title || 'Khóa học không xác định',
+            title: course?.title || t('admin.users.unknownCourse'),
             progress: courseProgress,
             courseId: courseId
           });
@@ -494,7 +508,7 @@ export const UserManagement: React.FC = () => {
   const handleSave = async () => {
     try {
       if (!formData.email || !formData.password || !formData.displayName) {
-        alert('Vui lòng điền đầy đủ thông tin');
+        alert(t('admin.users.fillRequired'));
         return;
       }
 
@@ -513,13 +527,13 @@ export const UserManagement: React.FC = () => {
 
           if (snapshot.empty) {
             console.error('User not found by uid:', editingUser.uid);
-            alert('Không tìm thấy người dùng! Vui lòng refresh trang và thử lại.');
+            alert(t('admin.users.userNotFound'));
             return;
           }
 
           userDocId = snapshot.docs[0].id;
         } else {
-          alert('Lỗi: Không tìm thấy thông tin người dùng!');
+          alert(t('admin.users.userInfoNotFound'));
           console.error('Editing user missing both docId and uid:', editingUser);
           return;
         }
@@ -603,11 +617,11 @@ export const UserManagement: React.FC = () => {
         }
 
         await updateDoc(userRef, finalData);
-        alert('Cập nhật người dùng thành công!');
+        alert(t('admin.users.updateSuccess'));
       } else {
         // Check if email exists
         if (!formData.email || formData.email.trim() === '') {
-          alert('Email không được để trống!');
+          alert(t('admin.users.emailRequired'));
           return;
         }
 
@@ -616,7 +630,7 @@ export const UserManagement: React.FC = () => {
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
-          alert('Email đã tồn tại!');
+          alert(t('admin.users.emailExists'));
           return;
         }
 
@@ -700,31 +714,31 @@ export const UserManagement: React.FC = () => {
 
         // Use setDoc with custom ID instead of addDoc
         await setDoc(doc(db, 'users', newUserId), finalNewUser);
-        alert('Thêm người dùng thành công!');
+        alert(t('admin.users.createSuccess'));
       }
 
       setShowModal(false);
       loadUsers();
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Lỗi khi lưu người dùng');
+      alert(t('admin.users.saveError'));
     }
   };
 
   const handleDelete = async (user: UserProfile & { docId?: string }) => {
     // Không cho xóa admin
     if (user.role === 'admin') {
-      alert('Không thể xóa tài khoản Admin!');
+      alert(t('admin.users.cannotDeleteAdmin'));
       return;
     }
 
     // Không cho tự xóa chính mình
     if (user.uid === currentUser?.uid) {
-      alert('Không thể xóa chính tài khoản của bạn!');
+      alert(t('admin.users.cannotDeleteSelf'));
       return;
     }
 
-    if (!confirm(`Bạn có chắc muốn xóa người dùng "${user.displayName}"?`)) {
+    if (!confirm(t('admin.users.confirmDelete', { name: user.displayName }))) {
       return;
     }
 
@@ -740,22 +754,22 @@ export const UserManagement: React.FC = () => {
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {
-          alert('Không tìm thấy người dùng!');
+          alert(t('admin.users.userNotFoundShort'));
           return;
         }
 
         userDocId = snapshot.docs[0].id;
       } else {
-        alert('Lỗi: Không tìm thấy thông tin người dùng!');
+        alert(t('admin.users.userInfoNotFound'));
         return;
       }
 
       await deleteDoc(doc(db, 'users', userDocId));
-      alert('Xóa người dùng thành công!');
+      alert(t('admin.users.deleteSuccess'));
       loadUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Lỗi khi xóa người dùng');
+      alert(t('admin.users.deleteError'));
     }
   };
 
@@ -766,9 +780,9 @@ export const UserManagement: React.FC = () => {
       student: 'bg-green-100 text-green-700'
     };
     const labels = {
-      admin: 'Admin',
-      staff: 'Nhân viên',
-      student: 'Học sinh'
+      admin: t('admin.users.roles.admin'),
+      staff: t('admin.users.roles.staff'),
+      student: t('admin.users.roles.studentAlt')
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[role as keyof typeof styles] || 'bg-gray-100 text-gray-700'}`}>
@@ -790,13 +804,13 @@ export const UserManagement: React.FC = () => {
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {
-          alert('Không tìm thấy người dùng!');
+          alert(t('admin.users.userNotFoundShort'));
           return;
         }
 
         userDocId = snapshot.docs[0].id;
       } else {
-        alert('Lỗi: Không tìm thấy thông tin người dùng!');
+        alert(t('admin.users.userInfoNotFound'));
         return;
       }
 
@@ -807,16 +821,16 @@ export const UserManagement: React.FC = () => {
         updatedAt: new Date()
       });
 
-      alert(approve ? 'Đã duyệt tài khoản!' : 'Đã từ chối tài khoản!');
+      alert(approve ? t('admin.users.approveSuccess') : t('admin.users.rejectSuccess'));
       loadUsers();
     } catch (error) {
       console.error('Error approving user:', error);
-      alert('Lỗi khi duyệt tài khoản');
+      alert(t('admin.users.approveError'));
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
   return (
@@ -824,14 +838,14 @@ export const UserManagement: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Quản lý người dùng</h2>
+          <h2 className="text-2xl font-bold text-white">{t('admin.users.title')}</h2>
           {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' ? (
             <p className="text-sm text-[#53cafd] mt-1">
-              🏢 Bạn đang xem nhân viên của phòng ban: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
+              🏢 {t('admin.users.viewingDepartmentStaff', { department: departments.find(d => d.id === currentUser.departmentId)?.name ?? '' })}
             </p>
           ) : (
             <p className="text-sm text-slate-300 mt-1">
-              Thời gian học được tính từ progress của các bài học
+              {t('admin.users.learningTimeHint')}
             </p>
           )}
         </div>
@@ -845,11 +859,11 @@ export const UserManagement: React.FC = () => {
                 disabled={syncingEmployment}
                 className="flex items-center gap-2 border-white/10 text-white hover:bg-white/10"
               >
-                {syncingEmployment ? 'Đang đồng bộ...' : 'Đồng bộ nhân sự'}
+                {syncingEmployment ? t('admin.users.syncing') : t('admin.users.syncEmployment')}
               </Button>
               <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] text-white border-none shadow-lg shadow-[#53cafd]/20">
                 <Plus size={18} />
-                Thêm người dùng
+                {t('admin.users.addUser')}
               </Button>
             </>
           )}
@@ -862,7 +876,7 @@ export const UserManagement: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Tìm kiếm theo tên hoặc email..."
+            placeholder={t('admin.users.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -873,10 +887,10 @@ export const UserManagement: React.FC = () => {
           onChange={(e) => setFilterPosition(e.target.value as Position | 'all' | 'none')}
           className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
         >
-          <option value="all">Tất cả chức vụ</option>
-          <option value="none">Chưa có chức vụ</option>
+          <option value="all">{t('admin.users.allPositions')}</option>
+          <option value="none">{t('admin.users.noPosition')}</option>
           {POSITIONS.map(pos => (
-            <option key={pos} value={pos}>{pos}</option>
+            <option key={pos} value={pos}>{getPositionLabel(pos)}</option>
           ))}
         </select>
         <select
@@ -884,8 +898,8 @@ export const UserManagement: React.FC = () => {
           onChange={(e) => setFilterDepartment(e.target.value)}
           className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
         >
-          <option value="all">Tất cả phòng ban</option>
-          <option value="none">Chưa có phòng ban</option>
+          <option value="all">{t('admin.users.allDepartments')}</option>
+          <option value="none">{t('admin.users.noDepartment')}</option>
           {departments.map(dept => (
             <option key={dept.id} value={dept.id}>{dept.name}</option>
           ))}
@@ -895,7 +909,7 @@ export const UserManagement: React.FC = () => {
           onChange={(e) => setFilterBranch(e.target.value)}
           className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
         >
-          <option value="all">Tất cả chi nhánh</option>
+          <option value="all">{t('admin.users.allBranches')}</option>
           {Array.from(
             new Set(
               users
@@ -911,7 +925,7 @@ export const UserManagement: React.FC = () => {
           onChange={(e) => setFilterProjectId(e.target.value)}
           className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
         >
-          <option value="">Tất cả dự án</option>
+          <option value="">{t('admin.users.allProjects')}</option>
           {projects.map(project => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -945,7 +959,7 @@ export const UserManagement: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🎂</span>
                 <h3 className="text-lg font-bold text-pink-900">
-                  Sinh nhật tháng {currentMonth} ({birthdayUsers.length} người)
+                  {t('admin.users.birthdayMonthTitle', { month: currentMonth, count: birthdayUsers.length })}
                 </h3>
               </div>
               <svg
@@ -979,10 +993,10 @@ export const UserManagement: React.FC = () => {
                           <div className="flex-1">
                             <p className="font-medium text-slate-900 flex items-center gap-2">
                               {user.displayName}
-                              {isToday && <span className="text-xs bg-pink-500 text-white px-2 py-0.5 rounded-full">Hôm nay!</span>}
+                              {isToday && <span className="text-xs bg-pink-500 text-white px-2 py-0.5 rounded-full">{t('admin.users.today')}</span>}
                             </p>
-                            <p className="text-xs text-slate-500">{dept?.name || 'Chưa có phòng ban'}</p>
-                            <p className="text-xs text-slate-400">{user.position || 'Chưa có chức vụ'}</p>
+                            <p className="text-xs text-slate-500">{dept?.name || t('admin.users.noDepartment')}</p>
+                            <p className="text-xs text-slate-400">{getPositionLabel(user.position)}</p>
                           </div>
                         </div>
                       </div>
@@ -1009,7 +1023,7 @@ export const UserManagement: React.FC = () => {
           const count = users.filter(u => (u.role === 'admin' || u.approved) && u.position === position).length;
           return (
             <div key={position} className="bg-[#5e3ed0]/20 backdrop-blur-md p-4 rounded-xl border border-white/10 hover:bg-[#5e3ed0]/30 transition-colors">
-              <p className="text-sm text-slate-300">{position}</p>
+              <p className="text-sm text-slate-300">{getPositionLabel(position)}</p>
               <p className={`text-2xl font-bold ${colors[index]}`}>{count}</p>
             </div>
           );
@@ -1026,7 +1040,7 @@ export const UserManagement: React.FC = () => {
             <div className="flex items-center gap-2">
               <XCircle className="text-orange-400" size={24} />
               <h3 className="text-lg font-bold text-orange-300">
-                Tài khoản chờ duyệt ({pendingUsers.length})
+                {t('admin.users.pendingAccounts', { count: pendingUsers.length })}
               </h3>
             </div>
             <svg
@@ -1045,11 +1059,11 @@ export const UserManagement: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-orange-500/20 border-b border-white/10">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">Tên</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">{t('admin.users.name')}</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">Vai trò</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">Ngày đăng ký</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-orange-200 uppercase">Thao tác</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">{t('admin.users.role')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">{t('admin.users.registeredDate')}</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-orange-200 uppercase">{t('admin.users.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -1061,24 +1075,24 @@ export const UserManagement: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-slate-300">{user.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-slate-300">
-                          {user.createdAt?.toLocaleDateString('vi-VN')}
+                          {user.createdAt?.toLocaleDateString(dateLocale)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <button
                             onClick={() => handleApprove(user, true)}
                             className="text-green-600 hover:text-green-800 mr-3 inline-flex items-center gap-1 px-3 py-1 bg-green-100 rounded-lg font-medium"
-                            title="Duyệt tài khoản"
+                            title={t('admin.users.approveAccount')}
                           >
                             <CheckCircle size={16} />
-                            Duyệt
+                            {t('admin.users.approve')}
                           </button>
                           <button
                             onClick={() => handleDelete(user)}
                             className="text-red-600 hover:text-red-800 inline-flex items-center gap-1 px-3 py-1 bg-red-100 rounded-lg font-medium"
-                            title="Từ chối"
+                            title={t('admin.users.rejectAccount')}
                           >
                             <Trash2 size={16} />
-                            Từ chối
+                            {t('admin.users.reject')}
                           </button>
                         </td>
                       </tr>
@@ -1093,22 +1107,22 @@ export const UserManagement: React.FC = () => {
 
       {/* Approved Users Table */}
       <div>
-        <h3 className="text-lg font-bold text-white mb-4">Danh sách người dùng</h3>
+        <h3 className="text-lg font-bold text-white mb-4">{t('admin.users.userList')}</h3>
         <div className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
             <table className="w-full">
               <thead className="bg-[#5e3ed0]/40 border-b border-white/10 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase sticky left-0 bg-[#311898]">Tên</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase sticky left-0 bg-[#311898]">{t('admin.users.name')}</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Vai trò</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Chức vụ</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Phòng ban</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Dự án</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase">Giờ học</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase">Lương</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Ngày tạo</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase sticky right-0 bg-[#311898]">Thao tác</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.role')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.position')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.department')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.project')}</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase">{t('admin.users.learningHours')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase">{t('admin.users.salary')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.createdDate')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase sticky right-0 bg-[#311898]">{t('admin.users.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -1133,12 +1147,12 @@ export const UserManagement: React.FC = () => {
                         {user.position ? (
                           <div className="flex items-center gap-1">
                             <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                              {user.position}
+                              {getPositionLabel(user.position)}
                             </span>
                             {user.departmentId && departments.find(d => d.managerId === user.uid) && (
                               <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium flex items-center gap-1">
                                 <Users size={12} />
-                                TP
+                                {t('admin.users.managerBadge')}
                               </span>
                             )}
                           </div>
@@ -1174,7 +1188,7 @@ export const UserManagement: React.FC = () => {
                         {user.monthlySalary ? `${(user.monthlySalary / 1000000).toFixed(1)}tr` : '-'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">
-                        {user.createdAt?.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                        {user.createdAt?.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-right sticky right-0 bg-[#311898]" onClick={(e) => e.stopPropagation()}>
                         {currentUser?.role === 'admin' ? (
@@ -1182,7 +1196,7 @@ export const UserManagement: React.FC = () => {
                           user.role === 'admin' ? (
                             <div className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-lg text-sm">
                               <Shield size={14} />
-                              <span className="font-medium">Được bảo vệ</span>
+                              <span className="font-medium">{t('admin.users.protected')}</span>
                             </div>
                           ) : (
                             <>
@@ -1192,7 +1206,7 @@ export const UserManagement: React.FC = () => {
                                   handleEdit(user);
                                 }}
                                 className="text-blue-600 hover:text-blue-800 mr-3"
-                                title="Chỉnh sửa"
+                                title={t('common.edit')}
                               >
                                 <Edit2 size={18} />
                               </button>
@@ -1202,7 +1216,7 @@ export const UserManagement: React.FC = () => {
                                   handleDelete(user);
                                 }}
                                 className="text-red-600 hover:text-red-800"
-                                title="Xóa"
+                                title={t('common.delete')}
                               >
                                 <Trash2 size={18} />
                               </button>
@@ -1210,7 +1224,7 @@ export const UserManagement: React.FC = () => {
                           )
                         ) : (
                           // Trưởng phòng chỉ xem
-                          <span className="text-slate-400 text-sm">Chỉ xem</span>
+                          <span className="text-slate-400 text-sm">{t('admin.users.viewOnly')}</span>
                         )}
                       </td>
                     </tr>
@@ -1223,12 +1237,11 @@ export const UserManagement: React.FC = () => {
         {filteredUsers.length > PAGE_SIZE && (
           <div className="flex items-center justify-between mt-4 text-sm text-slate-600">
             <div>
-              Hiển thị{' '}
-              <span className="font-semibold">
-                {(currentPage - 1) * PAGE_SIZE + 1}-
-                {Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}
-              </span>{' '}
-              trong tổng số <span className="font-semibold">{filteredUsers.length}</span> người dùng
+              {t('admin.users.paginationShowing', {
+                from: (currentPage - 1) * PAGE_SIZE + 1,
+                to: Math.min(currentPage * PAGE_SIZE, filteredUsers.length),
+                total: filteredUsers.length,
+              })}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -1236,7 +1249,7 @@ export const UserManagement: React.FC = () => {
                 disabled={currentPage === 1}
                 className="px-3 py-1 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                Trước
+                {t('common.prev')}
               </button>
               {Array.from({ length: Math.ceil(filteredUsers.length / PAGE_SIZE) }).map((_, idx) => {
                 const page = idx + 1;
@@ -1277,7 +1290,7 @@ export const UserManagement: React.FC = () => {
                 disabled={currentPage === Math.ceil(filteredUsers.length / PAGE_SIZE)}
                 className="px-3 py-1 rounded-lg border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                Sau
+                {t('common.next')}
               </button>
             </div>
           </div>
@@ -1290,7 +1303,7 @@ export const UserManagement: React.FC = () => {
           <div className="bg-[#311898]/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
             <div className="flex justify-between items-center p-6 border-b border-white/10 bg-[#5e3ed0]/20">
               <h3 className="text-xl font-bold text-white">
-                {editingUser ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
+                {editingUser ? t('admin.users.editUser') : t('admin.users.addUserNew')}
               </h3>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white">
                 <X size={24} />
@@ -1301,10 +1314,10 @@ export const UserManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Left Column */}
                 <div className="space-y-4 md:col-span-1">
-                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">Thông tin tài khoản</h4>
+                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">{t('admin.users.accountInfo')}</h4>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Họ và tên *</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.fullName')} *</label>
                     <input
                       type="text"
                       value={formData.displayName}
@@ -1324,7 +1337,7 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Mật khẩu *</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.password')} *</label>
                     <input
                       type="text"
                       value={formData.password}
@@ -1334,28 +1347,28 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Vai trò</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.role')}</label>
                     <select
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
                     >
-                      <option value="staff">Nhân viên</option>
-                      <option value="teacher">Giáo viên</option>
-                      <option value="student">Học viên</option>
+                      <option value="staff">{t('admin.users.roles.staff')}</option>
+                      <option value="teacher">{t('admin.users.roles.teacherAlt')}</option>
+                      <option value="student">{t('admin.users.roles.student')}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Chức vụ</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.position')}</label>
                     <select
                       value={formData.position}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value as Position | '' })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
                     >
-                      <option value="">-- Chọn chức vụ --</option>
+                      <option value="">{t('admin.users.selectPosition')}</option>
                       {POSITIONS.map(pos => (
-                        <option key={pos} value={pos}>{pos}</option>
+                        <option key={pos} value={pos}>{getPositionLabel(pos)}</option>
                       ))}
                     </select>
                   </div>
@@ -1363,13 +1376,13 @@ export const UserManagement: React.FC = () => {
                   {formData.role === 'staff' && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Phòng ban</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.department')}</label>
                         <select
                           value={formData.departmentId}
                           onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                           className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
                         >
-                          <option value="">-- Chọn phòng ban --</option>
+                          <option value="">{t('admin.users.selectDepartment')}</option>
                           {departments.map(dept => (
                             <option key={dept.id} value={dept.id}>{dept.name}</option>
                           ))}
@@ -1377,13 +1390,13 @@ export const UserManagement: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Lương tháng (VNĐ)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.monthlySalary')}</label>
                         <input
                           type="number"
                           value={formData.monthlySalary}
                           onChange={(e) => setFormData({ ...formData, monthlySalary: Number(e.target.value) })}
                           className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                          placeholder="Ví dụ: 10000000"
+                          placeholder={t('admin.users.salaryPlaceholder')}
                         />
                       </div>
                     </>
@@ -1392,7 +1405,7 @@ export const UserManagement: React.FC = () => {
 
                 {/* Right Column - Thông tin cá nhân & avatar */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">Thông tin cá nhân</h4>
+                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">{t('admin.users.personalInfo')}</h4>
 
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
@@ -1421,7 +1434,7 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Ngày sinh</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.dateOfBirth')}</label>
                     <input
                       type="date"
                       value={formData.dateOfBirth}
@@ -1431,7 +1444,7 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Số điện thoại</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.phone')}</label>
                     <input
                       type="tel"
                       value={formData.phoneNumber}
@@ -1442,56 +1455,56 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Địa chỉ</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.address')}</label>
                     <input
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="123 Đường ABC, Quận 1"
+                      placeholder={t('admin.users.addressPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Quốc gia</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.country')}</label>
                     <input
                       type="text"
                       value={formData.country}
                       onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="Việt Nam"
+                      placeholder={t('admin.users.countryPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Vị trí làm việc</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.workLocation')}</label>
                     <input
                       type="text"
                       value={formData.workLocation}
                       onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="Văn phòng HN"
+                      placeholder={t('admin.users.workLocationPlaceholder')}
                     />
                   </div>
                 </div>
 
                 {/* Third Column - Thông tin nhân sự */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">Thông tin nhân sự (tùy chọn)</h4>
+                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">{t('admin.users.employmentInfo')}</h4>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Trạng thái làm việc</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.employmentStatus')}</label>
                     <input
                       type="text"
                       value={formData.employmentStatus}
                       onChange={(e) => setFormData({ ...formData, employmentStatus: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="Nhân viên chính thức / Thử việc / Thực tập..."
+                      placeholder={t('admin.users.employmentStatusPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Ngày bắt đầu làm</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.employmentStartDate')}</label>
                     <input
                       type="date"
                       value={formData.employmentStartDate}
@@ -1501,47 +1514,47 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Tình trạng hôn nhân</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.maritalStatus')}</label>
                     <input
                       type="text"
                       value={formData.employmentMaritalStatus}
                       onChange={(e) => setFormData({ ...formData, employmentMaritalStatus: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="Độc thân / Đã kết hôn..."
+                      placeholder={t('admin.users.maritalStatusPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Chi nhánh</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.branch')}</label>
                     <input
                       type="text"
                       value={formData.employmentBranch}
                       onChange={(e) => setFormData({ ...formData, employmentBranch: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="Hà Nội / Hồ Chí Minh..."
+                      placeholder={t('admin.users.branchPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Team</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.team')}</label>
                     <input
                       type="text"
                       value={formData.employmentTeam}
                       onChange={(e) => setFormData({ ...formData, employmentTeam: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                      placeholder="Frontend Team, Backend Team..."
+                      placeholder={t('admin.users.teamPlaceholder')}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1">% lương</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.salaryPercentage')}</label>
                       <input
                         type="number"
                         value={formData.employmentSalaryPercentage}
                         onChange={(e) => setFormData({ ...formData, employmentSalaryPercentage: Number(e.target.value) })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                        placeholder="Ví dụ: 100"
+                        placeholder={t('admin.users.salaryPercentExample')}
                       />
                     </div>
                     <div className="flex items-center gap-2 mt-6">
@@ -1553,26 +1566,26 @@ export const UserManagement: React.FC = () => {
                         className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
                       />
                       <label htmlFor="employmentActive" className="text-sm text-slate-300">
-                        Đang active trong hệ thống nhân sự
+                        {t('admin.users.employmentActiveInHrSystem')}
                       </label>
                     </div>
                   </div>
 
                   {/* Projects Section */}
                   <div className="mt-6 pt-6 border-t border-white/10">
-                    <h4 className="text-sm font-semibold text-slate-300 mb-4">Dự án</h4>
+                    <h4 className="text-sm font-semibold text-slate-300 mb-4">{t('admin.users.projects')}</h4>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Chọn dự án
+                        {t('admin.users.selectProjects')}
                         {formData.projects.length > 0 && (
                           <span className="ml-2 text-xs text-[#53cafd]">
-                            ({formData.projects.length} dự án đã chọn)
+                            ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
                           </span>
                         )}
                       </label>
                       <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
                         {projects.length === 0 ? (
-                          <p className="text-xs text-slate-400 text-center py-4">Chưa có dự án nào. Vui lòng tạo dự án trước.</p>
+                          <p className="text-xs text-slate-400 text-center py-4">{t('admin.courses.noProjectsYet')}</p>
                         ) : (
                           projects.map(project => {
                             const isChecked = formData.projects.includes(project.id);
@@ -1638,13 +1651,13 @@ export const UserManagement: React.FC = () => {
             <div className="flex gap-3 p-6 border-t border-white/10 bg-[#5e3ed0]/20">
               <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] text-white border-none shadow-lg shadow-[#53cafd]/20">
                 <Save size={18} />
-                {editingUser ? 'Cập nhật' : 'Thêm mới'}
+                {editingUser ? t('common.update') : t('common.create')}
               </Button>
               <button
                 onClick={() => setShowModal(false)}
                 className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/10 bg-white/5 text-white"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -1690,48 +1703,48 @@ export const UserManagement: React.FC = () => {
               <div>
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-[#53cafd]" />
-                  Thông tin cơ bản
+                  {t('admin.users.basicInfo')}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">Vai trò</p>
+                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.role')}</p>
                     <div>{getRoleBadge(viewingUser.role)}</div>
                   </div>
                   <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">Chức vụ</p>
+                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.position')}</p>
                     {viewingUser.position ? (
                       <div className="flex flex-col gap-2">
                         <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium inline-block w-fit">
-                          {viewingUser.position}
+                          {getPositionLabel(viewingUser.position)}
                         </span>
                         {viewingUser.position === 'Trưởng phòng' && viewingUser.departmentId && (
                           <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium inline-flex items-center gap-1 w-fit">
                             <Users size={14} />
-                            Quản lý phòng ban
+                            {t('admin.users.departmentManager')}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <p className="text-slate-400">Chưa có</p>
+                      <p className="text-slate-400">{t('admin.dashboard.noneYet')}</p>
                     )}
                   </div>
                   <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">Phòng ban</p>
+                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.department')}</p>
                     <p className="font-medium text-white">{getDepartmentName(viewingUser.departmentId)}</p>
                   </div>
                   <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">Trạng thái</p>
+                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.status')}</p>
                     {viewingUser.role === 'admin' ? (
                       <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-                        Admin
+                        {t('admin.users.roles.admin')}
                       </span>
                     ) : viewingUser.approved ? (
                       <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                        Đã duyệt
+                        {t('common.approved')}
                       </span>
                     ) : (
                       <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-                        Chờ duyệt
+                        {t('common.pending')}
                       </span>
                     )}
                   </div>
@@ -1742,31 +1755,31 @@ export const UserManagement: React.FC = () => {
               <div>
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-[#53cafd]" />
-                  Thống kê học tập
+                  {t('admin.users.learningStats')}
                 </h4>
                 {loadingStats ? (
                   <div className="text-center py-8">
                     <div className="w-12 h-12 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                    <p className="text-slate-300 mt-2">Đang tải...</p>
+                    <p className="text-slate-300 mt-2">{t('common.loading')}</p>
                   </div>
                 ) : userLearningStats ? (
                   <div className="space-y-4">
                     {/* Stats Cards */}
                     <div className="grid grid-cols-4 gap-3">
                       <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">Tổng khóa học</p>
+                        <p className="text-xs text-slate-300 mb-1">{t('admin.dashboard.totalCourses')}</p>
                         <p className="text-2xl font-bold text-white">{userLearningStats.totalCourses}</p>
                       </div>
                       <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">Hoàn thành</p>
+                        <p className="text-xs text-slate-300 mb-1">{t('admin.dashboard.completed')}</p>
                         <p className="text-2xl font-bold text-white">{userLearningStats.completedCourses}</p>
                       </div>
                       <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">Đang học</p>
+                        <p className="text-xs text-slate-300 mb-1">{t('admin.users.inProgress')}</p>
                         <p className="text-2xl font-bold text-white">{userLearningStats.inProgressCourses}</p>
                       </div>
                       <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">Tiến độ TB</p>
+                        <p className="text-xs text-slate-300 mb-1">{t('admin.dashboard.avgProgress')}</p>
                         <p className="text-2xl font-bold text-white">{userLearningStats.averageProgress.toFixed(0)}%</p>
                       </div>
                     </div>
@@ -1774,7 +1787,7 @@ export const UserManagement: React.FC = () => {
                     {/* Learning Time & Salary */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-[#5e3ed0]/20 p-6 rounded-xl border border-white/10">
-                        <p className="text-sm text-slate-300 mb-2">Tổng thời gian học</p>
+                        <p className="text-sm text-slate-300 mb-2">{t('admin.users.totalLearningTime')}</p>
                         {(() => {
                           const totalHours = viewingUser.totalLearningHours || 0;
                           const hours = Math.floor(totalHours);
@@ -1783,17 +1796,17 @@ export const UserManagement: React.FC = () => {
                           return (
                             <div className="flex items-baseline gap-2">
                               <p className="text-3xl font-bold text-white">{hours}</p>
-                              <span className="text-base font-semibold text-slate-300">giờ</span>
+                              <span className="text-base font-semibold text-slate-300">{t('common.hours')}</span>
                               <p className="text-2xl font-bold text-white">{minutes}</p>
-                              <span className="text-base font-semibold text-slate-300">phút</span>
+                              <span className="text-base font-semibold text-slate-300">{t('common.minutes')}</span>
                             </div>
                           );
                         })()}
                       </div>
                       <div className="bg-[#5e3ed0]/20 p-6 rounded-xl border border-white/10">
-                        <p className="text-sm text-slate-300 mb-2">Lương tháng</p>
+                        <p className="text-sm text-slate-300 mb-2">{t('admin.users.salary')}</p>
                         <p className="text-2xl font-bold text-white">
-                          {viewingUser.monthlySalary ? `${viewingUser.monthlySalary.toLocaleString('vi-VN')}đ` : 'Chưa có'}
+                          {viewingUser.monthlySalary ? `${viewingUser.monthlySalary.toLocaleString(dateLocale)}đ` : t('admin.dashboard.noneYet')}
                         </p>
                       </div>
                     </div>
@@ -1803,11 +1816,11 @@ export const UserManagement: React.FC = () => {
                       <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-slate-300 mb-1">Bài kiểm tra</p>
-                            <p className="text-xl font-bold text-white">{userLearningStats.totalQuizzes} bài</p>
+                            <p className="text-sm text-slate-300 mb-1">{t('admin.users.quizTests')}</p>
+                            <p className="text-xl font-bold text-white">{userLearningStats.totalQuizzes} {t('admin.users.quizUnit')}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm text-slate-300 mb-1">Điểm trung bình</p>
+                            <p className="text-sm text-slate-300 mb-1">{t('admin.users.averageScore')}</p>
                             <p className="text-xl font-bold text-white">{userLearningStats.averageQuizScore.toFixed(1)}/100</p>
                           </div>
                         </div>
@@ -1817,7 +1830,7 @@ export const UserManagement: React.FC = () => {
                     {/* Recent Courses */}
                     {userLearningStats.recentCourses.length > 0 && (
                       <div>
-                        <h5 className="text-sm font-bold text-slate-300 mb-3">Khóa học gần đây</h5>
+                        <h5 className="text-sm font-bold text-slate-300 mb-3">{t('admin.users.recentCourses')}</h5>
                         <div className="space-y-2">
                           {userLearningStats.recentCourses.map((course, index) => (
                             <div key={course.courseId || `course-${index}`} className="bg-white/5 p-3 rounded-lg border border-white/10">
@@ -1839,21 +1852,21 @@ export const UserManagement: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-white/5 rounded-xl border border-white/10">
-                    <p className="text-slate-300">Chưa có dữ liệu học tập</p>
+                    <p className="text-slate-300">{t('admin.users.noLearningData')}</p>
                   </div>
                 )}
               </div>
 
               {/* Timeline */}
               <div>
-                <h4 className="text-lg font-bold text-white mb-4">Thời gian</h4>
+                <h4 className="text-lg font-bold text-white mb-4">{t('common.time')}</h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-white">Ngày tạo</p>
+                      <p className="text-sm font-medium text-white">{t('admin.users.createdDate')}</p>
                       <p className="text-sm text-slate-300">
-                        {viewingUser.createdAt?.toLocaleDateString('vi-VN', {
+                        {viewingUser.createdAt?.toLocaleDateString(dateLocale, {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
@@ -1866,9 +1879,9 @@ export const UserManagement: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-white">Cập nhật lần cuối</p>
+                      <p className="text-sm font-medium text-white">{t('admin.users.lastUpdated')}</p>
                       <p className="text-sm text-slate-300">
-                        {viewingUser.updatedAt?.toLocaleDateString('vi-VN', {
+                        {viewingUser.updatedAt?.toLocaleDateString(dateLocale, {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
@@ -1892,14 +1905,14 @@ export const UserManagement: React.FC = () => {
                   }}
                   className="flex-1 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white"
                 >
-                  Chỉnh sửa
+                  {t('admin.users.editAction')}
                 </Button>
               )}
               <Button
                 onClick={() => setShowDetailModal(false)}
                 className="flex-1 bg-white/10 hover:bg-white/20 border-none text-white"
               >
-                Đóng
+                {t('common.close')}
               </Button>
             </div>
           </div>

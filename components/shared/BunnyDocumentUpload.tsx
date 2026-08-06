@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Upload, X, FileText } from 'lucide-react';
 
 interface BunnyDocumentUploadProps {
@@ -17,11 +18,13 @@ export const BunnyDocumentUpload: React.FC<BunnyDocumentUploadProps> = ({
   onUploadComplete,
   currentDocument,
   currentDocumentName,
-  label = 'Tải tài liệu lên',
+  label,
   folder = 'documents',
   onUploadStart,
   onUploadEnd
 }) => {
+  const { t } = useLanguage();
+  const resolvedLabel = label ?? t('shared.uploadDocument');
   const [uploading, setUploading] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(currentDocument || null);
   const [documentName, setDocumentName] = useState<string | null>(currentDocumentName || null);
@@ -42,13 +45,13 @@ export const BunnyDocumentUpload: React.FC<BunnyDocumentUploadProps> = ({
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Vui lòng chọn file PDF, Word, PowerPoint hoặc Excel');
+      alert(t('shared.selectDocument'));
       return;
     }
 
     // Validate file size (max 50MB)
     if (file.size > 50 * 1024 * 1024) {
-      alert('Kích thước file không được vượt quá 50MB');
+      alert(t('shared.fileTooLarge50MB'));
       return;
     }
 
@@ -82,10 +85,10 @@ export const BunnyDocumentUpload: React.FC<BunnyDocumentUploadProps> = ({
       setDocumentUrl(documentUrl);
       setDocumentName(file.name);
       onUploadComplete(documentUrl, file.name);
-      alert('Tải tài liệu lên thành công!');
+      alert(t('shared.documentUploadSuccess'));
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Lỗi khi tải tài liệu lên');
+      alert(t('shared.documentUploadError'));
       setDocumentUrl(currentDocument || null);
       setDocumentName(currentDocumentName || null);
     } finally {
@@ -102,7 +105,7 @@ export const BunnyDocumentUpload: React.FC<BunnyDocumentUploadProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label className="block text-sm font-medium text-slate-700">{resolvedLabel}</label>
       
       {documentUrl && documentName ? (
         <div className="relative border-2 border-slate-200 rounded-lg p-4 bg-slate-50">
@@ -118,7 +121,7 @@ export const BunnyDocumentUpload: React.FC<BunnyDocumentUploadProps> = ({
                 rel="noopener noreferrer"
                 className="text-sm text-blue-600 hover:text-blue-700"
               >
-                Xem tài liệu →
+                {t('shared.viewDocumentLink')}
               </a>
             </div>
             <button
@@ -136,15 +139,15 @@ export const BunnyDocumentUpload: React.FC<BunnyDocumentUploadProps> = ({
             {uploading ? (
               <>
                 <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <p className="text-sm text-slate-600">Đang tải lên...</p>
+                <p className="text-sm text-slate-600">{t('shared.uploading')}</p>
               </>
             ) : (
               <>
                 <FileText className="w-12 h-12 text-slate-400 mb-3" />
                 <p className="mb-2 text-sm text-slate-600">
-                  <span className="font-semibold">Click để tải tài liệu lên</span>
+                  <span className="font-semibold">{t('shared.clickToUploadDocument')}</span>
                 </p>
-                <p className="text-xs text-slate-500">PDF, Word, PowerPoint, Excel (MAX. 50MB)</p>
+                <p className="text-xs text-slate-500">{t('shared.documentFormatsHint')}</p>
               </>
             )}
           </div>

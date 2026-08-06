@@ -1,43 +1,65 @@
+'use client';
+
 import React from 'react';
 import { Check } from 'lucide-react';
 import { Button } from './Button';
-
-const plans = [
-  {
-    name: "Cơ Bản",
-    price: "0đ",
-    description: "Trải nghiệm miễn phí các tính năng cơ bản.",
-    features: ["Truy cập 5 khóa học miễn phí", "Cộng đồng hỗ trợ cơ bản", "Xem video HD 720p", "Hỗ trợ qua Email"],
-    cta: "Đăng Ký Miễn Phí",
-    variant: "secondary" as const
-  },
-  {
-    name: "Chuyên Nghiệp",
-    price: "199k",
-    period: "/tháng",
-    description: "Dành cho người học nghiêm túc muốn bứt phá.",
-    features: ["Truy cập TOÀN BỘ khóa học", "AI Mentor hỗ trợ 24/7", "Chứng chỉ xác thực", "Tải video offline", "Hỗ trợ ưu tiên"],
-    cta: "Thử Ngay 7 Ngày",
-    variant: "primary" as const,
-    popular: true
-  },
-  {
-    name: "Doanh Nghiệp",
-    price: "Liên hệ",
-    description: "Giải pháp đào tạo nhân sự toàn diện.",
-    features: ["Tài khoản quản trị viên", "Báo cáo tiến độ nhân viên", "Lộ trình đào tạo riêng", "Hỗ trợ kỹ thuật 1:1", "API tích hợp"],
-    cta: "Liên Hệ Tư Vấn",
-    variant: "secondary" as const
-  }
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const Pricing: React.FC = () => {
+  const { t } = useLanguage();
+
+  const plans = [
+    {
+      name: t('landing.pricing.basic.name'),
+      price: t('landing.pricing.basic.price'),
+      description: t('landing.pricing.basic.description'),
+      features: [
+        t('landing.pricing.basic.features.f1'),
+        t('landing.pricing.basic.features.f2'),
+        t('landing.pricing.basic.features.f3'),
+        t('landing.pricing.basic.features.f4'),
+      ],
+      cta: t('landing.pricing.basic.cta'),
+      variant: "secondary" as const
+    },
+    {
+      name: t('landing.pricing.pro.name'),
+      price: t('landing.pricing.pro.price'),
+      period: t('landing.pricing.pro.period'),
+      description: t('landing.pricing.pro.description'),
+      features: [
+        t('landing.pricing.pro.features.f1'),
+        t('landing.pricing.pro.features.f2'),
+        t('landing.pricing.pro.features.f3'),
+        t('landing.pricing.pro.features.f4'),
+        t('landing.pricing.pro.features.f5'),
+      ],
+      cta: t('landing.pricing.pro.cta'),
+      variant: "primary" as const,
+      popular: true
+    },
+    {
+      name: t('landing.pricing.enterprise.name'),
+      price: t('landing.pricing.enterprise.price'),
+      description: t('landing.pricing.enterprise.description'),
+      features: [
+        t('landing.pricing.enterprise.features.f1'),
+        t('landing.pricing.enterprise.features.f2'),
+        t('landing.pricing.enterprise.features.f3'),
+        t('landing.pricing.enterprise.features.f4'),
+        t('landing.pricing.enterprise.features.f5'),
+      ],
+      cta: t('landing.pricing.enterprise.cta'),
+      variant: "secondary" as const
+    }
+  ];
+
   return (
     <section id="pricing" className="py-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-extrabold text-white">Đầu Tư Vào Kỹ Năng Hôm Nay</h2>
-          <p className="mt-4 text-slate-300">Thăng tiến sự nghiệp ngày mai với các gói đào tạo phù hợp.</p>
+          <h2 className="text-3xl font-extrabold text-white">{t('landing.pricing.title')}</h2>
+          <p className="mt-4 text-slate-300">{t('landing.pricing.subtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -48,7 +70,7 @@ export const Pricing: React.FC = () => {
               }`}>
               {plan.popular && (
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-[#53cafd] to-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide shadow-lg">
-                  Phổ biến nhất
+                  {t('landing.pricing.mostPopular')}
                 </div>
               )}
 

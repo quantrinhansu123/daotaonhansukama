@@ -7,6 +7,7 @@ import { Course } from '@/types/course';
 import { Lesson } from '@/types/lesson';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Play, Pause, Lock, CheckCircle, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
 
@@ -17,6 +18,7 @@ interface CourseViewerProps {
 
 export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) => {
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -496,7 +498,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   };
 
   if (loading) {
-    return <div className="text-center py-8 text-white">Đang tải...</div>;
+    return <div className="text-center py-8 text-white">{t("common.loading")}</div>;
   }
 
   // Debug: Log banner info
@@ -603,7 +605,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   onClick={onBack}
                   className="px-3 py-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-lg transition-all text-sm border border-white/20"
                 >
-                  ← Quay lại
+                  ← {t("common.back")}
                 </button>
 
                 <div>
@@ -617,7 +619,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   {/* Course Meta Info - Compact */}
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="px-2 py-1 bg-white/10 backdrop-blur-md rounded text-xs border border-white/20">
-                      <span className="text-white">{course.duration} giờ</span>
+                      <span className="text-white">{course.duration} {t("student.hoursUnit")}</span>
                     </div>
 
                     <div className="px-2 py-1 bg-white/10 backdrop-blur-md rounded text-xs border border-white/20">
@@ -629,8 +631,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         'bg-red-500/20 border-red-400/30 text-white'
                       }`}>
                       <span>
-                        {course.level === 'beginner' ? 'Cơ bản' :
-                          course.level === 'intermediate' ? 'Trung cấp' : 'Nâng cao'}
+                        {course.level === 'beginner' ? t('student.levelBeginner') :
+                          course.level === 'intermediate' ? t('student.levelIntermediate') : t('student.levelAdvanced')}
                       </span>
                     </div>
                   </div>
@@ -647,7 +649,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   onClick={onBack}
                   className="px-2.5 py-1 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded text-xs border border-white/20"
                 >
-                  ← Quay lại
+                  ← {t("common.back")}
                 </button>
 
                 <h1 className="text-lg font-bold text-white drop-shadow-lg">
@@ -661,7 +663,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 {/* Course Meta Info - Inline compact */}
                 <div className="flex items-center gap-1.5 ml-auto">
                   <span className="px-1.5 py-0.5 bg-white/10 backdrop-blur-md rounded text-[10px] border border-white/20 text-white">
-                    {course.duration} giờ
+                    {course.duration} {t("student.hoursUnit")}
                   </span>
                   <span className="px-1.5 py-0.5 bg-white/10 backdrop-blur-md rounded text-[10px] border border-white/20 text-white">
                     {course.teacherName}
@@ -670,8 +672,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     course.level === 'intermediate' ? 'bg-yellow-500/20 border-yellow-400/30' :
                       'bg-red-500/20 border-red-400/30'
                     }`}>
-                    {course.level === 'beginner' ? 'Cơ bản' :
-                      course.level === 'intermediate' ? 'Trung cấp' : 'Nâng cao'}
+                    {course.level === 'beginner' ? t('student.levelBeginner') :
+                          course.level === 'intermediate' ? t('student.levelIntermediate') : t('student.levelAdvanced')}
                   </span>
                 </div>
               </div>
@@ -684,7 +686,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       {course.demoVideoId && !selectedLesson && (
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-6 mb-6 border border-[#0056D2] shadow-2xl">
-            <h2 className="text-xl font-bold text-white mb-4">Video giới thiệu khóa học</h2>
+            <h2 className="text-xl font-bold text-white mb-4">{t("student.introVideo")}</h2>
             <div className="aspect-video bg-black rounded-lg overflow-hidden border border-white/10">
               <video
                 src={`https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`}
@@ -693,7 +695,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 poster={`https://${CDN_HOSTNAME}/${course.demoVideoId}/thumbnail.jpg`}
               >
                 <source src={`https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`} type="application/x-mpegURL" />
-                Trình duyệt của bạn không hỗ trợ video.
+                {t("student.videoNotSupported")}
               </video>
             </div>
           </div>
@@ -720,10 +722,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       }
                     }}
                     className="px-3 py-1.5 bg-gradient-to-br from-[#0047AB] to-[#003380] hover:from-[#0056D2] hover:to-[#003380] rounded-lg border border-[#0056D2] text-white transition-colors text-xs font-medium shadow-lg flex items-center gap-1.5"
-                    title="Bài kiểm tra"
+                    title={t("student.quiz")}
                   >
                     <HelpCircle size={14} />
-                    {takingQuiz ? (showQuizSection ? 'Ẩn bài' : 'Hiện bài') : 'Làm bài'}
+                    {takingQuiz ? (showQuizSection ? t('student.hideQuiz') : t('student.showQuiz')) : t('student.takeQuizShort')}
                   </button>
                 )}
                 <button
@@ -733,7 +735,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     setShowSidebar(!showSidebar);
                   }}
                   className="p-2 bg-gradient-to-br from-[#0047AB] to-[#003380] hover:from-[#0056D2] hover:to-[#0047AB] rounded-lg border border-[#0056D2] text-white transition-colors z-50 relative shadow-lg"
-                  title={showSidebar ? 'Ẩn danh sách bài học' : 'Hiện danh sách bài học'}
+                  title={showSidebar ? t("student.hideLessonList") : t("student.showLessonList")}
                 >
                   {showSidebar ? <X size={20} /> : <Menu size={20} />}
                 </button>
@@ -754,14 +756,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   <div className="flex items-center justify-between p-3 border-b border-[#0056D2]/50">
                     <div className="flex items-center gap-2">
                       <HelpCircle className="w-4 h-4 text-[#53cafd]" />
-                      <h3 className="text-sm font-bold text-white">Bài kiểm tra</h3>
+                      <h3 className="text-sm font-bold text-white">{t("student.quizSection")}</h3>
                     </div>
                     <button
                       onClick={() => {
                         setShowQuizSection(!showQuizSection);
                       }}
                       className="p-1 hover:bg-white/10 rounded transition-colors text-white"
-                      title={showQuizSection ? 'Thu gọn' : 'Mở rộng'}
+                      title={showQuizSection ? t("student.collapse") : t("student.expand")}
                     >
                       {showQuizSection ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
@@ -798,7 +800,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   style={isStaff ? { pointerEvents: 'none' } : {}}
                 >
                   <source src={`https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`} type="application/x-mpegURL" />
-                  Trình duyệt của bạn không hỗ trợ video.
+                  {t("student.videoNotSupported")}
                 </video>
 
                   {/* Custom Controls for Staff */}
@@ -810,7 +812,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <button
                             onClick={handleRestart}
                             className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
-                            title="Xem lại từ đầu"
+                            title={t("student.replayFromStart")}
                           >
                             <RotateCcw size={18} />
                           </button>
@@ -819,7 +821,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <button
                             onClick={handleRewind}
                             className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
-                            title="Tua lùi 10s"
+                            title={t("student.rewind10")}
                           >
                             <Rewind size={18} />
                           </button>
@@ -833,7 +835,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           </button>
 
                           <span className="text-white text-sm ml-2 font-medium">
-                            {isPlaying ? 'Đang phát' : 'Đã dừng'}
+                            {isPlaying ? t('student.playing') : t('student.paused')}
                           </span>
                         </div>
 
@@ -841,14 +843,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         <button
                           onClick={handleFullscreen}
                           className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
-                          title="Toàn màn hình"
+                          title={t("student.fullscreen")}
                         >
                           <Maximize size={20} />
                         </button>
                       </div>
                       <div className="mt-2 text-center">
                         <span className="text-white text-xs">
-                          Sử dụng các nút điều khiển để xem video | Double-click để fullscreen
+                          {t("student.videoControlsHint")}
                         </span>
                       </div>
                     </div>
@@ -859,7 +861,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     <button
                       onClick={handleFullscreen}
                       className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-lg flex items-center justify-center text-white transition-colors backdrop-blur-sm z-10"
-                      title="Toàn màn hình (hoặc double-click vào video)"
+                      title={t("student.fullscreenOrDblClick")}
                     >
                       <Maximize size={20} />
                     </button>
@@ -873,10 +875,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     style={{ willChange: 'transform' }}
                   >
                   <div className="p-3 border-b border-[#0056D2]/50 sticky top-0 bg-[#0047AB] z-10">
-                    <h3 className="font-bold text-white text-sm">Nội dung khóa học</h3>
+                    <h3 className="font-bold text-white text-sm">{t("student.courseContent")}</h3>
                     <p className="text-xs text-white mt-1 line-clamp-1">{currentCourse.title}</p>
                     <p className="text-xs text-white mt-1">
-                      {selectedTag === 'all' ? `${lessons.length} bài` : `${filteredLessons.length}/${lessons.length} bài`}
+                      {selectedTag === 'all' ? t('student.lessonsCount', { count: lessons.length }) : t('student.lessonsFiltered', { filtered: filteredLessons.length, total: lessons.length })}
                     </p>
                   </div>
 
@@ -884,7 +886,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     {filteredLessons.length === 0 ? (
                       <div className="text-center text-white py-4">
                         <p className="text-xs">
-                          {selectedTag === 'all' ? 'Chưa có bài học nào' : `Không có bài học nào với tag "${selectedTag}"`}
+                          {selectedTag === 'all' ? t('student.noLessonsYet') : t('student.noLessonsWithTag', { tag: selectedTag })}
                         </p>
                       </div>
                     ) : (
@@ -899,7 +901,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                               key={lesson.id}
                               onClick={() => {
                                 if (locked) {
-                                  alert(`Bạn cần hoàn thành bài kiểm tra của "${previousLesson?.title}" với điểm số tối thiểu 70 để mở khóa bài này.`);
+                                  alert(t("student.unlockLessonAlert", { title: previousLesson?.title || "" }));
                                   return;
                                 }
                                 if (hasContent) {
@@ -926,7 +928,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                     {lesson.title}
                                     {locked && (
                                       <span className="ml-1 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/30">
-                                        Cần đạt 70% bài trước
+                                        {t("student.needPassPrevious")}
                                       </span>
                                     )}
                                   </h4>
@@ -952,7 +954,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                     {lesson.documentUrl && (
                                       <span className="flex items-center gap-0.5 text-[#53cafd]">
                                         <FileText size={10} />
-                                        Tài liệu
+                                        {t("student.documents")}
                                       </span>
                                     )}
                                     {lesson.hasQuiz && (
@@ -964,7 +966,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                     {!hasContent && (
                                       <span className="flex items-center gap-0.5">
                                         <Lock size={10} />
-                                        Chưa có
+                                        {t("student.notAvailable")}
                                       </span>
                                     )}
                                   </div>
@@ -987,7 +989,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       {selectedLesson.duration && (
                         <div className="flex items-center gap-1.5 text-white">
                           <Clock size={12} />
-                          <span>Thời lượng: {formatDuration(selectedLesson.duration)}</span>
+                          <span>{t("student.durationLabel")}: {formatDuration(selectedLesson.duration)}</span>
                         </div>
                       )}
                       {progress[selectedLesson.id] && (
@@ -995,7 +997,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <div className="flex-1">
                             <div className="flex items-center gap-1.5 mb-0.5">
                               <span className="text-[10px] text-white">
-                                Đã xem: {formatDuration(progress[selectedLesson.id].watchedSeconds)}
+                                {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].watchedSeconds)}
                               </span>
                               {progress[selectedLesson.id].completed && (
                                 <CheckCircle size={12} className="text-green-400" />
@@ -1049,7 +1051,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           }`}
                       >
                         <FileText size={16} />
-                        Tài liệu
+                        {t("student.documents")}
                       </button>
                     )}
                     {selectedLesson.hasQuiz && (
@@ -1061,7 +1063,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           }`}
                       >
                         <HelpCircle size={16} />
-                        Bài kiểm tra
+                        {t("student.quizSection")}
                       </button>
                     )}
                   </div>
@@ -1073,7 +1075,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
                       <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p>Bài học này chưa có video</p>
+                      <p>{t("student.noVideoYet")}</p>
                     </div>
                   </div>
                 </div>
@@ -1084,7 +1086,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
               <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-8 border border-[#0056D2] shadow-2xl">
                 <div className="text-center">
                   <FileText className="w-16 h-16 text-[#53cafd] mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-white mb-2">Tài liệu bài học</h3>
+                  <h3 className="text-xl font-bold text-white mb-2">{t("student.lessonDocuments")}</h3>
                   <p className="text-white mb-4">{selectedLesson.documentName}</p>
                   <a
                     href={selectedLesson.documentUrl}
@@ -1092,14 +1094,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     rel="noopener noreferrer"
                     className="inline-block px-6 py-3 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] transition-all shadow-lg shadow-[#53cafd]/25"
                   >
-                    Tải xuống tài liệu
+                    {t("student.downloadDocument")}
                   </a>
                 </div>
               </div>
             ) : viewMode === 'document' ? (
               <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-8 text-center border border-[#0056D2] shadow-2xl">
                 <FileText className="w-16 h-16 text-white mx-auto mb-4" />
-                <p className="text-white">Bài học này chưa có tài liệu</p>
+                <p className="text-white">{t("student.noDocumentYet")}</p>
               </div>
             ) : null}
 
@@ -1113,7 +1115,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   {selectedLesson.duration && (
                     <div className="flex items-center gap-1.5 text-white">
                       <Clock size={12} />
-                      <span>Thời lượng: {formatDuration(selectedLesson.duration)}</span>
+                      <span>{t("student.durationLabel")}: {formatDuration(selectedLesson.duration)}</span>
                     </div>
                   )}
                   {progress[selectedLesson.id] && (
@@ -1121,7 +1123,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <span className="text-[10px] text-white">
-                            Đã xem: {formatDuration(progress[selectedLesson.id].watchedSeconds)}
+                            {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].watchedSeconds)}
                           </span>
                           {progress[selectedLesson.id].completed && (
                             <CheckCircle size={12} className="text-green-400" />
@@ -1147,14 +1149,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <div className="flex items-center gap-3">
                         <HelpCircle className="w-6 h-6 text-[#53cafd]" />
                         <div>
-                          <h3 className="text-lg font-bold text-white">Bài kiểm tra</h3>
-                          <p className="text-sm text-white">Kiểm tra kiến thức của bạn về bài học này</p>
+                          <h3 className="text-lg font-bold text-white">{t("student.quizSection")}</h3>
+                          <p className="text-sm text-white">{t("student.quizSectionHint")}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setShowQuizSection(!showQuizSection)}
                         className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white hover:text-white"
-                        title={showQuizSection ? 'Thu gọn' : 'Mở rộng'}
+                        title={showQuizSection ? t("student.collapse") : t("student.expand")}
                       >
                         {showQuizSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                       </button>
@@ -1180,7 +1182,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                               onClick={() => setTakingQuiz(true)}
                               className="px-6 py-3 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] transition-all shadow-lg shadow-[#53cafd]/25 font-medium"
                             >
-                              Bắt đầu làm bài
+                              {t("student.startQuiz")}
                             </button>
                           </div>
                         )}
@@ -1200,9 +1202,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           }`}>
             <div className="bg-[#0047AB] backdrop-blur-md rounded-xl border border-[#0056D2] overflow-hidden sticky top-24 shadow-lg">
               <div className="p-3 border-b border-[#0056D2]/50">
-                <h3 className="font-bold text-white text-sm">Hạng mục</h3>
+                <h3 className="font-bold text-white text-sm">{t("student.categories")}</h3>
                 <p className="text-xs text-white mt-1">
-                  {allTags.length} chủ đề
+                  {t("student.topicsCount", { count: allTags.length })}
                 </p>
               </div>
 
@@ -1216,7 +1218,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           : 'text-white hover:bg-[#0056D2]/40'
                         }`}
                     >
-                      Tất cả ({lessons.length})
+                      {t("student.allWithCount", { count: lessons.length })}
                     </button>
                     {allTags.map((tag) => {
                       const count = lessons.filter(l => l.tags?.includes(tag)).length;
@@ -1235,7 +1237,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     })}
                   </>
                 ) : (
-                  <p className="text-xs text-white">Chưa có tag nào</p>
+                  <p className="text-xs text-white">{t('student.noTags')}</p>
                 )}
               </div>
             </div>
@@ -1249,10 +1251,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           }`}>
             <div className="bg-[#0047AB] backdrop-blur-md rounded-xl border border-[#0056D2] overflow-hidden sticky top-24 shadow-lg">
               <div className="p-3 border-b border-[#0056D2]/50">
-                <h3 className="font-bold text-white text-sm">Nội dung khóa học</h3>
+                <h3 className="font-bold text-white text-sm">{t("student.courseContent")}</h3>
                 <p className="text-xs text-white mt-1 line-clamp-1">{currentCourse.title}</p>
                 <p className="text-xs text-white mt-1">
-                  {selectedTag === 'all' ? `${lessons.length} bài` : `${filteredLessons.length}/${lessons.length} bài`}
+                  {selectedTag === 'all' ? t('student.lessonsCount', { count: lessons.length }) : t('student.lessonsFiltered', { filtered: filteredLessons.length, total: lessons.length })}
                 </p>
               </div>
 
@@ -1260,7 +1262,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 {filteredLessons.length === 0 ? (
                   <div className="p-4 text-center text-white">
                     <p className="text-xs">
-                      {selectedTag === 'all' ? 'Chưa có bài học nào' : `Không có bài học nào với tag "${selectedTag}"`}
+                      {selectedTag === 'all' ? t('student.noLessonsYet') : t('student.noLessonsWithTag', { tag: selectedTag })}
                     </p>
                   </div>
                 ) : (
@@ -1275,7 +1277,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           key={lesson.id}
                           onClick={() => {
                             if (locked) {
-                              alert(`Bạn cần hoàn thành bài kiểm tra của "${previousLesson?.title}" với điểm số tối thiểu 70 để mở khóa bài này.`);
+                              alert(t("student.unlockLessonAlert", { title: previousLesson?.title || "" }));
                               return;
                             }
                             if (hasContent) {
@@ -1329,7 +1331,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                 {lesson.documentUrl && (
                                   <span className="flex items-center gap-0.5 text-[#53cafd]">
                                     <FileText size={10} />
-                                    Tài liệu
+                                    {t("student.documents")}
                                   </span>
                                 )}
                                 {lesson.hasQuiz && (
@@ -1341,7 +1343,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                 {!hasContent && (
                                   <span className="flex items-center gap-0.5">
                                     <Lock size={10} />
-                                    Chưa có
+                                    {t("student.notAvailable")}
                                   </span>
                                 )}
                               </div>
@@ -1364,7 +1366,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 : 'block'
             }`}>
               <div className="bg-[#0047AB] backdrop-blur-md rounded-xl border border-[#0056D2] p-3 sticky top-24 shadow-lg">
-                <h3 className="font-bold text-white text-sm mb-3">Khóa học khác</h3>
+                <h3 className="font-bold text-white text-sm mb-3">{t("student.otherCourses")}</h3>
                 <div className="space-y-1">
                   {allCourses.map((c) => (
                     <button
@@ -1399,18 +1401,18 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Bạn có đang xem video?</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">{t("student.stillWatching")}</h3>
             <p className="text-white mb-6">
-              Vui lòng xác nhận bạn đang theo dõi bài học để tiếp tục
+              {t("student.stillWatchingHint")}
             </p>
             <button
               onClick={handleAttentionCheckContinue}
               className="w-full px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium text-lg transition-colors shadow-lg shadow-green-500/25"
             >
-              Tiếp tục xem
+              {t("student.continueWatching")}
             </button>
             <p className="text-xs text-white mt-4">
-              Video sẽ tự động dừng nếu không có phản hồi
+              {t("student.autoPauseHint")}
             </p>
           </div>
         </div>

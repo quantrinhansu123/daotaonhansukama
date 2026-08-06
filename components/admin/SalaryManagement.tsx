@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DollarSign, Search, Download, Calendar, TrendingUp } from 'lucide-react';
@@ -21,6 +22,7 @@ interface SalaryRecord {
 }
 
 export const SalaryManagement: React.FC = () => {
+  const { t, dateLocale } = useLanguage();
   const [salaries, setSalaries] = useState<SalaryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +47,7 @@ export const SalaryManagement: React.FC = () => {
         id: `${user.id}_${selectedYear}_${selectedMonth}`,
         userId: user.id,
         userName: user.displayName || user.email,
-        department: 'Chưa phân công',
+        department: t('admin.salary.unassigned'),
         baseSalary: 10000000,
         bonus: 0,
         deduction: 0,
@@ -71,18 +73,18 @@ export const SalaryManagement: React.FC = () => {
   const totalBonus = filteredSalaries.reduce((sum, s) => sum + s.bonus, 0);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat(dateLocale, { style: 'currency', currency: 'VND' }).format(amount);
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Đang tải...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Quản lý lương</h1>
-        <p className="text-slate-300">Quản lý bảng lương nhân viên</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('admin.salary.title')}</h1>
+        <p className="text-slate-300">{t('admin.salary.subtitleAlt')}</p>
       </div>
 
       {/* Stats */}
@@ -93,7 +95,7 @@ export const SalaryManagement: React.FC = () => {
               <DollarSign className="w-6 h-6 text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-300">Tổng lương tháng</p>
+              <p className="text-sm text-slate-300">{t('admin.salary.totalMonth')}</p>
               <p className="text-2xl font-bold text-white">{formatCurrency(totalSalary)}</p>
             </div>
           </div>
@@ -105,7 +107,7 @@ export const SalaryManagement: React.FC = () => {
               <TrendingUp className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-300">Tổng thưởng</p>
+              <p className="text-sm text-slate-300">{t('admin.salary.totalBonus')}</p>
               <p className="text-2xl font-bold text-white">{formatCurrency(totalBonus)}</p>
             </div>
           </div>
@@ -117,7 +119,7 @@ export const SalaryManagement: React.FC = () => {
               <Calendar className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-300">Số nhân viên</p>
+              <p className="text-sm text-slate-300">{t('admin.salary.staffCount')}</p>
               <p className="text-2xl font-bold text-white">{filteredSalaries.length}</p>
             </div>
           </div>
@@ -132,7 +134,7 @@ export const SalaryManagement: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
               <input
                 type="text"
-                placeholder="Tìm kiếm nhân viên..."
+                placeholder={t('admin.salary.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -145,7 +147,7 @@ export const SalaryManagement: React.FC = () => {
             className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
           >
             {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-              <option key={month} value={month}>Tháng {month}</option>
+              <option key={month} value={month}>{t('admin.salary.monthN', { n: month })}</option>
             ))}
           </select>
           <select
@@ -159,7 +161,7 @@ export const SalaryManagement: React.FC = () => {
           </select>
           <Button className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
             <Download size={18} />
-            Xuất Excel
+            {t('admin.salary.export')}
           </Button>
         </div>
       </div>
@@ -170,13 +172,13 @@ export const SalaryManagement: React.FC = () => {
           <table className="w-full">
             <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Nhân viên</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-white">Phòng ban</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-white">Lương cơ bản</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-white">Thưởng</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-white">Khấu trừ</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-white">Tổng lương</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-white">Trạng thái</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">{t('admin.salary.employee')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white">{t('admin.salary.department')}</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-white">{t('admin.salary.baseSalary')}</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-white">{t('admin.salary.bonus')}</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-white">{t('admin.salary.deduction')}</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-white">{t('admin.salary.total')}</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-white">{t('common.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -195,7 +197,7 @@ export const SalaryManagement: React.FC = () => {
                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                         : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                       }`}>
-                      {salary.status === 'paid' ? 'Đã trả' : 'Chờ xử lý'}
+                      {salary.status === 'paid' ? t('admin.salary.paid') : t('admin.salary.pending')}
                     </span>
                   </td>
                 </tr>
@@ -208,7 +210,7 @@ export const SalaryManagement: React.FC = () => {
       {filteredSalaries.length === 0 && (
         <div className="text-center py-12 bg-[#5e3ed0]/20 rounded-xl border border-white/10 mt-6 backdrop-blur-md">
           <DollarSign className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-          <p className="text-slate-300">Không tìm thấy dữ liệu lương</p>
+          <p className="text-slate-300">{t('admin.salary.noRecords')}</p>
         </div>
       )}
     </div>

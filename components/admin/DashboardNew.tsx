@@ -32,6 +32,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DashboardStats {
   totalUsers: number;
@@ -47,6 +48,7 @@ interface DashboardStats {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export const DashboardNew: React.FC = () => {
+  const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalCourses: 0,
@@ -61,24 +63,20 @@ export const DashboardNew: React.FC = () => {
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [t]);
 
   const loadStats = async () => {
     try {
       setLoading(true);
 
-      // Load users
       const usersSnapshot = await getDocs(collection(db, 'users'));
       const users = usersSnapshot.docs.map(doc => doc.data());
 
-      // Load courses
       const coursesSnapshot = await getDocs(collection(db, 'courses'));
       const courses = coursesSnapshot.docs.map(doc => doc.data());
 
-      // Load departments
       const departmentsSnapshot = await getDocs(collection(db, 'departments'));
 
-      // Calculate stats
       const staffCount = users.filter(u => u.role === 'staff').length;
       const adminCount = users.filter(u => u.role === 'admin').length;
 
@@ -86,27 +84,24 @@ export const DashboardNew: React.FC = () => {
         .filter(u => u.role === 'staff' && u.monthlySalary)
         .reduce((sum, u) => sum + (u.monthlySalary || 0), 0);
 
-      // Users by role for pie chart
       const usersByRole = [
-        { name: 'Nhân viên', value: staffCount, color: '#3b82f6' },
-        { name: 'Admin', value: adminCount, color: '#ef4444' }
+        { name: t('admin.dashboard.totalStaff'), value: staffCount, color: '#3b82f6' },
+        { name: t('admin.users.roles.admin'), value: adminCount, color: '#ef4444' }
       ].filter(item => item.value > 0);
 
-      // Courses by level
       const coursesByLevel = [
-        { name: 'Cơ bản', value: courses.filter(c => c.level === 'beginner').length },
-        { name: 'Trung cấp', value: courses.filter(c => c.level === 'intermediate').length },
-        { name: 'Nâng cao', value: courses.filter(c => c.level === 'advanced').length }
+        { name: t('admin.dashboard.levelBeginner'), value: courses.filter(c => c.level === 'beginner').length },
+        { name: t('admin.dashboard.levelIntermediate'), value: courses.filter(c => c.level === 'intermediate').length },
+        { name: t('admin.dashboard.levelAdvanced'), value: courses.filter(c => c.level === 'advanced').length }
       ];
 
-      // Mock monthly data (in real app, get from database)
       const monthlyData = [
-        { month: 'T1', users: 45, courses: 12, revenue: 15000000 },
-        { month: 'T2', users: 52, courses: 15, revenue: 18000000 },
-        { month: 'T3', users: 61, courses: 18, revenue: 22000000 },
-        { month: 'T4', users: 70, courses: 20, revenue: 25000000 },
-        { month: 'T5', users: 85, courses: 24, revenue: 30000000 },
-        { month: 'T6', users: users.length, courses: courses.length, revenue: totalSalary }
+        { month: t('admin.dashboard.monthShort', { n: 1 }), users: 45, courses: 12, revenue: 15000000 },
+        { month: t('admin.dashboard.monthShort', { n: 2 }), users: 52, courses: 15, revenue: 18000000 },
+        { month: t('admin.dashboard.monthShort', { n: 3 }), users: 61, courses: 18, revenue: 22000000 },
+        { month: t('admin.dashboard.monthShort', { n: 4 }), users: 70, courses: 20, revenue: 25000000 },
+        { month: t('admin.dashboard.monthShort', { n: 5 }), users: 85, courses: 24, revenue: 30000000 },
+        { month: t('admin.dashboard.monthShort', { n: 6 }), users: users.length, courses: courses.length, revenue: totalSalary }
       ];
 
       setStats({
@@ -155,7 +150,7 @@ export const DashboardNew: React.FC = () => {
             <div className={`flex items-center gap-1 text-sm ${trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
               {trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
               <span className="font-medium">{trendValue}</span>
-              <span className="text-slate-400">so với tháng trước</span>
+              <span className="text-slate-400">{t('admin.dashboard.vsLastMonth')}</span>
             </div>
           )}
         </div>
@@ -171,7 +166,7 @@ export const DashboardNew: React.FC = () => {
       <div className="p-8 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-300">Đang tải dữ liệu...</p>
+          <p className="text-slate-300">{t('admin.dashboard.loadingData')}</p>
         </div>
       </div>
     );
@@ -179,20 +174,18 @@ export const DashboardNew: React.FC = () => {
 
   return (
     <div className="p-8 min-h-screen">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-slate-300">Tổng quan hệ thống quản lý</p>
+        <h1 className="text-4xl font-bold text-white mb-2">{t('admin.dashboard.titleAlt')}</h1>
+        <p className="text-slate-300">{t('admin.dashboard.managementOverview')}</p>
       </motion.div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          title="Tổng người dùng"
+          title={t('admin.dashboard.totalUsers')}
           value={stats.totalUsers}
           icon={Users}
           color="bg-blue-500"
@@ -200,7 +193,7 @@ export const DashboardNew: React.FC = () => {
           trendValue="+12%"
         />
         <StatCard
-          title="Khóa học"
+          title={t('admin.dashboard.courses')}
           value={stats.totalCourses}
           icon={BookOpen}
           color="bg-green-500"
@@ -208,13 +201,13 @@ export const DashboardNew: React.FC = () => {
           trendValue="+8%"
         />
         <StatCard
-          title="Phòng ban"
+          title={t('admin.dashboard.totalDepartments')}
           value={stats.totalDepartments}
           icon={Building2}
           color="bg-purple-500"
         />
         <StatCard
-          title="Tổng lương"
+          title={t('admin.dashboard.totalSalary')}
           value={`${(stats.totalSalary / 1000000).toFixed(1)}M`}
           icon={DollarSign}
           color="bg-orange-500"
@@ -223,7 +216,6 @@ export const DashboardNew: React.FC = () => {
         />
       </div>
 
-      {/* Secondary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -236,7 +228,7 @@ export const DashboardNew: React.FC = () => {
               <Users className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-300">Nhân viên</p>
+              <p className="text-sm text-slate-300">{t('admin.dashboard.totalStaff')}</p>
               <p className="text-2xl font-bold text-white">{stats.totalStaff}</p>
             </div>
           </div>
@@ -259,7 +251,7 @@ export const DashboardNew: React.FC = () => {
               <Award className="w-5 h-5 text-red-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-300">Admin</p>
+              <p className="text-sm text-slate-300">{t('admin.users.roles.admin')}</p>
               <p className="text-2xl font-bold text-white">{stats.totalUsers - stats.totalStaff}</p>
             </div>
           </div>
@@ -272,9 +264,7 @@ export const DashboardNew: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Area Chart - Growth */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -283,7 +273,7 @@ export const DashboardNew: React.FC = () => {
         >
           <div className="flex items-center gap-3 mb-6">
             <Activity className="w-5 h-5 text-[#53cafd]" />
-            <h3 className="text-lg font-bold text-white">Tăng trưởng theo tháng</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.monthlyGrowth')}</h3>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={stats.monthlyData}>
@@ -315,7 +305,7 @@ export const DashboardNew: React.FC = () => {
                 stroke="#3b82f6"
                 fillOpacity={1}
                 fill="url(#colorUsers)"
-                name="Người dùng"
+                name={t('admin.dashboard.users')}
               />
               <Area
                 type="monotone"
@@ -323,13 +313,12 @@ export const DashboardNew: React.FC = () => {
                 stroke="#10b981"
                 fillOpacity={1}
                 fill="url(#colorCourses)"
-                name="Khóa học"
+                name={t('admin.dashboard.courses')}
               />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Pie Chart - Users by Role */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -338,7 +327,7 @@ export const DashboardNew: React.FC = () => {
         >
           <div className="flex items-center gap-3 mb-6">
             <Users className="w-5 h-5 text-purple-400" />
-            <h3 className="text-lg font-bold text-white">Phân bổ người dùng</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.userDistribution')}</h3>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -369,9 +358,7 @@ export const DashboardNew: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bar Chart - Courses by Level */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -380,7 +367,7 @@ export const DashboardNew: React.FC = () => {
         >
           <div className="flex items-center gap-3 mb-6">
             <BookOpen className="w-5 h-5 text-green-400" />
-            <h3 className="text-lg font-bold text-white">Khóa học theo cấp độ</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.coursesByLevel')}</h3>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.coursesByLevel}>
@@ -400,7 +387,6 @@ export const DashboardNew: React.FC = () => {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Line Chart - Revenue */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -409,7 +395,7 @@ export const DashboardNew: React.FC = () => {
         >
           <div className="flex items-center gap-3 mb-6">
             <DollarSign className="w-5 h-5 text-orange-400" />
-            <h3 className="text-lg font-bold text-white">Doanh thu theo tháng</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.monthlyRevenue')}</h3>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={stats.monthlyData}>
@@ -431,14 +417,13 @@ export const DashboardNew: React.FC = () => {
                 stroke="#f97316"
                 strokeWidth={3}
                 dot={{ fill: '#f97316', r: 6 }}
-                name="Doanh thu"
+                name={t('admin.dashboard.revenue')}
               />
             </LineChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
 
-      {/* Activity Feed */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -447,14 +432,14 @@ export const DashboardNew: React.FC = () => {
       >
         <div className="flex items-center gap-3 mb-6">
           <Clock className="w-5 h-5 text-slate-300" />
-          <h3 className="text-lg font-bold text-white">Hoạt động gần đây</h3>
+          <h3 className="text-lg font-bold text-white">{t('admin.dashboard.recentActivity')}</h3>
         </div>
         <div className="space-y-4">
           {[
-            { action: 'Thêm khóa học mới', detail: 'React Advanced', time: '5 phút trước', color: 'bg-green-500/20 text-green-400' },
-            { action: 'Người dùng mới đăng ký', detail: 'Nguyễn Văn A', time: '15 phút trước', color: 'bg-blue-500/20 text-blue-400' },
-            { action: 'Cập nhật lương', detail: 'Phòng Kỹ thuật', time: '1 giờ trước', color: 'bg-orange-500/20 text-orange-400' },
-            { action: 'Thêm phòng ban', detail: 'Phòng Marketing', time: '2 giờ trước', color: 'bg-purple-500/20 text-purple-400' }
+            { action: t('admin.dashboard.activityAddCourse'), detail: 'React Advanced', time: t('admin.dashboard.minutesAgo', { n: 5 }), color: 'bg-green-500/20 text-green-400' },
+            { action: t('admin.dashboard.activityNewUser'), detail: 'Nguyễn Văn A', time: t('admin.dashboard.minutesAgo', { n: 15 }), color: 'bg-blue-500/20 text-blue-400' },
+            { action: t('admin.dashboard.activityUpdateSalary'), detail: 'Phòng Kỹ thuật', time: t('admin.dashboard.hoursAgo', { n: 1 }), color: 'bg-orange-500/20 text-orange-400' },
+            { action: t('admin.dashboard.activityAddDepartment'), detail: 'Phòng Marketing', time: t('admin.dashboard.hoursAgo', { n: 2 }), color: 'bg-purple-500/20 text-purple-400' }
           ].map((activity, index) => (
             <div key={index} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors border border-transparent hover:border-white/5">
               <div className={`w-2 h-2 rounded-full ${activity.color.split(' ')[0].replace('/20', '')}`} />

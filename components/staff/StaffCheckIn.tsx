@@ -4,11 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AttendanceRecord, CompanySettings } from '@/types/attendance';
 import { Clock, CheckCircle, XCircle, Wifi, AlertCircle, Calendar, LogIn, LogOut, History, Camera, X, Phone, MapPin, Globe, Briefcase } from 'lucide-react';
 
 export const StaffCheckIn: React.FC = () => {
   const { userProfile: user } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [currentIP, setCurrentIP] = useState<string>('');
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
@@ -100,7 +102,7 @@ export const StaffCheckIn: React.FC = () => {
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
-      alert('Không thể truy cập camera. Vui lòng cấp quyền camera.');
+      alert(t('staff.cameraDenied'));
       setShowCamera(false);
     }
   };
@@ -175,7 +177,7 @@ export const StaffCheckIn: React.FC = () => {
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
         console.error('Upload failed:', uploadResponse.status, errorText);
-        throw new Error(`Lỗi upload: ${uploadResponse.status}`);
+        throw new Error(t("staff.uploadError", { status: uploadResponse.status }));
       }
 
       const result = await uploadResponse.json();
@@ -184,9 +186,9 @@ export const StaffCheckIn: React.FC = () => {
     } catch (error: any) {
       console.error('Upload photo error:', error);
       if (error.name === 'AbortError') {
-        throw new Error('Upload timeout - vui lòng thử lại');
+        throw new Error(t('staff.uploadTimeout'));
       }
-      throw new Error(error.message || 'Lỗi khi upload ảnh');
+      throw new Error(error.message || t('staff.uploadPhotoError'));
     }
   };
 
@@ -221,11 +223,11 @@ export const StaffCheckIn: React.FC = () => {
       console.log('Check-in saved successfully');
 
       stopCamera();
-      alert('Check-in thành công!');
+      alert(t('staff.checkInSuccess'));
       loadData();
     } catch (error: any) {
       console.error('Check-in error:', error);
-      alert(`Lỗi: ${error.message || 'Không thể check-in'}`);
+      alert(t("staff.checkInError", { message: error.message || t("staff.checkInErrorFallback") }));
     } finally {
       setProcessing(false);
     }
@@ -242,14 +244,14 @@ export const StaffCheckIn: React.FC = () => {
       if (workHours < 4) status = 'half-day';
       await setDoc(doc(db, 'attendanceRecords', todayRecord.id), { ...todayRecord, checkOutTime: now, checkOutIP: currentIP, checkOutPhoto: photoUrl, workHours, status, updatedAt: now });
       stopCamera();
-      alert('Check-out thành công!');
+      alert(t('staff.checkOutSuccess'));
       loadData();
-    } catch (error) { console.error('Error:', error); alert('Lỗi khi check-out'); } finally { setProcessing(false); }
+    } catch (error) { console.error('Error:', error); alert(t('staff.checkOutError')); } finally { setProcessing(false); }
   };
 
   if (loading) return (
     <div className="min-h-screen bg-[#311898] flex items-center justify-center">
-      <div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#53cafd] mx-auto mb-4"></div><p className="text-white/80">Đang tải...</p></div>
+      <div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#53cafd] mx-auto mb-4"></div><p className="text-white/80">{t("common.loading")}</p></div>
     </div>
   );
 
@@ -257,8 +259,8 @@ export const StaffCheckIn: React.FC = () => {
     <div className="min-h-screen bg-[#311898] flex items-center justify-center p-4">
       <div className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-8 text-center max-w-md border border-white/10">
         <AlertCircle className="text-yellow-400 mx-auto mb-4" size={64} />
-        <h2 className="text-xl font-bold text-white mb-2">Chưa cấu hình</h2>
-        <p className="text-white/70">Hệ thống chấm công chưa được thiết lập.</p>
+        <h2 className="text-xl font-bold text-white mb-2">{t("staff.notConfigured")}</h2>
+        <p className="text-white/70">{t("staff.notConfiguredHint")}</p>
       </div>
     </div>
   );
@@ -272,7 +274,7 @@ export const StaffCheckIn: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#1a103d] flex flex-col">
         <div className="flex items-center justify-between p-4 bg-black/50 backdrop-blur-md border-b border-white/10">
-          <h2 className="text-white font-bold text-lg">{cameraMode === 'checkin' ? 'Check-in' : 'Check-out'} - Chụp ảnh</h2>
+          <h2 className="text-white font-bold text-lg">{t("staff.captureTitle", { mode: cameraMode === "checkin" ? t("staff.checkInBtn") : t("staff.checkOutBtn") })}</h2>
           <button onClick={stopCamera} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"><X className="text-white" size={24} /></button>
         </div>
 
@@ -295,7 +297,7 @@ export const StaffCheckIn: React.FC = () => {
           </div>
 
           <p className="text-white/60 text-center mb-6">
-            {!capturedPhoto ? 'Đặt khuôn mặt vào khung hình và nhấn chụp' : 'Xác nhận ảnh hoặc chụp lại'}
+            {!capturedPhoto ? t('staff.placeFaceHint') : t('staff.confirmOrRetake')}
           </p>
 
           <div className="flex gap-4 w-full max-w-md">
@@ -305,7 +307,7 @@ export const StaffCheckIn: React.FC = () => {
                 className="flex-1 bg-[#53cafd] hover:bg-[#3db9f5] text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-[#53cafd]/25 transition-all flex items-center justify-center gap-2"
               >
                 <Camera size={24} />
-                Chụp ảnh
+                {t("staff.capturePhoto")}
               </button>
             ) : (
               <>
@@ -314,7 +316,7 @@ export const StaffCheckIn: React.FC = () => {
                   className="flex-1 bg-white/10 hover:bg-white/20 text-white py-4 rounded-xl font-bold transition-all border border-white/10"
                   disabled={processing}
                 >
-                  Chụp lại
+                  {t("staff.retakePhoto")}
                 </button>
                 <button
                   onClick={cameraMode === 'checkin' ? handleConfirmCheckIn : handleConfirmCheckOut}
@@ -324,12 +326,12 @@ export const StaffCheckIn: React.FC = () => {
                   {processing ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Đang xử lý...
+                      {t("staff.processing")}
                     </>
                   ) : (
                     <>
                       <CheckCircle size={24} />
-                      Xác nhận
+                      {t("common.confirm")}
                     </>
                   )}
                 </button>
@@ -348,7 +350,7 @@ export const StaffCheckIn: React.FC = () => {
         <div className="text-center mb-6 pt-4">
           <div className="inline-flex items-center gap-2 bg-[#5e3ed0]/20 backdrop-blur-lg px-4 py-2 rounded-full border border-white/10">
             <div className={`w-2 h-2 rounded-full ${ipAllowed ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-            <span className="text-white/80 text-sm">{ipAllowed ? 'Đã kết nối mạng công ty' : 'Chưa kết nối mạng công ty'}</span>
+            <span className="text-white/80 text-sm">{ipAllowed ? t('staff.connectedCompanyNet') : t('staff.notConnectedCompanyNet')}</span>
           </div>
         </div>
 
@@ -383,13 +385,13 @@ export const StaffCheckIn: React.FC = () => {
 
               {/* Basic Info */}
               <div className="space-y-3 pt-4 border-t border-white/10">
-                <h3 className="text-white/80 font-semibold text-sm mb-3">Thông tin cơ bản</h3>
+                <h3 className="text-white/80 font-semibold text-sm mb-3">{t("staff.basicInfo")}</h3>
 
                 {user?.phoneNumber && (
                   <div className="flex items-start gap-3">
                     <Phone className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white/50 text-xs">Số điện thoại</p>
+                      <p className="text-white/50 text-xs">{t("common.phone")}</p>
                       <p className="text-white text-sm break-all">{user.phoneNumber}</p>
                     </div>
                   </div>
@@ -399,8 +401,8 @@ export const StaffCheckIn: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Calendar className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white/50 text-xs">Ngày sinh</p>
-                      <p className="text-white text-sm">{new Date(user.dateOfBirth).toLocaleDateString('vi-VN')}</p>
+                      <p className="text-white/50 text-xs">{t("profile.dateOfBirth")}</p>
+                      <p className="text-white text-sm">{new Date(user.dateOfBirth).toLocaleDateString(dateLocale)}</p>
                     </div>
                   </div>
                 )}
@@ -409,7 +411,7 @@ export const StaffCheckIn: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <MapPin className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white/50 text-xs">Địa chỉ</p>
+                      <p className="text-white/50 text-xs">{t("common.address")}</p>
                       <p className="text-white text-sm break-words">{user.address}</p>
                     </div>
                   </div>
@@ -419,7 +421,7 @@ export const StaffCheckIn: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Briefcase className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white/50 text-xs">Vị trí làm việc</p>
+                      <p className="text-white/50 text-xs">{t("profile.workLocation")}</p>
                       <p className="text-white text-sm break-words">{user.workLocation}</p>
                     </div>
                   </div>
@@ -429,7 +431,7 @@ export const StaffCheckIn: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Globe className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white/50 text-xs">Quốc gia</p>
+                      <p className="text-white/50 text-xs">{t("common.country")}</p>
                       <p className="text-white text-sm">{user.country}</p>
                     </div>
                   </div>
@@ -444,20 +446,20 @@ export const StaffCheckIn: React.FC = () => {
             <div className="bg-[#5e3ed0]/20 backdrop-blur-lg rounded-3xl p-6 border border-white/10">
               <div className="text-center">
                 <div className="text-5xl md:text-6xl font-bold text-white mb-2 font-mono tracking-wider">
-                  {currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  {currentTime.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </div>
                 <div className="text-white/60 text-base">
-                  {currentTime.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                 </div>
               </div>
               <div className="flex justify-center gap-8 mt-6 pt-4 border-t border-white/10">
                 <div className="text-center">
-                  <p className="text-white/50 text-sm">Giờ vào</p>
+                  <p className="text-white/50 text-sm">{t("staff.checkInTime")}</p>
                   <p className="text-xl font-bold text-white">{companySettings.workStartTime}</p>
                 </div>
                 <div className="w-px bg-white/20"></div>
                 <div className="text-center">
-                  <p className="text-white/50 text-sm">Giờ ra</p>
+                  <p className="text-white/50 text-sm">{t("staff.checkOutTime")}</p>
                   <p className="text-xl font-bold text-white">{companySettings.workEndTime}</p>
                 </div>
               </div>
@@ -467,7 +469,7 @@ export const StaffCheckIn: React.FC = () => {
             {todayRecord && (
               <div className="bg-[#5e3ed0]/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
                 <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                  <Calendar size={20} /> Chấm công hôm nay
+                  <Calendar size={20} /> {t("staff.checkInToday")}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white/5 rounded-xl p-4 text-center">
@@ -477,7 +479,7 @@ export const StaffCheckIn: React.FC = () => {
                       <LogIn className="text-green-400 mx-auto mb-2" size={24} />
                     )}
                     <p className="text-white/50 text-xs">Check-in</p>
-                    <p className="text-white font-bold">{todayRecord.checkInTime?.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-white font-bold">{todayRecord.checkInTime?.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                   <div className="bg-white/5 rounded-xl p-4 text-center">
                     {todayRecord.checkOutPhoto ? (
@@ -486,18 +488,18 @@ export const StaffCheckIn: React.FC = () => {
                       <LogOut className="text-orange-400 mx-auto mb-2" size={24} />
                     )}
                     <p className="text-white/50 text-xs">Check-out</p>
-                    <p className="text-white font-bold">{todayRecord.checkOutTime?.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) || '--:--'}</p>
+                    <p className="text-white font-bold">{todayRecord.checkOutTime?.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' }) || '--:--'}</p>
                   </div>
                   <div className="bg-white/5 rounded-xl p-4 text-center">
                     <Clock className="text-blue-400 mx-auto mb-2" size={24} />
-                    <p className="text-white/50 text-xs">Số giờ</p>
+                    <p className="text-white/50 text-xs">{t("staff.hoursCount")}</p>
                     <p className="text-white font-bold">{todayRecord.workHours ? `${todayRecord.workHours}h` : '--'}</p>
                   </div>
                   <div className="bg-white/5 rounded-xl p-4 text-center">
                     <CheckCircle className={`mx-auto mb-2 ${todayRecord.status === 'present' ? 'text-green-400' : todayRecord.status === 'late' ? 'text-yellow-400' : 'text-orange-400'}`} size={24} />
-                    <p className="text-white/50 text-xs">Trạng thái</p>
+                    <p className="text-white/50 text-xs">{t("staff.statusLabel")}</p>
                     <p className={`font-bold ${todayRecord.status === 'present' ? 'text-green-400' : todayRecord.status === 'late' ? 'text-yellow-400' : 'text-orange-400'}`}>
-                      {todayRecord.status === 'present' ? 'Đúng giờ' : todayRecord.status === 'late' ? 'Đi muộn' : 'Nửa ngày'}
+                      {todayRecord.status === 'present' ? t('staff.onTime') : todayRecord.status === 'late' ? t('staff.late') : t('staff.halfDay')}
                     </p>
                   </div>
                 </div>
@@ -509,51 +511,51 @@ export const StaffCheckIn: React.FC = () => {
         {/* Statistics */}
         <div className="bg-[#5e3ed0]/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10 mb-6">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <History size={20} /> Thống kê chấm công
+            <History size={20} /> {t("staff.attendanceStats")}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white/5 rounded-xl p-4 text-center">
               <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="text-green-400" size={24} />
               </div>
-              <p className="text-white/50 text-xs mb-1">Ngày làm việc</p>
+              <p className="text-white/50 text-xs mb-1">{t("staff.workDays")}</p>
               <p className="text-3xl font-bold text-white mb-1">
                 {allRecords.filter(r => r.status === 'present' || r.status === 'late').length}
               </p>
-              <p className="text-white/40 text-xs">ngày</p>
+              <p className="text-white/40 text-xs">{t("staff.daysUnit")}</p>
             </div>
 
             <div className="bg-white/5 rounded-xl p-4 text-center">
               <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Clock className="text-blue-400" size={24} />
               </div>
-              <p className="text-white/50 text-xs mb-1">Tổng giờ làm</p>
+              <p className="text-white/50 text-xs mb-1">{t("staff.totalWorkHours")}</p>
               <p className="text-3xl font-bold text-white mb-1">
                 {allRecords.reduce((sum, r) => sum + (r.workHours || 0), 0).toFixed(1)}
               </p>
-              <p className="text-white/40 text-xs">giờ</p>
+              <p className="text-white/40 text-xs">{t("staff.hoursUnit")}</p>
             </div>
 
             <div className="bg-white/5 rounded-xl p-4 text-center">
               <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <AlertCircle className="text-yellow-400" size={24} />
               </div>
-              <p className="text-white/50 text-xs mb-1">Tổng phút muộn</p>
+              <p className="text-white/50 text-xs mb-1">{t("staff.totalLateMinutes")}</p>
               <p className="text-3xl font-bold text-white mb-1">
                 {allRecords.reduce((sum, r) => sum + (r.lateMinutes || 0), 0)}
               </p>
-              <p className="text-white/40 text-xs">phút</p>
+              <p className="text-white/40 text-xs">{t("staff.minutesUnit")}</p>
             </div>
 
             <div className="bg-white/5 rounded-xl p-4 text-center">
               <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Calendar className="text-orange-400" size={24} />
               </div>
-              <p className="text-white/50 text-xs mb-1">Nửa ngày</p>
+              <p className="text-white/50 text-xs mb-1">{t("staff.halfDay")}</p>
               <p className="text-3xl font-bold text-white mb-1">
                 {allRecords.filter(r => r.status === 'half-day').length}
               </p>
-              <p className="text-white/40 text-xs">ngày</p>
+              <p className="text-white/40 text-xs">{t("staff.daysUnit")}</p>
             </div>
           </div>
         </div>
@@ -565,7 +567,7 @@ export const StaffCheckIn: React.FC = () => {
               <Wifi className={ipAllowed ? 'text-green-400' : 'text-red-400'} size={24} />
             </div>
             <div className="flex-1">
-              <p className={`font-medium ${ipAllowed ? 'text-green-300' : 'text-red-300'}`}>{ipAllowed ? 'Mạng công ty đã xác nhận' : 'Không phải mạng công ty'}</p>
+              <p className={`font-medium ${ipAllowed ? 'text-green-300' : 'text-red-300'}`}>{ipAllowed ? t('staff.companyNetConfirmed') : t('staff.notCompanyNet')}</p>
               <p className={`text-sm font-mono ${ipAllowed ? 'text-green-400/70' : 'text-red-400/70'}`}>IP: {currentIP}</p>
             </div>
             {ipAllowed ? <CheckCircle className="text-green-400" size={28} /> : <XCircle className="text-red-400" size={28} />}
@@ -595,8 +597,8 @@ export const StaffCheckIn: React.FC = () => {
               <div className="w-20 h-20 bg-green-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="text-green-400" size={40} />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Hoàn thành!</h3>
-              <p className="text-white/60">Bạn đã chấm công xong hôm nay.</p>
+              <h3 className="text-2xl font-bold text-white mb-2">{t("staff.doneTitle")}</h3>
+              <p className="text-white/60">{t("staff.doneHint")}</p>
             </div>
           )}
         </div>
@@ -605,7 +607,7 @@ export const StaffCheckIn: React.FC = () => {
         {recentRecords.length > 0 && (
           <div className="bg-[#5e3ed0]/20 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden">
             <div className="p-4 border-b border-white/10">
-              <h3 className="text-white font-semibold flex items-center gap-2"><History size={20} /> Lịch sử 7 ngày gần đây</h3>
+              <h3 className="text-white font-semibold flex items-center gap-2"><History size={20} /> {t("staff.recentHistory")}</h3>
             </div>
             <div className="divide-y divide-white/10">
               {recentRecords.slice(0, 7).map((record) => (
@@ -619,17 +621,17 @@ export const StaffCheckIn: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <p className="text-white font-medium">{new Date(record.date).toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' })}</p>
+                      <p className="text-white font-medium">{new Date(record.date).toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'numeric' })}</p>
                       <p className="text-white/50 text-sm">
-                        {record.checkInTime?.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        {record.checkOutTime && ` - ${record.checkOutTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`}
+                        {record.checkInTime?.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
+                        {record.checkOutTime && ` - ${record.checkOutTime.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}`}
                       </p>
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${record.status === 'present' ? 'bg-green-500/20 text-green-400' :
                     record.status === 'late' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-orange-500/20 text-orange-400'
                     }`}>
-                    {record.status === 'present' ? 'Đúng giờ' : record.status === 'late' ? `Muộn ${record.lateMinutes}p` : 'Nửa ngày'}
+                    {record.status === 'present' ? t('staff.onTime') : record.status === 'late' ? t('staff.lateMinutes', { minutes: record.lateMinutes ?? 0 }) : t('staff.halfDay')}
                   </span>
                 </div>
               ))}
@@ -639,7 +641,7 @@ export const StaffCheckIn: React.FC = () => {
 
         {!ipAllowed && (
           <div className="mt-6 bg-yellow-500/20 border border-yellow-500/30 rounded-xl p-4 text-center backdrop-blur-md">
-            <p className="text-yellow-300 text-sm">💡 Kết nối WiFi công ty để chấm công</p>
+            <p className="text-yellow-300 text-sm">{t("staff.connectWifiHint")}</p>
           </div>
         )}
       </div>

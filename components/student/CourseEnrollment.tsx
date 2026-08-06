@@ -5,12 +5,14 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { Search, BookOpen } from 'lucide-react';
 import { CourseCard } from './CourseCard';
 
 export const CourseEnrollment: React.FC = () => {
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
@@ -90,7 +92,7 @@ export const CourseEnrollment: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t("common.loading")}</div>;
   }
 
   return (
@@ -98,14 +100,14 @@ export const CourseEnrollment: React.FC = () => {
       {/* All Available Courses */}
       <div>
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Khóa học của bạn</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">{t("student.yourCourses")}</h2>
           {userProfile?.departmentId ? (
             <p className="text-slate-300">
-              Hiển thị các khóa học dành cho phòng ban của bạn. Các khóa học của phòng ban khác sẽ bị ẩn.
+              {t("student.deptCoursesHint")}
             </p>
           ) : (
             <p className="text-slate-300">
-              Bạn chưa thuộc phòng ban nào. Chỉ hiển thị các khóa học chung.
+              {t("student.noDeptHint")}
             </p>
           )}
         </div>
@@ -115,7 +117,7 @@ export const CourseEnrollment: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
               type="text"
-              placeholder="Tìm kiếm khóa học..."
+              placeholder={t("student.searchCourses")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -126,17 +128,17 @@ export const CourseEnrollment: React.FC = () => {
             onChange={(e) => setFilterLevel(e.target.value as any)}
             className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
           >
-            <option value="all">Tất cả cấp độ</option>
-            <option value="beginner">Cơ bản</option>
-            <option value="intermediate">Trung cấp</option>
-            <option value="advanced">Nâng cao</option>
+            <option value="all">{t("student.allLevels")}</option>
+            <option value="beginner">{t("student.levelBeginner")}</option>
+            <option value="intermediate">{t("student.levelIntermediate")}</option>
+            <option value="advanced">{t("student.levelAdvanced")}</option>
           </select>
         </div>
 
         {filteredCourses.length === 0 ? (
           <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
             <BookOpen className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-400">Không tìm thấy khóa học nào</p>
+            <p className="text-slate-400">{t("student.noCoursesFound")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

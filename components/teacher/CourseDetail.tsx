@@ -9,6 +9,7 @@ import { LessonProgress } from '@/types/progress';
 import { UserProfile } from '@/types/user';
 import { ArrowLeft, Users, Clock, CheckCircle, TrendingUp, BookOpen, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CourseDetailProps {
   course: Course;
@@ -18,6 +19,7 @@ interface CourseDetailProps {
 
 export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onStudentUnenrolled }) => {
   const { userProfile: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [currentCourse, setCurrentCourse] = useState<Course>(course);
   const [students, setStudents] = useState<UserProfile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -149,7 +151,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
   const handleUnenrollStudent = async (studentId: string, studentName: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent selecting the student when clicking the button
     
-    if (!confirm(`Bạn có chắc muốn hủy đăng ký của "${studentName}" khỏi khóa học này?`)) {
+    if (!confirm(t("teacher.confirmUnenroll", { name: studentName }))) {
       return;
     }
 
@@ -188,10 +190,10 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
         onStudentUnenrolled();
       }
       
-      alert('Đã hủy đăng ký thành công!');
+      alert(t('teacher.unenrollSuccess'));
     } catch (error) {
       console.error('Error unenrolling student:', error);
-      alert('Lỗi khi hủy đăng ký');
+      alert(t('teacher.unenrollError'));
       // Reload on error to restore correct state
       await loadData();
     } finally {
@@ -200,7 +202,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t("common.loading")}</div>;
   }
 
   return (
@@ -215,7 +217,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
             </div>
             <span className="text-2xl font-bold text-white">{students.length}</span>
           </div>
-          <p className="text-sm text-slate-300">Tổng học viên</p>
+          <p className="text-sm text-slate-300">{t("teacher.totalStudents")}</p>
         </div>
 
         <div className="bg-[#5e3ed0]/20 rounded-xl p-4 border border-white/10 backdrop-blur-md">
@@ -225,7 +227,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
             </div>
             <span className="text-2xl font-bold text-white">{lessons.filter(l => l.videoId).length}</span>
           </div>
-          <p className="text-sm text-slate-300">Bài học</p>
+          <p className="text-sm text-slate-300">{t("teacher.lessons")}</p>
         </div>
 
         <div className="bg-[#5e3ed0]/20 rounded-xl p-4 border border-white/10 backdrop-blur-md">
@@ -237,7 +239,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
               {formatDuration(Object.values(progress).flat().reduce((sum, p) => sum + p.watchedSeconds, 0))}
             </span>
           </div>
-          <p className="text-sm text-slate-300">Tổng thời gian học</p>
+          <p className="text-sm text-slate-300">{t("teacher.totalLearningTime")}</p>
         </div>
 
         <div className="bg-[#5e3ed0]/20 rounded-xl p-4 border border-white/10 backdrop-blur-md">
@@ -249,14 +251,14 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
               {Object.values(progress).flat().filter(p => p.completed).length}
             </span>
           </div>
-          <p className="text-sm text-slate-300">Bài đã hoàn thành</p>
+          <p className="text-sm text-slate-300">{t("teacher.completedLessons")}</p>
         </div>
       </div>
 
       {students.length === 0 ? (
         <div className="bg-[#5e3ed0]/20 rounded-xl p-12 text-center border border-white/10 backdrop-blur-md">
           <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-          <p className="text-slate-300">Chưa có học viên nào đăng ký khóa học này</p>
+          <p className="text-slate-300">{t("teacher.noStudentsEnrolled")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -264,7 +266,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
           <div className="lg:col-span-1">
             <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
               <div className="p-4 border-b border-white/10 bg-white/5">
-                <h3 className="font-bold text-white">Danh sách học viên</h3>
+                <h3 className="font-bold text-white">{t("teacher.studentList")}</h3>
               </div>
               <div className="divide-y divide-white/10 max-h-[600px] overflow-y-auto">
                 {students.map((student) => {
@@ -319,7 +321,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                             className="w-full px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-colors flex items-center justify-center gap-2 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <X size={14} />
-                            {isRemoving ? 'Đang xử lý...' : 'Hủy đăng ký'}
+                            {isRemoving ? t('common.processing') : t('teacher.unenroll')}
                           </button>
                         </div>
                       )}
@@ -351,15 +353,15 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-[#53cafd]">{formatDuration(stats.totalWatched)}</div>
-                          <div className="text-xs text-slate-300">Tổng thời gian</div>
+                          <div className="text-xs text-slate-300">{t("teacher.totalTime")}</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-green-400">{stats.completedLessons}/{stats.totalLessons}</div>
-                          <div className="text-xs text-slate-300">Hoàn thành</div>
+                          <div className="text-xs text-slate-300">{t("teacher.completed")}</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-purple-400">{stats.completionRate.toFixed(0)}%</div>
-                          <div className="text-xs text-slate-300">Tiến độ</div>
+                          <div className="text-xs text-slate-300">{t("common.progress")}</div>
                         </div>
                       </div>
                     );
@@ -367,7 +369,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                 </div>
 
                 <div className="p-6">
-                  <h4 className="font-bold text-white mb-4">Chi tiết từng bài học</h4>
+                  <h4 className="font-bold text-white mb-4">{t("teacher.lessonDetails")}</h4>
                   <div className="space-y-3">
                     {lessons.filter(l => l.videoId).map((lesson) => {
                       const studentProgress = progress[selectedStudent.uid] || [];
@@ -403,13 +405,13 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-4 text-xs text-slate-400">
-                                    <span>Đã xem: {formatDuration(lessonProgress.watchedSeconds)}</span>
+                                    <span>{t("teacher.watched")}: {formatDuration(lessonProgress.watchedSeconds)}</span>
                                     <span>•</span>
-                                    <span>Tổng: {formatDuration(lessonProgress.totalSeconds)}</span>
+                                    <span>{t("teacher.total")}: {formatDuration(lessonProgress.totalSeconds)}</span>
                                   </div>
                                 </>
                               ) : (
-                                <p className="text-sm text-slate-500">Chưa xem</p>
+                                <p className="text-sm text-slate-500">{t("teacher.notWatched")}</p>
                               )}
                             </div>
                           </div>
@@ -422,7 +424,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
             ) : (
               <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-12 text-center backdrop-blur-md">
                 <TrendingUp className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-                <p className="text-slate-300">Chọn giáo viên để xem chi tiết tiến độ</p>
+                <p className="text-slate-300">{t("teacher.selectStudentHint")}</p>
               </div>
             )}
           </div>

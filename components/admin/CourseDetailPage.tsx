@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Course } from '@/types/course';
 import { ArrowLeft, PlayCircle, Users, UserPlus, Trash2 } from 'lucide-react';
 import { LessonManagement } from '@/components/teacher/LessonManagement';
@@ -22,6 +23,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   isAdmin = false,
   onDelete
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'lessons' | 'students'>('lessons');
   const [showStudentManagement, setShowStudentManagement] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -52,20 +54,18 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
   const handleDeleteCourse = async () => {
     if (!isAdmin) {
-      alert('Chỉ admin mới có quyền xóa khóa học');
+      alert(t('admin.courseDetail.adminOnlyDelete'));
       return;
     }
 
-    const confirmMessage = `Bạn có chắc muốn xóa khóa học "${currentCourse.title}"?\n\nLưu ý: Hành động này không thể hoàn tác và sẽ xóa:\n- Tất cả bài học trong khóa học\n- Tất cả tiến độ học tập của học viên\n- Tất cả dữ liệu liên quan`;
-    
-    if (!confirm(confirmMessage)) {
+    if (!confirm(t('admin.courseDetail.confirmDeleteCourse', { title: currentCourse.title }))) {
       return;
     }
 
     try {
       // Delete course from Firestore
       await deleteDoc(doc(db, 'courses', currentCourse.id));
-      alert('Xóa khóa học thành công!');
+      alert(t('admin.courseDetail.deleteSuccess'));
       
       // Call onDelete callback if provided, otherwise just go back
       if (onDelete) {
@@ -75,7 +75,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
       }
     } catch (error) {
       console.error('Error deleting course:', error);
-      alert('Lỗi khi xóa khóa học');
+      alert(t('admin.courseDetail.deleteError'));
     }
   };
 
@@ -89,7 +89,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
             className="text-[#53cafd] hover:text-[#3db9f5] flex items-center gap-2 font-medium mb-4"
           >
             <ArrowLeft size={20} />
-            Quay lại danh sách
+            {t('admin.courseDetail.backToList')}
           </button>
 
           <div className="flex items-start justify-between">
@@ -97,26 +97,26 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
               <h2 className="text-2xl font-bold text-white mb-1">{currentCourse.title}</h2>
               <p className="text-slate-300">{currentCourse.description}</p>
               <div className="flex items-center gap-3 mt-2 text-sm text-slate-400">
-                <span>Danh mục: {currentCourse.category}</span>
+                <span>{t('admin.courseDetail.category', { name: currentCourse.category })}</span>
                 <span>•</span>
-                <span>Thời lượng: {currentCourse.duration}h</span>
+                <span>{t('admin.courseDetail.duration', { hours: currentCourse.duration })}</span>
                 <span>•</span>
-                <span>Học viên: {currentCourse.students?.length || 0}</span>
+                <span>{t('admin.courseDetail.studentCount', { count: currentCourse.students?.length || 0 })}</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {isAdmin && (
                 <>
                   <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full border border-red-500/30">
-                    Chế độ Admin
+                    {t('admin.courseDetail.adminMode')}
                   </span>
                   <button
                     onClick={handleDeleteCourse}
                     className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-all flex items-center gap-2 font-medium"
-                    title="Xóa khóa học"
+                    title={t('admin.courses.deleteCourse')}
                   >
                     <Trash2 size={18} />
-                    Xóa lớp
+                    {t('admin.courseDetail.deleteClass')}
                   </button>
                 </>
               )}
@@ -133,7 +133,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
               }`}
           >
             <PlayCircle size={20} />
-            Quản lý bài học
+            {t('admin.courseDetail.manageLessons')}
           </button>
           <button
             onClick={() => setActiveTab('students')}
@@ -143,7 +143,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
               }`}
           >
             <Users size={20} />
-            Học viên & Thống kê
+            {t('admin.courseDetail.studentsStats')}
           </button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
             className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
           >
             <UserPlus size={18} />
-            Quản lý học viên
+            {t('admin.courseDetail.manageStudents')}
           </button>
         </div>
       )}

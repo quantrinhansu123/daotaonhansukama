@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { StaffCheckIn } from '@/components/staff/StaffCheckIn';
 import { StaffProfile } from '@/components/staff/StaffProfile';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Clock, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function StaffPage() {
   const [activeTab, setActiveTab] = useState<'checkin' | 'profile'>('checkin');
   const { signOut } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <ProtectedRoute allowedRoles={['staff']}>
@@ -27,7 +30,7 @@ export default function StaffPage() {
                     }`}
                 >
                   <Clock size={20} />
-                  Chấm công
+                  {t('staff.checkIn')}
                 </button>
                 <button
                   onClick={() => setActiveTab('profile')}
@@ -37,16 +40,19 @@ export default function StaffPage() {
                     }`}
                 >
                   <User size={20} />
-                  Thông tin cá nhân
+                  {t('staff.personalInfoTab')}
                 </button>
               </div>
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2 px-4 py-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-              >
-                <LogOut size={20} />
-                Đăng xuất
-              </button>
+              <div className="flex items-center gap-3">
+                <LanguageSwitcher variant="light" />
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2 px-4 py-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                >
+                  <LogOut size={20} />
+                  {t('common.logout')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

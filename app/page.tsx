@@ -4,9 +4,11 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Auth } from '@/components/Auth';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const App: React.FC = () => {
   const { userProfile, loading } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +36,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Đang tải...</p>
+          <p className="text-slate-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -46,7 +48,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Đang chuyển hướng...</p>
+          <p className="text-slate-600">{t('common.redirecting')}</p>
         </div>
       </div>
     );

@@ -2,13 +2,16 @@
 
 import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { GraduationCap, LogOut } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { MyCourses } from '@/components/teacher/MyCourses';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export default function TeacherPage() {
   const { userProfile, loading, signOut } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function TeacherPage() {
       <div className="min-h-screen flex items-center justify-center bg-[#311898]">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Đang tải...</p>
+          <p className="text-white">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -52,18 +55,19 @@ export default function TeacherPage() {
                 <GraduationCap className="w-6 h-6 text-[#53cafd]" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Teacher Dashboard</h1>
-                <p className="text-xs text-slate-300">Quản lý giảng dạy</p>
+                <h1 className="text-xl font-bold text-white">{t('teacher.dashboard')}</h1>
+                <p className="text-xs text-slate-300">{t('teacher.subtitle')}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <LanguageSwitcher variant="light" />
               <div className="text-right">
                 <p className="text-sm font-medium text-white">{userProfile.displayName}</p>
                 <p className="text-xs text-slate-300">{userProfile.email}</p>
               </div>
               <Button onClick={handleSignOut} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border-none">
                 <LogOut size={16} />
-                Đăng xuất
+                {t('common.logout')}
               </Button>
             </div>
           </div>
@@ -74,8 +78,8 @@ export default function TeacherPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-[#5e3ed0]/40 to-[#53cafd]/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-white mb-8">
-          <h2 className="text-3xl font-bold mb-2">Chào mừng, {userProfile.displayName}!</h2>
-          <p className="text-slate-200">Quản lý khóa học và học sinh của bạn</p>
+          <h2 className="text-3xl font-bold mb-2">{t('teacher.welcome', { name: userProfile.displayName })}</h2>
+          <p className="text-slate-200">{t('teacher.welcomeSub')}</p>
         </div>
 
         {/* My Courses */}

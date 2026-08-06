@@ -7,6 +7,7 @@ import { Question, QuizResult, Lesson } from '@/types/lesson';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle, XCircle, Award, Save, Clock, FileText, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/Button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QuizTakerProps {
   lessonId: string;
@@ -18,6 +19,7 @@ interface QuizTakerProps {
 }
 
 export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDuration, quizDocumentUrl, quizDocumentName, onComplete }) => {
+  const { t, dateLocale } = useLanguage();
   const { userProfile } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,13 +116,13 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
 
   const handleSubmit = async () => {
     if (!userProfile) {
-      alert('Bạn cần đăng nhập để nộp bài');
+      alert(t('student.needLoginToSubmit'));
       return;
     }
 
     // Check if all questions are answered
     if (answers.some(a => a === -1)) {
-      if (!confirm('Bạn chưa trả lời hết các câu hỏi. Bạn có muốn nộp bài không?')) {
+      if (!confirm(t('student.confirmSubmitIncomplete'))) {
         return;
       }
     }
@@ -142,7 +144,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
       const quizResult: QuizResult = {
         id: `${userProfile.uid}_${lessonId}_${Date.now()}`,
         userId: userProfile.uid,
-        userName: userProfile.displayName || userProfile.email || 'Giáo viên',
+        userName: userProfile.displayName || userProfile.email || t('student.teacherFallback'),
         userEmail: userProfile.email || '',
         lessonId: lessonId,
         courseId: courseId,
@@ -164,19 +166,19 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
       setShowResult(true);
     } catch (error) {
       console.error('Error submitting quiz:', error);
-      alert('Lỗi khi nộp bài: ' + (error as Error).message);
+      alert(t('student.submitError', { message: (error as Error).message }));
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải câu hỏi...</div>;
+    return <div className="text-center py-8">{t("student.loadingQuestions")}</div>;
   }
 
   if (questions.length === 0) {
     return (
       <div className="bg-white rounded-xl p-8 text-center">
-        <p className="text-slate-600 mb-4">Bài kiểm tra này chưa có câu hỏi</p>
-        <Button onClick={onComplete}>Quay lại</Button>
+        <p className="text-slate-600 mb-4">{t("student.quizNoQuestions")}</p>
+        <Button onClick={onComplete}>{t("common.back")}</Button>
       </div>
     );
   }
@@ -189,17 +191,17 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
           <Award className={`w-20 h-20 mx-auto mb-4 ${
             existingResult.score >= 80 ? 'text-green-500' : existingResult.score >= 50 ? 'text-yellow-500' : 'text-red-500'
           }`} />
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Kết quả bài kiểm tra</h2>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t("student.quizResultTitle")}</h2>
           <div className="text-5xl font-bold mb-2" style={{
             color: existingResult.score >= 80 ? '#10b981' : existingResult.score >= 50 ? '#f59e0b' : '#ef4444'
           }}>
-            {existingResult.score} điểm
+            {t("student.scorePoints", { score: existingResult.score })}
           </div>
           <p className="text-slate-600 mb-2">
-            Bạn đã trả lời đúng {existingResult.correctCount}/{existingResult.totalQuestions} câu
+            {t("student.answeredCorrectly", { correct: existingResult.correctCount, total: existingResult.totalQuestions })}
           </p>
           <p className="text-sm text-slate-500">
-            Hoàn thành lúc: {existingResult.completedAt.toLocaleString('vi-VN')}
+            {t("student.completedAt", { time: existingResult.completedAt.toLocaleString(dateLocale) })}
           </p>
         </div>
 
@@ -210,9 +212,9 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 <AlertCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-orange-900 mb-1">Chưa đạt yêu cầu</p>
+                <p className="text-sm font-bold text-orange-900 mb-1">{t("student.notPassedTitle")}</p>
                 <p className="text-xs text-orange-800">
-                  Bạn cần đạt tối thiểu <strong>70 điểm</strong> để được học bài tiếp theo. Hãy làm lại để cải thiện kết quả!
+                  {t("student.notPassedHint")}
                 </p>
               </div>
             </div>
@@ -224,9 +226,9 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-green-900 mb-1">Xuất sắc!</p>
+                <p className="text-sm font-bold text-green-900 mb-1">{t("student.excellentTitle")}</p>
                 <p className="text-xs text-green-800">
-                  Bạn đã đạt yêu cầu. Bạn có thể tiếp tục học bài tiếp theo hoặc làm lại để cải thiện điểm số.
+                  {t("student.excellentHint")}
                 </p>
               </div>
             </div>
@@ -235,11 +237,11 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
 
         <div className="flex gap-3">
           <Button onClick={onComplete} className="flex-1">
-            Quay lại bài học
+            {t("student.backToLesson")}
           </Button>
           <Button 
             onClick={async () => {
-              if (!confirm('Bạn có chắc muốn làm lại? Kết quả cũ sẽ bị xóa.')) return;
+              if (!confirm(t('student.confirmRetake'))) return;
               
               try {
                 // Delete old result from Firestore
@@ -260,12 +262,12 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 }
               } catch (error) {
                 console.error('Error deleting old result:', error);
-                alert('Lỗi khi xóa kết quả cũ. Vui lòng thử lại.');
+                alert(t('student.deleteResultError'));
               }
             }} 
             className="flex-1 bg-orange-500 hover:bg-orange-600"
           >
-            Làm lại bài kiểm tra
+            {t("student.retakeQuiz")}
           </Button>
         </div>
       </div>
@@ -279,14 +281,14 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
           <Award className={`w-20 h-20 mx-auto mb-4 ${
             result.score >= 80 ? 'text-green-500' : result.score >= 50 ? 'text-yellow-500' : 'text-red-500'
           }`} />
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Kết quả bài kiểm tra</h2>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t("student.quizResultTitle")}</h2>
           <div className="text-5xl font-bold mb-2" style={{
             color: result.score >= 80 ? '#10b981' : result.score >= 50 ? '#f59e0b' : '#ef4444'
           }}>
-            {result.score} điểm
+            {t("student.scorePoints", { score: result.score })}
           </div>
           <p className="text-slate-600">
-            Bạn trả lời đúng {result.correctCount}/{result.totalQuestions} câu
+            {t("student.answeredCorrectlyShort", { correct: result.correctCount, total: result.totalQuestions })}
           </p>
         </div>
 
@@ -297,9 +299,9 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 <AlertCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-orange-900 mb-1">Chưa đạt yêu cầu</p>
+                <p className="text-sm font-bold text-orange-900 mb-1">{t("student.notPassedTitle")}</p>
                 <p className="text-xs text-orange-800">
-                  Bạn cần đạt tối thiểu <strong>70 điểm</strong> để được học bài tiếp theo. Bạn có thể làm lại để cải thiện kết quả!
+                  {t("student.notPassedHintRetake")}
                 </p>
               </div>
             </div>
@@ -311,9 +313,9 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-green-900 mb-1">Xuất sắc!</p>
+                <p className="text-sm font-bold text-green-900 mb-1">{t("student.excellentTitle")}</p>
                 <p className="text-xs text-green-800">
-                  Bạn đã đạt yêu cầu. Bạn có thể tiếp tục học bài tiếp theo hoặc làm lại để cải thiện điểm số.
+                  {t("student.excellentHint")}
                 </p>
               </div>
             </div>
@@ -322,11 +324,11 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
 
         <div className="flex gap-3">
           <Button onClick={onComplete} className="flex-1">
-            {result.score >= 70 ? 'Tiếp tục học' : 'Quay lại'}
+            {result.score >= 70 ? t('student.continueLearningBtn') : t('common.back')}
           </Button>
           <Button 
             onClick={async () => {
-              if (!confirm('Bạn có chắc muốn làm lại? Kết quả này sẽ bị xóa.')) return;
+              if (!confirm(t('student.confirmRetakeCurrent'))) return;
               
               try {
                 // Delete the result we just saved
@@ -346,12 +348,12 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 }
               } catch (error) {
                 console.error('Error deleting result:', error);
-                alert('Lỗi khi xóa kết quả. Vui lòng thử lại.');
+                alert(t('student.deleteResultErrorShort'));
               }
             }} 
             className="flex-1 bg-orange-500 hover:bg-orange-600"
           >
-            Làm lại
+            {t("student.retake")}
           </Button>
         </div>
       </div>
@@ -365,7 +367,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
       {/* Header */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-slate-900">Bài kiểm tra</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{t("student.quiz")}</h2>
           <div className="flex items-center gap-4">
             {quizDuration && timeLeft > 0 && (
               <div className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 ${
@@ -378,7 +380,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
               </div>
             )}
             <span className="text-sm font-medium text-slate-600">
-              {answers.filter(a => a !== -1).length} / {questions.length} câu
+              {t("student.answeredCount", { answered: answers.filter(a => a !== -1).length, total: questions.length })}
             </span>
           </div>
         </div>
@@ -398,7 +400,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-blue-900 mb-1">Tài liệu tham khảo</p>
+              <p className="text-sm font-bold text-blue-900 mb-1">{t("student.referenceDoc")}</p>
               <p className="text-xs text-blue-700 mb-2">{quizDocumentName}</p>
               <a
                 href={quizDocumentUrl}
@@ -407,7 +409,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                 className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download size={14} />
-                Tải xuống tài liệu
+                {t("student.downloadDocument")}
               </a>
             </div>
           </div>
@@ -428,7 +430,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                   {index + 1}
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 flex-1">
-                  {question.question || `Câu hỏi ${index + 1}`}
+                  {question.question || t("student.questionFallback", { n: index + 1 })}
                 </h3>
                 {answers[index] !== -1 && (
                   <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
@@ -451,7 +453,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
                     }`}
                   >
                     <span className="font-bold mr-2">{String.fromCharCode(65 + optIndex)}.</span>
-                    {option || `Đáp án ${String.fromCharCode(65 + optIndex)}`}
+                    {option || t("student.optionFallback", { letter: String.fromCharCode(65 + optIndex) })}
                   </button>
                 ))}
               </div>
@@ -506,7 +508,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
           onClick={onComplete}
           className="px-6 py-3 border-2 border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors"
         >
-          Hủy
+          {t("common.cancel")}
         </button>
         <div className="flex-1" />
         <button
@@ -515,7 +517,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
           className="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-bold shadow-lg flex items-center gap-2 disabled:opacity-50"
         >
           <Save size={18} />
-          Nộp bài ({answers.filter(a => a !== -1).length}/{questions.length})
+          {t("student.submitWithCount", { answered: answers.filter(a => a !== -1).length, total: questions.length })}
         </button>
       </div>
     </div>

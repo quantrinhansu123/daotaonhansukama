@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, ArrowLeft, BookOpen } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from './Button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { UserRole, UserProfile } from '@/types/user';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface AuthProps {
   initialMode?: 'login' | 'register';
@@ -14,12 +16,13 @@ interface AuthProps {
 }
 
 export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showBackButton = false }) => {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState<UserRole>('staff'); // Mặc định là nhân viên
+  const [role, setRole] = useState<UserRole>('staff');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('Việt Nam');
@@ -40,7 +43,6 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
     switch (userRole) {
       case 'admin':
       case 'staff':
-        // Admin và Staff đều vào trang admin, menu sẽ hiển thị theo quyền
         router.push('/admin');
         break;
       case 'teacher':
@@ -63,17 +65,15 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
       if (mode === 'login') {
         const profile = await signIn(email, password);
         if (profile) {
-          // Chuyển hướng đến dashboard
           redirectByRole(profile.role);
         }
       } else {
         if (!displayName.trim()) {
-          setError('Vui lòng nhập họ và tên');
+          setError(t('auth.nameRequired'));
           setLoading(false);
           return;
         }
 
-        // Prepare additional info
         const additionalInfo: Partial<UserProfile> = {};
         if (dateOfBirth) additionalInfo.dateOfBirth = dateOfBirth;
         if (address) additionalInfo.address = address;
@@ -83,13 +83,11 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
 
         const profile = await signUp(email, password, displayName, role, additionalInfo);
 
-        // Hiển thị thông báo khác nhau tùy role
         if (profile.role === 'admin') {
-          alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
+          alert(t('auth.registerSuccessAdmin'));
           redirectByRole(profile.role);
         } else {
-          alert('Đăng ký thành công! Tài khoản của bạn đang chờ quản trị viên duyệt. Vui lòng đợi email xác nhận.');
-          // Quay về trang login
+          alert(t('auth.registerSuccessPending'));
           setMode('login');
           setEmail('');
           setPassword('');
@@ -97,17 +95,14 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+      setError(err.message || t('common.error'));
     } finally {
       setLoading(false);
     }
   };
 
-
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background Image for entire page */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
           src="https://www.appsheet.com/template/gettablefileurl?appName=Appsheet-325045268&tableName=Kho%20%E1%BA%A3nh&fileName=Kho%20%E1%BA%A3nh_Images%2Fb8a05340.%E1%BA%A2nh.014538.jpg"
@@ -122,7 +117,6 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50"></div>
       </div>
       <div className="w-full max-w-5xl flex rounded-3xl overflow-hidden shadow-2xl bg-[#5e3ed0]/30 backdrop-blur-xl border border-white/10 relative z-10">
-        {/* Left Side - Visuals (Hidden on mobile) */}
         <div className="hidden lg:flex lg:w-1/2 relative bg-[#311898]/50 text-white overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
             <img
@@ -140,13 +134,13 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
 
           <div className="relative z-10 flex flex-col justify-between p-12 w-full">
             <div className="flex flex-col items-start gap-1 text-white cursor-pointer" onClick={onBack}>
-              <span className="text-3xl font-bold text-yellow-400">Việt Nam</span>
-              <span className="text-2xl font-bold text-red-500">Kỷ nguyên vươn mình</span>
+              <span className="text-3xl font-bold text-yellow-400">{t('auth.brandLine1')}</span>
+              <span className="text-2xl font-bold text-red-500">{t('auth.brandLine2')}</span>
             </div>
 
             <div className="space-y-6 max-w-md">
               <blockquote className="text-2xl font-medium leading-relaxed text-slate-100">
-                "Ta sẽ đóng những con tàu đi khắp đại dương. Nhưng trước hết phải có những con người đẹp nhất, biết căm thù và biết yêu thương."
+                {t('auth.quote')}
               </blockquote>
               <div className="flex items-center gap-4">
                 <img
@@ -159,41 +153,41 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                   }}
                 />
                 <div>
-                  <div className="font-bold text-white">Người Cộng Sản</div>
-                  <div className="text-slate-300 text-sm">
-                    Quyết đánh và quyết thắng.<br />
-                    Biết đánh - dám đánh và biết thắng
+                  <div className="font-bold text-white">{t('auth.quoteAuthor')}</div>
+                  <div className="text-slate-300 text-sm whitespace-pre-line">
+                    {t('auth.quoteAuthorSub')}
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="text-sm text-slate-400">
-              © 2024 Kama Inc. Privacy Policy & Terms.
+              {t('auth.footer')}
             </div>
           </div>
         </div>
 
-        {/* Right Side - Form */}
         <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative bg-white/5">
+          <div className="absolute top-6 right-6 z-20">
+            <LanguageSwitcher variant="light" />
+          </div>
+
           {showBackButton && onBack && (
             <button
               onClick={onBack}
               className="absolute top-8 left-8 flex items-center text-slate-400 hover:text-white transition-colors lg:hidden"
             >
-              <ArrowLeft size={20} className="mr-2" /> Quay lại
+              <ArrowLeft size={20} className="mr-2" /> {t('common.back')}
             </button>
           )}
 
           <div className="w-full max-w-md space-y-8 animate-in slide-in-from-right-5 duration-500">
             <div className="text-center lg:text-left">
               <h2 className="text-3xl font-bold text-white tracking-tight">
-                {mode === 'login' ? 'Chào mừng trở lại' : 'Tạo tài khoản mới'}
+                {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
               </h2>
               <p className="mt-2 text-slate-300">
-                {mode === 'login'
-                  ? 'Thế hệ trẻ Việt Nam liên tục học tập và phát triển vươn mình ra biển lớn'
-                  : 'Bắt đầu hành trình chinh phục tri thức ngay hôm nay.'}
+                {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
               </p>
             </div>
 
@@ -207,10 +201,10 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
               {mode === 'register' && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Họ và tên *</label>
+                    <label className="text-sm font-medium text-slate-300">{t('auth.fullName')}</label>
                     <input
                       type="text"
-                      placeholder="Ví dụ: Nguyễn Văn A"
+                      placeholder={t('auth.fullNamePlaceholder')}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
@@ -220,7 +214,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-300">Ngày sinh</label>
+                      <label className="text-sm font-medium text-slate-300">{t('auth.dateOfBirth')}</label>
                       <input
                         type="date"
                         value={dateOfBirth}
@@ -230,7 +224,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-300">Số điện thoại</label>
+                      <label className="text-sm font-medium text-slate-300">{t('auth.phone')}</label>
                       <input
                         type="tel"
                         placeholder="0912345678"
@@ -242,10 +236,10 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Địa chỉ</label>
+                    <label className="text-sm font-medium text-slate-300">{t('auth.address')}</label>
                     <input
                       type="text"
-                      placeholder="Số nhà, đường, phường/xã, quận/huyện"
+                      placeholder={t('auth.addressPlaceholder')}
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
@@ -254,26 +248,26 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-300">Quốc gia</label>
+                      <label className="text-sm font-medium text-slate-300">{t('auth.country')}</label>
                       <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white transition-all [&>option]:bg-[#311898]"
                       >
-                        <option value="Việt Nam">Việt Nam</option>
-                        <option value="Hoa Kỳ">Hoa Kỳ</option>
-                        <option value="Nhật Bản">Nhật Bản</option>
-                        <option value="Hàn Quốc">Hàn Quốc</option>
-                        <option value="Singapore">Singapore</option>
-                        <option value="Khác">Khác</option>
+                        <option value="Việt Nam">{t('auth.countries.vietnam')}</option>
+                        <option value="Hoa Kỳ">{t('auth.countries.usa')}</option>
+                        <option value="Nhật Bản">{t('auth.countries.japan')}</option>
+                        <option value="Hàn Quốc">{t('auth.countries.korea')}</option>
+                        <option value="Singapore">{t('auth.countries.singapore')}</option>
+                        <option value="Khác">{t('auth.countries.other')}</option>
                       </select>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-300">Vị trí học việc</label>
+                      <label className="text-sm font-medium text-slate-300">{t('auth.workLocation')}</label>
                       <input
                         type="text"
-                        placeholder="Ví dụ: Intern, Junior Dev"
+                        placeholder={t('auth.workLocationPlaceholder')}
                         value={workLocation}
                         onChange={(e) => setWorkLocation(e.target.value)}
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
@@ -284,7 +278,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Email</label>
+                <label className="text-sm font-medium text-slate-300">{t('auth.email')}</label>
                 <input
                   type="email"
                   placeholder="name@example.com"
@@ -297,10 +291,10 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <label className="text-sm font-medium text-slate-300">Mật khẩu</label>
+                  <label className="text-sm font-medium text-slate-300">{t('auth.password')}</label>
                   {mode === 'login' && (
                     <a href="#" className="text-sm font-medium text-[#53cafd] hover:text-[#3db9f5]">
-                      Quên mật khẩu?
+                      {t('auth.forgotPassword')}
                     </a>
                   )}
                 </div>
@@ -325,14 +319,18 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
               </div>
 
               <Button type="submit" className="w-full py-3.5 text-lg shadow-[#53cafd]/25" disabled={loading}>
-                {loading ? 'Đang xử lý...' : (mode === 'login' ? 'Đăng Nhập' : 'Đăng Ký Miễn Phí')}
+                {loading
+                  ? t('common.processing')
+                  : mode === 'login'
+                    ? t('auth.loginButton')
+                    : t('auth.registerButton')}
               </Button>
             </form>
 
             <p className="text-center text-sm text-slate-400">
-              {mode === 'login' ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
+              {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
               <button onClick={toggleMode} className="font-bold text-[#53cafd] hover:text-[#3db9f5] hover:underline">
-                {mode === 'login' ? 'Đăng ký ngay' : 'Đăng nhập'}
+                {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
               </button>
             </p>
           </div>

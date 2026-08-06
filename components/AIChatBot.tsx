@@ -1,15 +1,25 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Sparkles, Loader2 } from 'lucide-react';
 import { sendMessageToGemini, ChatMessage } from '@/services/geminiService';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const AIChatBot: React.FC = () => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Chào bạn! Mình là EduBot. Bạn đang quan tâm đến lĩnh vực nào? Mình có thể tư vấn lộ trình học cho bạn.' }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      setMessages([{ role: 'model', text: t('landing.chatbot.greeting') }]);
+      initialized.current = true;
+    }
+  }, [t]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,7 +41,7 @@ export const AIChatBot: React.FC = () => {
       const responseText = await sendMessageToGemini(userMsg.text, messages);
       setMessages(prev => [...prev, { role: 'model', text: responseText }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: 'Xin lỗi, có lỗi xảy ra.' }]);
+      setMessages(prev => [...prev, { role: 'model', text: t('landing.chatbot.error') }]);
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +62,7 @@ export const AIChatBot: React.FC = () => {
           className="group flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-all hover:scale-105"
         >
           <Sparkles className="w-6 h-6 animate-pulse" />
-          <span className="font-semibold hidden group-hover:inline-block transition-all duration-300">Tư vấn AI</span>
+          <span className="font-semibold hidden group-hover:inline-block transition-all duration-300">{t('landing.chatbot.label')}</span>
         </button>
       )}
 
@@ -97,7 +107,7 @@ export const AIChatBot: React.FC = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white text-slate-500 border border-gray-100 shadow-sm rounded-2xl rounded-bl-none px-4 py-2 text-sm flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Đang suy nghĩ...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t('landing.chatbot.thinking')}
                 </div>
               </div>
             )}
@@ -112,7 +122,7 @@ export const AIChatBot: React.FC = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Hỏi về khóa học..."
+                placeholder={t('landing.chatbot.placeholder')}
                 className="flex-1 border-gray-200 bg-gray-50 text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
               />
               <button

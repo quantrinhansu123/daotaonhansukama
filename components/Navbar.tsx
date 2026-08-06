@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu, X, BookOpen, User } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from './Button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface NavbarProps {
   onLogin: () => void;
@@ -16,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -43,9 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
     }
   };
 
-
-
-  // Text color logic: White when at top (on dark hero), Dark when scrolled (on white bg)
   const textColorClass = isScrolled ? 'text-slate-600 hover:text-brand-600' : 'text-slate-200 hover:text-white';
   const logoColorClass = isScrolled ? 'text-slate-900' : 'text-white';
   const buttonVariant = isScrolled ? 'primary' : 'primary';
@@ -73,6 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-4">
+            <LanguageSwitcher variant={isScrolled ? 'dark' : 'light'} />
             {userProfile ? (
               <Button 
                 variant={buttonVariant} 
@@ -80,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
                 onClick={handleDashboardClick}
                 className={!isScrolled ? "shadow-none bg-brand-600 hover:bg-brand-500 text-white" : ""}
               >
-                Quay lại Dashboard
+                {t('landing.nav.backToDashboard')}
               </Button>
             ) : (
               <>
@@ -88,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
                   onClick={onLogin}
                   className={`text-sm font-medium transition-colors ${textColorClass}`}
                 >
-                  Đăng nhập
+                  {t('landing.nav.login')}
                 </button>
                 <Button 
                   variant={buttonVariant} 
@@ -96,14 +97,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
                   onClick={onRegister}
                   className={!isScrolled ? "shadow-none bg-brand-600 hover:bg-brand-500 text-white" : ""}
                 >
-                  Đăng Ký Ngay
+                  {t('landing.nav.register')}
                 </Button>
               </>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageSwitcher variant={isScrolled ? 'dark' : 'light'} />
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className={`transition-colors ${isScrolled ? 'text-slate-900' : 'text-white'}`}
@@ -123,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
               className="w-full"
               onClick={() => { handleDashboardClick(); setMobileMenuOpen(false); }}
             >
-              Quay lại Dashboard
+              {t('landing.nav.backToDashboard')}
             </Button>
           ) : (
             <>
@@ -131,14 +133,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
                 onClick={() => { onLogin(); setMobileMenuOpen(false); }}
                 className="text-base font-medium text-slate-600 hover:text-brand-600 block py-2 px-2 text-left"
               >
-                Đăng nhập
+                {t('landing.nav.login')}
               </button>
               <Button 
                 variant="primary" 
                 className="w-full"
                 onClick={() => { onRegister(); setMobileMenuOpen(false); }}
               >
-                Đăng Ký Ngay
+                {t('landing.nav.register')}
               </Button>
             </>
           )}

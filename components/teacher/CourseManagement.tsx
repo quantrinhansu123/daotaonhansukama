@@ -5,6 +5,7 @@ import { Course } from '@/types/course';
 import { ArrowLeft, PlayCircle, Users } from 'lucide-react';
 import { LessonManagement } from './LessonManagement';
 import { CourseDetail } from './CourseDetail';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CourseManagementProps {
   course: Course;
@@ -13,14 +14,14 @@ interface CourseManagementProps {
 
 export const CourseManagement: React.FC<CourseManagementProps> = ({ course, onBack }) => {
   const [activeTab, setActiveTab] = useState<'lessons' | 'students'>('lessons');
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-6">
-      {/* Header with Tabs */}
       <div>
         <button onClick={onBack} className="text-[#53cafd] hover:text-[#3db9f5] mb-4 flex items-center gap-2 transition-colors">
           <ArrowLeft size={20} />
-          Quay lại danh sách khóa học
+          {t('teacher.backToCourses')}
         </button>
 
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
@@ -38,7 +39,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({ course, onBa
                 }`}
             >
               <PlayCircle size={20} />
-              Quản lý bài học
+              {t('teacher.manageLessons')}
             </button>
             <button
               onClick={() => setActiveTab('students')}
@@ -48,13 +49,12 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({ course, onBa
                 }`}
             >
               <Users size={20} />
-              Học sinh & Thống kê
+              {t('teacher.studentsAndStats')}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <div>
         {activeTab === 'lessons' ? (
           <LessonManagement course={course} onBack={() => { }} />

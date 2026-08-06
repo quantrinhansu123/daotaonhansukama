@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Department } from '@/types/department';
@@ -19,6 +20,7 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
   onClose,
   onUpdate
 }) => {
+  const { t } = useLanguage();
   const [selectedPermissions, setSelectedPermissions] = useState<PermissionAction[]>(
     department.permissions || []
   );
@@ -40,12 +42,12 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
         permissions: selectedPermissions,
         updatedAt: new Date()
       });
-      alert('Cập nhật quyền thành công!');
+      alert(t('admin.permissions.saveSuccess'));
       onUpdate();
       onClose();
     } catch (error) {
       console.error('Error updating permissions:', error);
-      alert('Lỗi khi cập nhật quyền');
+      alert(t('admin.permissions.saveError'));
     } finally {
       setSaving(false);
     }
@@ -69,7 +71,7 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
               <Shield className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white">Phân quyền phòng ban</h3>
+              <h3 className="text-xl font-bold text-white">{t('admin.permissions.title')}</h3>
               <p className="text-sm text-slate-300">{department.name}</p>
             </div>
           </div>
@@ -87,16 +89,16 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
             onClick={selectAll}
             className="px-4 py-2 text-sm bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors font-medium border border-blue-500/30"
           >
-            Chọn tất cả
+            {t('admin.permissions.selectAll')}
           </button>
           <button
             onClick={clearAll}
             className="px-4 py-2 text-sm bg-white/10 text-slate-300 rounded-lg hover:bg-white/20 transition-colors font-medium border border-white/10"
           >
-            Bỏ chọn tất cả
+            {t('admin.permissions.deselectAll')}
           </button>
           <div className="ml-auto text-sm text-slate-300 flex items-center">
-            Đã chọn: <span className="font-bold ml-1 text-white">{selectedPermissions.length}/{PERMISSIONS.length}</span>
+            {t('admin.permissions.selectedCount')} <span className="font-bold ml-1 text-white">{selectedPermissions.length}/{PERMISSIONS.length}</span>
           </div>
         </div>
 
@@ -121,10 +123,10 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
                   />
                   <div className="flex-1">
                     <div className="font-semibold text-white mb-1">
-                      {permission.name}
+                      {t(`admin.permissions.${permission.action}`)}
                     </div>
                     <div className="text-sm text-slate-300">
-                      {permission.description}
+                      {t(`admin.permissions.${permission.action}_desc`)}
                     </div>
                     <div className="mt-2">
                       <code className="text-xs bg-white/10 px-2 py-1 rounded text-slate-300">
@@ -146,14 +148,14 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
             className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25"
           >
             <Save size={18} />
-            {saving ? 'Đang lưu...' : 'Lưu quyền'}
+            {saving ? t('admin.permissions.saving') : t('admin.permissions.savePermissions')}
           </Button>
           <button
             onClick={onClose}
             disabled={saving}
             className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5 transition-colors font-medium text-white"
           >
-            Hủy
+            {t('common.cancel')}
           </button>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { CourseDetailPage } from './CourseDetailPage';
 import { BunnyImageUpload } from '@/components/shared/BunnyImageUpload';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CourseManagementProps {
   onNavigateToApproval?: () => void;
@@ -16,6 +17,7 @@ interface CourseManagementProps {
 
 export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const { userProfile: currentUser } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -273,7 +275,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const handleSave = async () => {
     try {
       if (!formData.title || !formData.category) {
-        alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+        alert(t('admin.courses.fillRequired'));
         return;
       }
 
@@ -325,7 +327,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         console.log('🔍 Checking for undefined:', Object.keys(finalData).some(k => finalData[k] === undefined));
         
         await updateDoc(courseRef, finalData);
-        alert('Cập nhật khóa học thành công!');
+        alert(t('admin.courses.updateSuccess'));
       } else {
         // Build newCourse with explicit values
         const newCourse: Record<string, any> = {};
@@ -365,29 +367,29 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         console.log('🔍 Checking for undefined:', Object.keys(finalCourse).some(k => finalCourse[k] === undefined));
         
         await setDoc(doc(db, 'courses', finalCourse.id), finalCourse);
-        alert('Thêm khóa học thành công!');
+        alert(t('admin.courses.createSuccess'));
       }
 
       setShowModal(false);
       loadData();
     } catch (error) {
       console.error('Error saving course:', error);
-      alert('Lỗi khi lưu khóa học');
+      alert(t('admin.courses.saveError'));
     }
   };
 
   const handleDelete = async (course: Course) => {
-    if (!confirm(`Bạn có chắc muốn xóa khóa học "${course.title}"?`)) {
+    if (!confirm(t('admin.courses.confirmDelete', { title: course.title }))) {
       return;
     }
 
     try {
       await deleteDoc(doc(db, 'courses', course.id));
-      alert('Xóa khóa học thành công!');
+      alert(t('admin.courses.deleteSuccess'));
       loadData();
     } catch (error) {
       console.error('Error deleting course:', error);
-      alert('Lỗi khi xóa khóa học');
+      alert(t('admin.courses.deleteError'));
     }
   };
 
@@ -398,9 +400,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       advanced: 'bg-red-100 text-red-700'
     };
     const labels = {
-      beginner: 'Cơ bản',
-      intermediate: 'Trung cấp',
-      advanced: 'Nâng cao'
+      beginner: t('admin.courses.levelBeginner'),
+      intermediate: t('admin.courses.levelIntermediate'),
+      advanced: t('admin.courses.levelAdvanced')
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${styles[level as keyof typeof styles]}`}>
@@ -410,7 +412,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
   // Show course detail page
@@ -434,17 +436,17 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">Quản lý khóa học</h2>
+          <h2 className="text-2xl font-bold text-white">{t('admin.courses.title')}</h2>
           {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
             <p className="text-sm text-[#53cafd] mt-1">
-              🏢 Bạn đang xem khóa học của phòng ban: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
+              🏢 {t('admin.courses.managerScope')}: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
             </p>
           )}
         </div>
         <div className="flex gap-3">
           <Button
             onClick={async () => {
-              if (!confirm('Cập nhật lại danh sách học viên cho TẤT CẢ khóa học dựa trên phòng ban?\n\nLưu ý: Thao tác này sẽ ghi đè danh sách học viên hiện tại.')) {
+              if (!confirm(t('admin.courses.syncStudentsConfirm'))) {
                 return;
               }
               setLoading(true);
@@ -455,11 +457,11 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   await updateDoc(doc(db, 'courses', course.id), { students });
                   updated++;
                 }
-                alert(`✅ Đã cập nhật ${updated} khóa học!`);
+                alert(t('admin.courses.syncStudentsSuccess', { count: updated }));
                 loadData();
               } catch (error) {
                 console.error('Error updating students:', error);
-                alert('❌ Lỗi khi cập nhật!');
+                alert(t('admin.courses.syncStudentsError'));
               } finally {
                 setLoading(false);
               }
@@ -467,13 +469,13 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             className="flex items-center gap-2 bg-[#5e3ed0]/20 hover:bg-[#5e3ed0]/40 text-white border border-white/10"
           >
             <Users size={18} />
-            Cập nhật học viên
+            {t('admin.courses.manageStudents')}
           </Button>
           {/* Chỉ admin mới được thêm khóa học */}
           {currentUser?.role === 'admin' && (
             <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
               <Plus size={18} />
-              Thêm khóa học
+              {t('admin.courses.addCourse')}
             </Button>
           )}
         </div>
@@ -485,7 +487,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Tìm kiếm khóa học theo tên, mô tả, danh mục..."
+            placeholder={t('admin.courses.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -496,39 +498,39 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       {/* Filters */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo cấp độ</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.courses.filterByLevel')}</label>
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value as any)}
             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white [&>option]:whitespace-nowrap"
           >
-            <option value="all">Tất cả cấp độ</option>
-            <option value="beginner">Cơ bản</option>
-            <option value="intermediate">Trung cấp</option>
-            <option value="advanced">Nâng cao</option>
+            <option value="all">{t('admin.courses.allLevels')}</option>
+            <option value="beginner">{t('admin.courses.levelBeginner')}</option>
+            <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
+            <option value="advanced">{t('admin.courses.levelAdvanced')}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo danh mục</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.courses.filterByCategory')}</label>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
           >
-            <option value="all">Tất cả danh mục</option>
+            <option value="all">{t('admin.courses.allCategories')}</option>
             {categories.map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo dự án</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.courses.filterByProject')}</label>
           <select
             value={filterProjectId}
             onChange={(e) => setFilterProjectId(e.target.value)}
             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
           >
-            <option value="">Tất cả dự án</option>
+            <option value="">{t('admin.courses.allProjects')}</option>
             {projects.map(project => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -540,19 +542,19 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Tổng khóa học</p>
+          <p className="text-sm text-slate-300">{t('admin.courses.totalCourses')}</p>
           <p className="text-2xl font-bold text-white">{courses.length}</p>
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Cơ bản</p>
+          <p className="text-sm text-slate-300">{t('admin.courses.levelBeginner')}</p>
           <p className="text-2xl font-bold text-green-400">{courses.filter(c => c.level === 'beginner').length}</p>
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Trung cấp</p>
+          <p className="text-sm text-slate-300">{t('admin.courses.levelIntermediate')}</p>
           <p className="text-2xl font-bold text-yellow-400">{courses.filter(c => c.level === 'intermediate').length}</p>
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Nâng cao</p>
+          <p className="text-sm text-slate-300">{t('admin.courses.levelAdvanced')}</p>
           <p className="text-2xl font-bold text-red-400">{courses.filter(c => c.level === 'advanced').length}</p>
         </div>
       </div>
@@ -564,28 +566,28 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Khóa học
+                  {t('admin.courses.courseName')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Danh mục
+                  {t('admin.courses.category')}
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Cấp độ
+                  {t('admin.courses.level')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Đối tượng
+                  {t('admin.courses.audience')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Dự án
+                  {t('admin.courses.projectsLabel')}
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Học viên
+                  {t('admin.courses.students')}
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Thời lượng
+                  {t('admin.courses.durationLabel')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Thao tác
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -607,7 +609,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   <td className="px-6 py-4">
                     {course.departmentId === 'all' ? (
                       <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                        🌐 Chung
+                        🌐 {t('admin.courses.audienceAllShort')}
                       </span>
                     ) : course.departmentId ? (
                       <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
@@ -615,7 +617,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       </span>
                     ) : (
                       <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-sm font-medium">
-                        🔒 Nháp
+                        🔒 {t('admin.courses.draft')}
                       </span>
                     )}
                   </td>
@@ -638,7 +640,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   <td className="px-6 py-4 text-center">
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
                       <span>{course.students?.length || 0}</span>
-                      <span className="text-xs">người</span>
+                      <span className="text-xs">{t('admin.courses.people')}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center text-sm text-white">
@@ -649,10 +651,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       <button
                         onClick={() => setDetailCourse(course)}
                         className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
-                        title="Chi tiết lớp học"
+                        title={t('admin.courses.classDetail')}
                       >
                         <BookOpen size={16} />
-                        Chi tiết
+                        {t('common.details')}
                       </button>
 
                       {/* Chỉ admin mới thấy các nút chỉnh sửa và xóa */}
@@ -661,14 +663,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                           <button
                             onClick={() => handleEdit(course)}
                             className="p-2 text-[#53cafd] hover:bg-white/10 rounded-lg transition-colors"
-                            title="Chỉnh sửa"
+                            title={t('common.edit')}
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(course)}
                             className="p-2 text-pink-500 hover:bg-white/10 rounded-lg transition-colors"
-                            title="Xóa"
+                            title={t('common.delete')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -687,8 +689,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             <BookOpen className="w-16 h-16 text-slate-500 mx-auto mb-4" />
             <p className="text-slate-300">
               {searchTerm || filterProjectId || filterCategory !== 'all' || filterLevel !== 'all'
-                ? 'Không tìm thấy khóa học nào phù hợp với bộ lọc'
-                : 'Không tìm thấy khóa học nào'}
+                ? t('admin.courses.noMatchFilter')
+                : t('admin.courses.notFound')}
             </p>
           </div>
         )}
@@ -699,7 +701,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">
-                {editingCourse ? 'Chỉnh sửa khóa học' : 'Thêm khóa học mới'}
+                {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
                 <X size={24} />
@@ -708,7 +710,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Tên khóa học *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.courseName')} *</label>
                 <input
                   type="text"
                   value={formData.title}
@@ -718,7 +720,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Mô tả</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -728,55 +730,55 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Danh mục *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.category')} *</label>
                 <input
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="VD: Lập trình, Thiết kế..."
+                  placeholder={t('admin.courses.categoryPlaceholder')}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Đối tượng học *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.audience')} *</label>
                 <select
                   value={formData.departmentId}
                   onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                   disabled={!!(currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid))}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white disabled:bg-white/10 disabled:cursor-not-allowed [&>option]:bg-[#311898] [&>option]:text-white"
                 >
-                  <option value="">-- Không hiển thị cho ai --</option>
-                  <option value="all">🌐 Chung (Tất cả nhân viên)</option>
+                  <option value="">{t('admin.courses.audienceNone')}</option>
+                  <option value="all">{t('admin.courses.audienceAll')}</option>
                   {departments.map(dept => (
                     <option key={dept.id} value={dept.id}>🏢 {dept.name}</option>
                   ))}
                 </select>
                 {currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid) ? (
                   <p className="text-xs text-[#53cafd] mt-1">
-                    🔒 Trưởng phòng chỉ có thể tạo khóa học cho phòng ban của mình
+                    🔒 {t('admin.courses.managerCreateHint')}
                   </p>
                 ) : (
                   <p className="text-xs text-slate-400 mt-1">
-                    • <strong>Chung</strong>: Tất cả nhân viên đều thấy<br />
-                    • <strong>Phòng ban cụ thể</strong>: Chỉ nhân viên phòng ban đó thấy<br />
-                    • <strong>Không chọn</strong>: Không ai thấy (nháp)
+                    • <strong>{t('admin.courses.audienceAll')}</strong>: {t('admin.courses.audienceHintAll')}<br />
+                    • <strong>{t('admin.courses.audienceHintDeptLabel')}</strong>: {t('admin.courses.audienceHintDept')}<br />
+                    • <strong>{t('admin.courses.audienceNone')}</strong>: {t('admin.courses.audienceHintNone')}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Dự án
+                  {t('admin.courses.projectsLabel')}
                   {formData.projects.length > 0 && (
                     <span className="ml-2 text-xs text-[#53cafd]">
-                      ({formData.projects.length} dự án đã chọn)
+                      ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
                     </span>
                   )}
                 </label>
                 <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
                   {projects.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4">Chưa có dự án nào. Vui lòng tạo dự án trước.</p>
+                    <p className="text-xs text-slate-400 text-center py-4">{t('admin.courses.noProjectsYet')}</p>
                   ) : (
                     projects.map(project => {
                       const isChecked = formData.projects.includes(project.id);
@@ -837,20 +839,20 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Cấp độ</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.level')}</label>
                   <select
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
                   >
-                    <option value="beginner">Cơ bản</option>
-                    <option value="intermediate">Trung cấp</option>
-                    <option value="advanced">Nâng cao</option>
+                    <option value="beginner">{t('admin.courses.levelBeginner')}</option>
+                    <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
+                    <option value="advanced">{t('admin.courses.levelAdvanced')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Thời lượng (giờ)</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.durationHours')}</label>
                   <input
                     type="number"
                     value={formData.duration}
@@ -861,7 +863,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
               </div>
 
               <BunnyImageUpload
-                label="Thumbnail (Ảnh đại diện)"
+                label={t('admin.courses.thumbnailLabel')}
                 currentImage={formData.thumbnail}
                 onUploadStart={() => setUploadingThumbnail(true)}
                 onUploadEnd={() => setUploadingThumbnail(false)}
@@ -871,7 +873,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
               <div>
                 <BunnyImageUpload
-                  label="Banner (Ảnh bìa khóa học - Hiển thị ở đầu trang chi tiết)"
+                  label={t('admin.courses.bannerLabel')}
                   currentImage={formData.banner}
                   onUploadStart={() => {
                     console.log('⏳ Banner upload started...');
@@ -892,25 +894,25 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   folder="courses/banners"
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  📐 <strong>Kích cỡ khuyến nghị:</strong> 1920x600px (tỷ lệ 16:5) hoặc 1920x1080px (16:9)<br />
-                  📦 <strong>Kích thước file:</strong> Tối đa 5MB<br />
-                  📄 <strong>Định dạng:</strong> JPG, PNG, WebP
+                  📐 {t('admin.courses.bannerRecommend')}<br />
+                  📦 {t('admin.courses.bannerMaxSize')}<br />
+                  📄 {t('admin.courses.bannerFormats')}
                 </p>
                 {uploadingBanner && (
                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-700 font-semibold">⏳ Đang tải banner lên... Vui lòng đợi!</p>
+                    <p className="text-xs text-blue-700 font-semibold">⏳ {t('admin.courses.bannerUploading')}</p>
                   </div>
                 )}
                 {!uploadingBanner && formData.banner && (
                   <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-xs text-green-700 font-semibold mb-1">✅ Banner đã được tải lên</p>
+                    <p className="text-xs text-green-700 font-semibold mb-1">✅ {t('admin.courses.bannerUploaded')}</p>
                     <p className="text-xs text-green-600 break-all font-mono">{formData.banner}</p>
                   </div>
                 )}
               </div>
 
               {/* <BunnyVideoUpload
-                label="Video Demo (Video giới thiệu khóa học)"
+                label={t('admin.courses.videoDemoLabel')}
                 currentVideoId={formData.demoVideoId}
                 onUploadComplete={(videoId) => setFormData({ ...formData, demoVideoId: videoId })}
               /> */}
@@ -923,18 +925,18 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={18} />
-                {uploadingThumbnail || uploadingBanner ? 'Đang tải ảnh...' : 'Lưu'}
+                {uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
               </Button>
               <button
                 onClick={() => setShowModal(false)}
                 className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/10 text-white"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
             </div>
             {(uploadingThumbnail || uploadingBanner) && (
               <p className="text-xs text-orange-600 text-center mt-2">
-                ⚠️ Vui lòng đợi ảnh tải lên hoàn tất trước khi lưu
+                {t('admin.courses.waitUploadBeforeSave')}
               </p>
             )}
           </div>

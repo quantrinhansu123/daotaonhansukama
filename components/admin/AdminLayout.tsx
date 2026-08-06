@@ -7,6 +7,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -21,8 +22,8 @@ import {
   Fingerprint,
   FolderKanban
 } from 'lucide-react';
-import { PermissionAction } from '@/types/permission';
 import { ProfileModal } from '@/components/ProfileModal';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ interface AdminLayoutProps {
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { userProfile, signOut } = useAuth();
   const { hasPermission } = usePermissions();
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -45,36 +47,37 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     loadDepartments();
   }, []);
 
+  const isManager = departments.some(d => d.managerId === userProfile?.uid);
+  void isManager;
+
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
   };
 
-  const isManager = departments.some(d => d.managerId === userProfile?.uid);
-
   const menuItems = [
     {
       id: 'checkin',
-      label: 'Chấm công',
+      label: t('admin.menu.checkin'),
       icon: Fingerprint,
       href: '/admin/checkin',
-      permission: null, // Không cần quyền
-      hideForStaff: false, // Staff luôn thấy
-      hideForAdmin: true, // Admin KHÔNG thấy
-      hidden: true // TẠM THỜI ẨN
+      permission: null,
+      hideForStaff: false,
+      hideForAdmin: true,
+      hidden: true
     },
     {
       id: 'dashboard',
-      label: 'Tổng quan',
+      label: t('admin.menu.dashboard'),
       icon: LayoutDashboard,
       href: '/admin',
       permission: 'view_dashboard' as const,
       hideForStaff: false,
-      hideForManager: true // Trưởng phòng KHÔNG thấy
+      hideForManager: true
     },
     {
       id: 'learning',
-      label: 'Học bài',
+      label: t('admin.menu.learning'),
       icon: GraduationCap,
       href: '/admin/learning',
       permission: null,
@@ -83,7 +86,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       id: 'users',
-      label: 'Quản lý người dùng',
+      label: t('admin.menu.users'),
       icon: Users,
       href: '/admin/users',
       permission: 'view_users' as const,
@@ -91,7 +94,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       id: 'courses',
-      label: 'Quản lý khóa học',
+      label: t('admin.menu.courses'),
       icon: BookOpen,
       href: '/admin/courses',
       permission: 'view_courses' as const,
@@ -99,7 +102,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       id: 'departments',
-      label: 'Quản lý phòng ban',
+      label: t('admin.menu.departments'),
       icon: Building2,
       href: '/admin/departments',
       permission: 'view_departments' as const,
@@ -107,7 +110,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       id: 'projects',
-      label: 'Quản lý Dự án',
+      label: t('admin.menu.projects'),
       icon: FolderKanban,
       href: '/admin/projects',
       permission: 'view_projects' as const,
@@ -115,14 +118,27 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       id: 'attendance',
-      label: 'Quản lý chấm công',
+      label: t('admin.menu.attendance'),
       icon: Clock,
       href: '/admin/attendance',
       permission: 'view_salary' as const,
       hideForStaff: false,
-      hidden: true // TẠM THỜI ẨN
+      hidden: true
     },
   ];
+
+  const positionLabel = (position?: string) => {
+    if (!position) return '';
+    const map: Record<string, string> = {
+      'Nhân viên': t('admin.users.positions.staff'),
+      'Trưởng nhóm': t('admin.users.positions.teamLead'),
+      'Phó phòng': t('admin.users.positions.deputyManager'),
+      'Trưởng phòng': t('admin.users.positions.manager'),
+      'Phó giám đốc': t('admin.users.positions.deputyDirector'),
+      'Giám đốc': t('admin.users.positions.director'),
+    };
+    return map[position] || position;
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -137,8 +153,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <span className="text-white font-bold text-xl">K</span>
                 </div>
                 <div>
-                  <h1 className="font-bold text-lg text-white">Kama System</h1>
-                  <p className="text-xs text-slate-300">Quản lý & Đào tạo</p>
+                  <h1 className="font-bold text-lg text-white">{t('admin.systemName')}</h1>
+                  <p className="text-xs text-slate-300">{t('admin.tagline')}</p>
                 </div>
               </div>
               <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-slate-300">
@@ -159,23 +175,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             const isStaff = userProfile?.role === 'staff';
             const isManager = userProfile?.position === 'Trưởng phòng';
 
-            // Ẩn menu nếu có flag hidden
             if (item.hidden) {
               return null;
             }
 
-            // Ẩn menu nếu role không phù hợp
             if (isAdmin && item.hideForAdmin) {
-              return null; // Admin không thấy "Học bài"
+              return null;
             }
             if (isStaff && item.hideForStaff) {
               return null;
             }
             if (isManager && item.hideForManager) {
-              return null; // Trưởng phòng không thấy "Tổng quan"
+              return null;
             }
 
-            // Check permission - nếu permission là null thì luôn hiển thị
             if (item.permission && !hasPermission(item.permission)) {
               return null;
             }
@@ -228,7 +241,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </div>
               {userProfile?.position && (
                 <div className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors">
-                  <p className="text-xs text-brand-300 text-center font-medium">{userProfile.position}</p>
+                  <p className="text-xs text-brand-300 text-center font-medium">{positionLabel(userProfile.position)}</p>
                 </div>
               )}
             </button>
@@ -250,13 +263,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               )}
             </button>
           )}
+          {sidebarOpen && (
+            <div className="mb-3 flex justify-center">
+              <LanguageSwitcher variant="sidebar" className="w-full justify-center" />
+            </div>
+          )}
+          {!sidebarOpen && (
+            <div className="mb-3 flex justify-center">
+              <LanguageSwitcher variant="sidebar" className="!px-2" />
+            </div>
+          )}
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-500/10 border border-transparent transition-all group"
-            title={!sidebarOpen ? 'Đăng xuất' : ''}
+            title={!sidebarOpen ? t('admin.logout') : ''}
           >
             <LogOut size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
-            {sidebarOpen && <span className="font-medium text-sm">Đăng xuất</span>}
+            {sidebarOpen && <span className="font-medium text-sm">{t('admin.logout')}</span>}
           </button>
         </div>
       </aside>

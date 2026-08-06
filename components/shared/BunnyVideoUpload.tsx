@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Upload, X, Video, Play } from 'lucide-react';
 
 interface BunnyVideoUploadProps {
@@ -12,8 +13,10 @@ interface BunnyVideoUploadProps {
 export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
   onUploadComplete,
   currentVideoId,
-  label = 'Tải video lên'
+  label
 }) => {
+  const { t } = useLanguage();
+  const resolvedLabel = label ?? t('shared.uploadVideo');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoId, setVideoId] = useState<string | null>(currentVideoId || null);
@@ -26,13 +29,13 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
 
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      alert('Vui lòng chọn file video');
+      alert(t('shared.selectVideo'));
       return;
     }
 
     // Validate file size (max 500MB)
     if (file.size > 500 * 1024 * 1024) {
-      alert('Kích thước file không được vượt quá 500MB');
+      alert(t('shared.fileTooLarge500MB'));
       return;
     }
 
@@ -79,10 +82,10 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
       setVideoId(newVideoId);
       onUploadComplete(newVideoId);
       setUploadProgress(100);
-      alert('Tải video lên thành công! Video đang được xử lý...');
+      alert(t('shared.videoUploadSuccess'));
     } catch (error) {
       console.error('Error uploading video:', error);
-      alert('Lỗi khi tải video lên');
+      alert(t('shared.videoUploadError'));
       setVideoId(currentVideoId || null);
     } finally {
       setUploading(false);
@@ -96,7 +99,7 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label className="block text-sm font-medium text-slate-700">{resolvedLabel}</label>
       
       {videoId ? (
         <div className="relative">
@@ -108,7 +111,7 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
               poster={`https://${CDN_HOSTNAME}/${videoId}/thumbnail.jpg`}
             >
               <source src={`https://${CDN_HOSTNAME}/${videoId}/playlist.m3u8`} type="application/x-mpegURL" />
-              Trình duyệt của bạn không hỗ trợ video.
+              {t('shared.browserNoVideo')}
             </video>
           </div>
           <button
@@ -118,7 +121,7 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
           >
             <X size={16} />
           </button>
-          <p className="text-xs text-slate-500 mt-2">Video ID: {videoId}</p>
+          <p className="text-xs text-slate-500 mt-2">{t('shared.videoIdLabel', { id: videoId })}</p>
         </div>
       ) : (
         <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-brand-500 hover:bg-slate-50 transition-colors">
@@ -126,15 +129,15 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
             {uploading ? (
               <>
                 <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <p className="text-sm text-slate-600">Đang tải lên... {uploadProgress}%</p>
+                <p className="text-sm text-slate-600">{t('shared.uploadingProgress', { progress: uploadProgress })}</p>
               </>
             ) : (
               <>
                 <Video className="w-12 h-12 text-slate-400 mb-3" />
                 <p className="mb-2 text-sm text-slate-600">
-                  <span className="font-semibold">Click để tải video lên</span>
+                  <span className="font-semibold">{t('shared.clickToUploadVideo')}</span>
                 </p>
-                <p className="text-xs text-slate-500">MP4, MOV, AVI (MAX. 500MB)</p>
+                <p className="text-xs text-slate-500">{t('shared.videoFormatsHint')}</p>
               </>
             )}
           </div>

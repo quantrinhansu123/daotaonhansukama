@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface StatCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface StatCardProps {
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, gradient, trend }) => {
+  const { t } = useLanguage();
   return (
     <div className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-all duration-300">
       <div className="flex items-start justify-between">
@@ -24,7 +26,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, gr
           {trend && (
             <div className={`flex items-center gap-1 text-sm ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               <span className="font-medium">{trend.value}</span>
-              <span className="text-slate-500">so với tháng trước</span>
+              <span className="text-slate-500">{t('admin.dashboard.vsLastMonth')}</span>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -10,6 +11,7 @@ import { CourseViewer } from '@/components/student/CourseViewer';
 
 export default function CourseDetailPage() {
   const { userProfile, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const params = useParams();
   const courseId = params.courseId as string;
@@ -54,7 +56,7 @@ export default function CourseDetailPage() {
       const courseSnap = await getDoc(courseRef);
 
       if (!courseSnap.exists()) {
-        setError('Không tìm thấy khóa học');
+        setError(t('student.courseNotFound'));
         return;
       }
 
@@ -81,14 +83,14 @@ export default function CourseDetailPage() {
 
       // Check if user is enrolled (staff can access all courses)
       if (userProfile?.role !== 'staff' && !courseData.students?.includes(userProfile?.uid || '')) {
-        setError('Bạn chưa đăng ký khóa học này');
+        setError(t('student.notEnrolled'));
         return;
       }
 
       setCourse(courseData);
     } catch (err) {
       console.error('Error loading course:', err);
-      setError('Lỗi khi tải khóa học');
+      setError(t('student.loadCourseError'));
     } finally {
       setLoading(false);
     }
@@ -104,7 +106,7 @@ export default function CourseDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-[#311898]">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white/80">Đang tải...</p>
+          <p className="text-white/80">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -123,7 +125,7 @@ export default function CourseDetailPage() {
             onClick={handleBack}
             className="px-6 py-2 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] transition-colors shadow-lg shadow-[#53cafd]/25"
           >
-            Quay lại Dashboard
+            {t("common.backToDashboard")}
           </button>
         </div>
       </div>

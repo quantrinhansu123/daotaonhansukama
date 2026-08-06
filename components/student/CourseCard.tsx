@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Course } from '@/types/course';
 import { BookOpen, Clock, Play } from 'lucide-react';
 import { Button } from '@/components/Button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CourseCardProps {
   course: Course;
@@ -16,6 +17,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   onView,
   departmentName
 }) => {
+  const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -52,9 +54,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       advanced: 'bg-red-100 text-red-700'
     };
     const labels = {
-      beginner: 'Cơ bản',
-      intermediate: 'Trung cấp',
-      advanced: 'Nâng cao'
+      beginner: t('student.levelBeginner'),
+      intermediate: t('student.levelIntermediate'),
+      advanced: t('student.levelAdvanced')
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[level as keyof typeof styles]}`}>
@@ -133,7 +135,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         <div className="mb-3 flex items-center gap-2">
           {course.departmentId === 'all' ? (
             <span className="inline-block px-2 py-1 bg-green-500/20 text-green-300 rounded-full text-xs font-medium border border-green-500/30">
-              🌐 Chung
+              🌐 {t("student.general")}
             </span>
           ) : departmentName ? (
             <span className="inline-block px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-medium border border-purple-500/30">
@@ -142,7 +144,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           ) : null}
           {course.students && course.students.length > 0 && (
             <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-medium border border-blue-500/30">
-              👥 {course.students.length} học viên
+              👥 {t("student.studentsCount", { count: course.students.length })}
             </span>
           )}
         </div>
@@ -159,7 +161,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           onClick={() => onView?.(course.id)}
           className="w-full bg-[#53cafd] hover:bg-[#3db9f5] text-white shadow-lg shadow-[#53cafd]/20"
         >
-          Học ngay
+          {t("student.learnNow")}
         </Button>
       </div>
     </div>

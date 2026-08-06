@@ -8,6 +8,7 @@ import { UserProfile } from '@/types/user';
 import { Search, UserPlus, UserCheck, UserX, X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CourseStudentsProps {
   course: Course;
@@ -17,6 +18,7 @@ interface CourseStudentsProps {
 
 export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose, onUpdate }) => {
   const { userProfile: currentUser } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [currentCourse, setCurrentCourse] = useState<Course>(course);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [pendingStudents, setPendingStudents] = useState<UserProfile[]>([]);
@@ -252,7 +254,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
   const handleApprove = async (studentId: string) => {
     if (!studentId || studentId.trim() === '') {
-      alert('Lỗi: ID học viên không hợp lệ');
+      alert(t('admin.courseStudents.invalidId'));
       return;
     }
 
@@ -264,7 +266,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
         pendingStudents: arrayRemove(validStudentId),
         students: arrayUnion(validStudentId)
       });
-      alert('Đã phê duyệt nhân viên!');
+      alert(t('admin.courseStudents.approveSuccess'));
       // Reload course data and students list
       const updatedCourse = await loadCourseData(currentCourse.id);
       if (updatedCourse) {
@@ -273,7 +275,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       onUpdate();
     } catch (error) {
       console.error('Error approving:', error);
-      alert('Lỗi khi phê duyệt');
+      alert(t('admin.courseStudents.approveError'));
     } finally {
       setProcessing(null);
     }
@@ -281,7 +283,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
   const handleReject = async (studentId: string) => {
     if (!studentId || studentId.trim() === '') {
-      alert('Lỗi: ID học viên không hợp lệ');
+      alert(t('admin.courseStudents.invalidId'));
       return;
     }
 
@@ -291,7 +293,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       await updateDoc(courseRef, {
         pendingStudents: arrayRemove(studentId.trim())
       });
-      alert('Đã từ chối yêu cầu!');
+      alert(t('admin.courseStudents.rejectSuccess'));
       // Reload course data and students list
       const updatedCourse = await loadCourseData(currentCourse.id);
       if (updatedCourse) {
@@ -300,7 +302,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       onUpdate();
     } catch (error) {
       console.error('Error rejecting:', error);
-      alert('Lỗi khi từ chối');
+      alert(t('admin.courseStudents.rejectError'));
     } finally {
       setProcessing(null);
     }
@@ -308,11 +310,11 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
   const handleRemove = async (studentId: string) => {
     if (!studentId || studentId.trim() === '') {
-      alert('Lỗi: ID học viên không hợp lệ');
+      alert(t('admin.courseStudents.invalidId'));
       return;
     }
 
-    if (!confirm('Bạn có chắc muốn xóa học sinh này khỏi khóa học?')) return;
+    if (!confirm(t('admin.courseStudents.confirmRemoveStudent'))) return;
 
     try {
       setProcessing(studentId);
@@ -320,7 +322,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       await updateDoc(courseRef, {
         students: arrayRemove(studentId.trim())
       });
-      alert('Đã xóa nhân viên!');
+      alert(t('admin.courseStudents.removeStaffSuccess'));
       // Reload course data and students list
       const updatedCourse = await loadCourseData(currentCourse.id);
       if (updatedCourse) {
@@ -329,7 +331,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       onUpdate();
     } catch (error) {
       console.error('Error removing:', error);
-      alert('Lỗi khi xóa học sinh');
+      alert(t('admin.courseStudents.removeStudentError'));
     } finally {
       setProcessing(null);
     }
@@ -337,7 +339,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
   const handleAddStudent = async (studentId: string) => {
     if (!studentId || studentId.trim() === '') {
-      alert('Lỗi: ID học viên không hợp lệ');
+      alert(t('admin.courseStudents.invalidId'));
       return;
     }
 
@@ -347,7 +349,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       await updateDoc(courseRef, {
         students: arrayUnion(studentId.trim())
       });
-      alert('Đã thêm nhân viên vào khóa học!');
+      alert(t('admin.courseStudents.addStaffSuccess'));
       // Reload course data and students list
       const updatedCourse = await loadCourseData(currentCourse.id);
       if (updatedCourse) {
@@ -356,7 +358,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
       onUpdate();
     } catch (error) {
       console.error('Error adding student:', error);
-      alert('Lỗi khi thêm học sinh');
+      alert(t('admin.courseStudents.addStudentError'));
     } finally {
       setProcessing(null);
     }
@@ -366,7 +368,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl p-6">
-          <p>Đang tải...</p>
+          <p>{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -378,10 +380,10 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-2xl font-bold text-white">{currentCourse.title}</h3>
-            <p className="text-slate-300">Quản lý nhân viên</p>
+            <p className="text-slate-300">{t('admin.courseStudents.manageStaff')}</p>
             {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
               <p className="text-sm text-[#53cafd] mt-1">
-                🏢 Chỉ hiển thị nhân viên trong phòng ban của bạn
+                🏢 {t('admin.courseStudents.managerScope')}
               </p>
             )}
           </div>
@@ -397,7 +399,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
               <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-sm border border-yellow-500/30">
                 {pendingStudents.length}
               </span>
-              Chờ phê duyệt
+              {t('admin.courseStudents.pendingApproval')}
             </h4>
             <div className="space-y-2">
               {pendingStudents.map((student) => (
@@ -418,7 +420,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
                       className="px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-lg hover:bg-green-500/30 disabled:opacity-50 flex items-center gap-1 text-sm"
                     >
                       <UserCheck size={14} />
-                      Duyệt
+                      {t('admin.users.approve')}
                     </button>
                     <button
                       onClick={() => handleReject(student.uid)}
@@ -426,7 +428,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
                       className="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 disabled:opacity-50 flex items-center gap-1 text-sm"
                     >
                       <UserX size={14} />
-                      Từ chối
+                      {t('admin.users.reject')}
                     </button>
                   </div>
                 </div>
@@ -441,10 +443,10 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
             <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-sm border border-green-500/30">
               {enrolledStudents.length}
             </span>
-            Đã đăng ký
+            {t('admin.courseStudents.enrolled')}
           </h4>
           {enrolledStudents.length === 0 ? (
-            <p className="text-slate-400 text-center py-4">Chưa có nhân viên nào</p>
+            <p className="text-slate-400 text-center py-4">{t('admin.courseStudents.noStaff')}</p>
           ) : (
             <div className="space-y-2">
               {enrolledStudents.map((student) => (
@@ -464,7 +466,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
                     className="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 disabled:opacity-50 flex items-center gap-1 text-sm"
                   >
                     <UserX size={14} />
-                    Xóa
+                    {t('common.delete')}
                   </button>
                 </div>
               ))}
@@ -478,10 +480,10 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
             <span className="bg-[#53cafd]/20 text-[#53cafd] px-2 py-1 rounded-full text-sm border border-[#53cafd]/30">
               {availableStudents.length}
             </span>
-            Thêm nhân viên
+            {t('admin.courseStudents.addStaff')}
           </h4>
           {availableStudents.length === 0 ? (
-            <p className="text-slate-400 text-center py-4">Không còn nhân viên nào</p>
+            <p className="text-slate-400 text-center py-4">{t('admin.courseStudents.noMoreStaff')}</p>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {availableStudents.map((student) => (
@@ -501,7 +503,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
                     className="px-3 py-1.5 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] disabled:opacity-50 flex items-center gap-1 text-sm shadow-[#53cafd]/25"
                   >
                     <UserPlus size={14} />
-                    Thêm
+                    {t('common.add')}
                   </button>
                 </div>
               ))}
@@ -511,7 +513,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
         <div className="mt-6 pt-6 border-t border-white/10">
           <Button onClick={onClose} className="w-full bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
       </div>

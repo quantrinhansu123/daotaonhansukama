@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface BunnyImageUploadProps {
@@ -15,11 +16,13 @@ interface BunnyImageUploadProps {
 export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
   onUploadComplete,
   currentImage,
-  label = 'Tải ảnh lên',
+  label,
   folder = 'courses',
   onUploadStart,
   onUploadEnd
 }) => {
+  const { t } = useLanguage();
+  const resolvedLabel = label ?? t('shared.uploadImage');
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -59,13 +62,13 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Vui lòng chọn file ảnh');
+      alert(t('shared.selectImage'));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Kích thước file không được vượt quá 5MB');
+      alert(t('shared.fileTooLarge5MB'));
       return;
     }
 
@@ -112,10 +115,10 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
       console.log('🖼️ Preview URL:', previewUrl);
       
       onUploadComplete(uploadedUrl);
-      alert('Tải ảnh lên thành công!');
+      alert(t('shared.imageUploadSuccess'));
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Lỗi khi tải ảnh lên');
+      alert(t('shared.imageUploadError'));
       // Restore previous preview
       const previousPreview = convertToProxyUrl(currentImage) || currentImage || null;
       setPreview(previousPreview);
@@ -132,7 +135,7 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label className="block text-sm font-medium text-slate-700">{resolvedLabel}</label>
       
       {preview ? (
         <div className="space-y-2">
@@ -172,7 +175,7 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
           </div>
           {/* Display URL below image */}
           <div className="p-2 bg-slate-50 rounded border border-slate-200">
-            <p className="text-xs text-slate-500 mb-1">URL:</p>
+            <p className="text-xs text-slate-500 mb-1">{t('shared.urlLabel')}</p>
             <p className="text-xs text-slate-700 break-all font-mono">
               {currentImage || preview}
             </p>
@@ -181,13 +184,13 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
                 const urlToCopy = currentImage || preview;
                 if (urlToCopy) {
                   navigator.clipboard.writeText(urlToCopy);
-                  alert('Đã copy URL!');
+                  alert(t('shared.urlCopied'));
                 }
               }}
               className="mt-1 text-xs text-blue-600 hover:text-blue-700 underline"
               type="button"
             >
-              Copy URL
+              {t('shared.copyUrl')}
             </button>
           </div>
         </div>
@@ -197,15 +200,15 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
             {uploading ? (
               <>
                 <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <p className="text-sm text-slate-600">Đang tải lên...</p>
+                <p className="text-sm text-slate-600">{t('shared.uploading')}</p>
               </>
             ) : (
               <>
                 <ImageIcon className="w-12 h-12 text-slate-400 mb-3" />
                 <p className="mb-2 text-sm text-slate-600">
-                  <span className="font-semibold">Click để tải ảnh lên</span>
+                  <span className="font-semibold">{t('shared.clickToUploadImage')}</span>
                 </p>
-                <p className="text-xs text-slate-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                <p className="text-xs text-slate-500">{t('shared.imageFormatsHint')}</p>
               </>
             )}
           </div>

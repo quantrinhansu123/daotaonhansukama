@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Building2, Plus, Edit2, Trash2, X, Save, Users, Search, Shield } from 'lucide-react';
@@ -10,6 +11,7 @@ import { UserProfile } from '@/types/user';
 
 
 export const DepartmentManagement: React.FC = () => {
+  const { t, dateLocale } = useLanguage();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -137,7 +139,7 @@ export const DepartmentManagement: React.FC = () => {
   const handleSave = async () => {
     try {
       if (!formData.name) {
-        alert('Vui lòng nhập tên phòng ban');
+        alert(t('admin.departments.fillRequired'));
         return;
       }
 
@@ -156,42 +158,42 @@ export const DepartmentManagement: React.FC = () => {
 
       await setDoc(doc(db, 'departments', deptId), deptData);
 
-      alert(editingDept ? 'Cập nhật phòng ban thành công!' : 'Thêm phòng ban thành công!');
+      alert(editingDept ? t('admin.departments.updateSuccess') : t('admin.departments.createSuccess'));
       setShowModal(false);
       loadData();
     } catch (error) {
       console.error('Error saving department:', error);
-      alert('Lỗi khi lưu phòng ban');
+      alert(t('admin.departments.saveError'));
     }
   };
 
   const handleDelete = async (dept: Department) => {
-    if (!confirm(`Bạn có chắc muốn xóa phòng ban "${dept.name}"?`)) return;
+    if (!confirm(t('admin.departments.confirmDelete', { name: dept.name }))) return;
 
     try {
       await deleteDoc(doc(db, 'departments', dept.id));
-      alert('Xóa phòng ban thành công!');
+      alert(t('admin.departments.deleteSuccess'));
       loadData();
     } catch (error) {
       console.error('Error deleting department:', error);
-      alert('Lỗi khi xóa phòng ban');
+      alert(t('admin.departments.deleteError'));
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Đang tải...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Quản lý phòng ban</h1>
-          <p className="text-slate-300">Chọn trưởng phòng từ danh sách nhân viên trong phòng ban</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('admin.departments.title')}</h1>
+          <p className="text-slate-300">{t('admin.departments.subtitleAlt')}</p>
         </div>
         <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
           <Plus size={20} />
-          Thêm phòng ban
+          {t('admin.departments.addDepartment')}
         </Button>
       </div>
 
@@ -201,7 +203,7 @@ export const DepartmentManagement: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Tìm kiếm phòng ban theo tên, mô tả, trưởng phòng..."
+            placeholder={t('admin.departments.searchPlaceholderAlt')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -211,13 +213,13 @@ export const DepartmentManagement: React.FC = () => {
 
       {/* Filters */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo dự án</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.filterByProject')}</label>
         <select
           value={filterProjectId}
           onChange={(e) => setFilterProjectId(e.target.value)}
           className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
         >
-          <option value="">Tất cả dự án</option>
+          <option value="">{t('admin.departments.allProjects')}</option>
           {projects.map(project => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -229,17 +231,17 @@ export const DepartmentManagement: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Tổng phòng ban</p>
+          <p className="text-sm text-slate-300">{t('admin.departments.totalDepartments')}</p>
           <p className="text-2xl font-bold text-white">{departments.length}</p>
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Có trưởng phòng</p>
+          <p className="text-sm text-slate-300">{t('admin.departments.withManager')}</p>
           <p className="text-2xl font-bold text-[#53cafd]">
             {departments.filter(d => d.managerId).length}
           </p>
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">Tổng nhân viên</p>
+          <p className="text-sm text-slate-300">{t('admin.departments.totalStaff')}</p>
           <p className="text-2xl font-bold text-pink-400">
             {users.length}
           </p>
@@ -253,8 +255,8 @@ export const DepartmentManagement: React.FC = () => {
             <Building2 className="w-16 h-16 text-slate-500 mx-auto mb-4" />
             <p className="text-slate-300">
               {searchTerm || filterProjectId 
-                ? 'Không tìm thấy phòng ban nào phù hợp với bộ lọc' 
-                : 'Chưa có phòng ban nào'}
+                ? t('admin.departments.noMatchFilter')
+                : t('admin.departments.noneYet')}
             </p>
           </div>
         ) : (
@@ -263,22 +265,22 @@ export const DepartmentManagement: React.FC = () => {
               <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Phòng ban
+                    {t('admin.departments.name')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Mô tả
+                    {t('admin.departments.description')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Trưởng phòng
+                    {t('admin.departments.manager')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Dự án
+                    {t('admin.departments.projects')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Số nhân viên
+                    {t('admin.departments.staffCount')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Thao tác
+                    {t('common.actions')}
                   </th>
                 </tr>
               </thead>
@@ -309,7 +311,7 @@ export const DepartmentManagement: React.FC = () => {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm font-medium">
-                          ⚠️ Chưa có
+                          ⚠️ {t('admin.departments.noManagerYet')}
                         </span>
                       )}
                     </td>
@@ -343,14 +345,14 @@ export const DepartmentManagement: React.FC = () => {
                         <button
                           onClick={() => handleEdit(dept)}
                           className="p-2 text-[#53cafd] hover:bg-white/10 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
+                          title={t('common.edit')}
                         >
                           <Edit2 size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(dept)}
                           className="p-2 text-pink-500 hover:bg-white/10 rounded-lg transition-colors"
-                          title="Xóa"
+                          title={t('common.delete')}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -370,7 +372,7 @@ export const DepartmentManagement: React.FC = () => {
           <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-md w-full">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">
-                {editingDept ? 'Chỉnh sửa phòng ban' : 'Thêm phòng ban mới'}
+                {editingDept ? t('admin.departments.editDepartment') : t('admin.departments.addDepartmentNew')}
               </h3>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-lg text-white">
                 <X size={20} />
@@ -378,57 +380,57 @@ export const DepartmentManagement: React.FC = () => {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Tên phòng ban</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.name')}</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                  placeholder="Ví dụ: Phòng Kỹ thuật"
+                  placeholder={t('admin.departments.namePlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Mô tả</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
                   rows={3}
-                  placeholder="Mô tả về phòng ban..."
+                  placeholder={t('admin.departments.descriptionPlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Trưởng phòng</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.manager')}</label>
                 <select
                   value={formData.managerId}
                   onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
                 >
-                  <option value="">-- Chọn trưởng phòng --</option>
+                  <option value="">{t('admin.departments.selectManager')}</option>
                   {editingDept && getUsersInDepartment(editingDept.id).map(user => (
                     <option key={user.uid} value={user.uid}>
-                      {user.displayName} - {user.position || 'Nhân viên'}
+                      {user.displayName} - {user.position || t('admin.departments.staffFallback')}
                     </option>
                   ))}
                 </select>
                 <p className="text-xs text-slate-400 mt-1">
                   {editingDept
-                    ? `Chọn từ ${getUsersInDepartment(editingDept.id).length} nhân viên trong phòng`
-                    : 'Lưu phòng ban trước, sau đó sửa để chọn trưởng phòng'}
+                    ? t('admin.departments.selectFromStaff', { count: getUsersInDepartment(editingDept.id).length })
+                    : t('admin.departments.saveFirstHint')}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Dự án
+                  {t('admin.departments.projects')}
                   {formData.projects.length > 0 && (
                     <span className="ml-2 text-xs text-[#53cafd]">
-                      ({formData.projects.length} dự án đã chọn)
+                      ({t('admin.departments.selectedProjects', { count: formData.projects.length })})
                     </span>
                   )}
                 </label>
                 <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
                   {projects.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4">Chưa có dự án nào. Vui lòng tạo dự án trước.</p>
+                    <p className="text-xs text-slate-400 text-center py-4">{t('admin.departments.noProjectsYet')}</p>
                   ) : (
                     projects.map(project => {
                       const isChecked = formData.projects.includes(project.id);
@@ -489,11 +491,11 @@ export const DepartmentManagement: React.FC = () => {
             </div>
             <div className="p-6 border-t border-white/10 flex gap-3">
               <Button onClick={() => setShowModal(false)} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
-                Hủy
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
                 <Save size={18} />
-                Lưu
+                {t('common.save')}
               </Button>
             </div>
           </div>
@@ -508,7 +510,7 @@ export const DepartmentManagement: React.FC = () => {
           <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#5e3ed0]/20">
               <div>
-                <h3 className="text-xl font-bold text-white">Danh sách nhân viên</h3>
+                <h3 className="text-xl font-bold text-white">{t('admin.departments.staffListTitle')}</h3>
                 <p className="text-sm text-slate-300 mt-1">{viewStaffDept.name}</p>
               </div>
               <button
@@ -525,12 +527,12 @@ export const DepartmentManagement: React.FC = () => {
                   <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
                   <p className="text-slate-300">
                     {users.filter(u => u.departmentId === viewStaffDept.id).length === 0
-                      ? 'Chưa có nhân viên nào trong phòng ban này'
-                      : 'Chưa có nhân viên nào được duyệt trong phòng ban này'}
+                      ? t('admin.departments.noStaffInDept')
+                      : t('admin.departments.noApprovedStaffInDept')}
                   </p>
                   {users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length > 0 && (
                     <p className="text-xs text-slate-400 mt-2">
-                      ({users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length} nhân viên chờ duyệt)
+                      {t('admin.departments.pendingStaffCount', { count: users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length })}
                     </p>
                   )}
                 </div>
@@ -556,12 +558,12 @@ export const DepartmentManagement: React.FC = () => {
                           {user.uid === viewStaffDept.managerId && (
                             <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#53cafd]/20 text-[#53cafd] rounded-full text-xs font-medium">
                               <Shield size={12} />
-                              Trưởng phòng
+                              {t('admin.users.positions.manager')}
                             </span>
                           )}
                           {user.monthlySalary && (
                             <p className="text-sm text-slate-300 mt-1">
-                              {user.monthlySalary.toLocaleString('vi-VN')}đ/tháng
+                              {t('admin.departments.salaryPerMonth', { amount: user.monthlySalary.toLocaleString(dateLocale) })}
                             </p>
                           )}
                         </div>
@@ -574,15 +576,15 @@ export const DepartmentManagement: React.FC = () => {
             <div className="p-6 border-t border-white/10 bg-[#5e3ed0]/20">
               <div className="flex items-center justify-between text-sm text-slate-300">
                 <div>
-                  <span>Tổng số nhân viên đã duyệt: <strong className="text-white">{users.filter(u => u.departmentId === viewStaffDept.id && u.approved).length}</strong></span>
+                  <span>{t('admin.departments.totalApprovedStaff', { count: users.filter(u => u.departmentId === viewStaffDept.id && u.approved).length })}</span>
                   {users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length > 0 && (
                     <span className="ml-4 text-orange-300">
-                      ({users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length} chờ duyệt)
+                      {t('admin.departments.pendingApprovalShort', { count: users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length })}
                     </span>
                   )}
                 </div>
                 <Button onClick={() => setViewStaffDept(null)} className="bg-white/10 hover:bg-white/20 text-white border-none">
-                  Đóng
+                  {t('common.close')}
                 </Button>
               </div>
             </div>

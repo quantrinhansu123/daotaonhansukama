@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Users, BookOpen, Building2, Clock, Award, CheckCircle, Trophy, TrendingUp } from 'lucide-react';
@@ -15,7 +16,7 @@ interface Stats {
   averageProgress: number;
   usersByPosition: { name: string; value: number; color: string }[];
   learningByDepartment: { name: string; hours: number }[];
-  departmentComparison: { name: string; 'Giờ học': number; 'Bài hoàn thành': number; 'Điểm TB': number; 'Số người': number }[];
+  departmentComparison: { name: string; learningHours: number; lessonsCompleted: number; avgScore: number; peopleCount: number }[];
   topLearners: { name: string; hours: number; department: string }[];
   topQuizScorers: { name: string; score: number; quizCount: number }[];
   learningTrend: { month: string; hours: number; lessons: number }[];
@@ -25,6 +26,7 @@ interface Stats {
 const POSITION_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
 export const DashboardSimple: React.FC = () => {
+  const { t, dateLocale } = useLanguage();
   const [stats, setStats] = useState<Stats>({
     totalDepartments: 0,
     totalUsers: 0,
@@ -87,7 +89,7 @@ export const DashboardSimple: React.FC = () => {
       for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const monthName = date.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+        const monthName = date.toLocaleDateString(dateLocale, { month: 'short', year: 'numeric' });
 
         const monthProgress = progressData.filter(p => {
           const progressDate = p.lastWatched?.toDate?.() || new Date();
@@ -112,7 +114,7 @@ export const DashboardSimple: React.FC = () => {
       // Add historical data (last 3 months)
       for (let i = 2; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthName = date.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+        const monthName = date.toLocaleDateString(dateLocale, { month: 'short', year: 'numeric' });
         learningForecast.push({
           month: monthName,
           actual: monthlyHours[5 - i]
@@ -129,7 +131,7 @@ export const DashboardSimple: React.FC = () => {
       let lastValue = monthlyHours[monthlyHours.length - 1];
       for (let i = 1; i <= 3; i++) {
         const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        const monthName = date.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+        const monthName = date.toLocaleDateString(dateLocale, { month: 'short', year: 'numeric' });
         const predictedValue = Math.max(0, lastValue + avgGrowth);
         learningForecast.push({
           month: monthName,
@@ -145,7 +147,7 @@ export const DashboardSimple: React.FC = () => {
       // Users by position
       const positionCounts: Record<string, number> = {};
       approvedUsers.forEach(u => {
-        const pos = u.position || 'Chưa có chức vụ';
+        const pos = u.position || t('admin.dashboard.noPosition');
         positionCounts[pos] = (positionCounts[pos] || 0) + 1;
       });
       const usersByPosition = Object.entries(positionCounts).map(([name, value], index) => ({
@@ -190,10 +192,10 @@ export const DashboardSimple: React.FC = () => {
 
       const departmentComparison = Object.entries(deptStats).map(([name, stats]) => ({
         name,
-        'Giờ học': stats.hours,
-        'Bài hoàn thành': stats.lessonsCompleted,
-        'Điểm TB': stats.avgQuizScore,
-        'Số người': stats.users
+        learningHours: stats.hours,
+        lessonsCompleted: stats.lessonsCompleted,
+        avgScore: stats.avgQuizScore,
+        peopleCount: stats.users
       }));
 
       // Top learners
@@ -204,7 +206,7 @@ export const DashboardSimple: React.FC = () => {
         return {
           name: u.displayName,
           hours: parseFloat(hours.toFixed(1)),
-          department: dept?.name || 'Chưa có'
+          department: dept?.name || t('admin.dashboard.noneYet')
         };
       }).sort((a, b) => b.hours - a.hours).slice(0, 10);
 
@@ -254,7 +256,7 @@ export const DashboardSimple: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Đang tải thống kê...</p>
+          <p className="text-slate-600">{t('admin.dashboard.loadingStats')}</p>
         </div>
       </div>
     );
@@ -262,7 +264,7 @@ export const DashboardSimple: React.FC = () => {
 
   return (
     <div className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-white">{t('admin.dashboard.titleAlt')}</h1>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
@@ -271,7 +273,7 @@ export const DashboardSimple: React.FC = () => {
             <Building2 size={32} />
             <span className="text-3xl font-bold">{stats.totalDepartments}</span>
           </div>
-          <p className="text-blue-100">Phòng ban</p>
+          <p className="text-blue-100">{t('admin.dashboard.totalDepartments')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
@@ -279,7 +281,7 @@ export const DashboardSimple: React.FC = () => {
             <Users size={32} />
             <span className="text-3xl font-bold">{stats.totalUsers}</span>
           </div>
-          <p className="text-green-100">Nhân viên</p>
+          <p className="text-green-100">{t('admin.dashboard.totalStaff')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
@@ -287,7 +289,7 @@ export const DashboardSimple: React.FC = () => {
             <BookOpen size={32} />
             <span className="text-3xl font-bold">{stats.totalCourses}</span>
           </div>
-          <p className="text-purple-100">Khóa học</p>
+          <p className="text-purple-100">{t('admin.dashboard.courses')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white">
@@ -295,7 +297,7 @@ export const DashboardSimple: React.FC = () => {
             <Clock size={32} />
             <span className="text-3xl font-bold">{stats.totalLearningHours}h</span>
           </div>
-          <p className="text-orange-100">Giờ học</p>
+          <p className="text-orange-100">{t('admin.dashboard.learningHours')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-6 text-white">
@@ -303,7 +305,7 @@ export const DashboardSimple: React.FC = () => {
             <CheckCircle size={32} />
             <span className="text-3xl font-bold">{stats.totalLessonsCompleted}</span>
           </div>
-          <p className="text-pink-100">Bài hoàn thành</p>
+          <p className="text-pink-100">{t('admin.dashboard.lessonsCompleted')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-6 text-white">
@@ -311,7 +313,7 @@ export const DashboardSimple: React.FC = () => {
             <TrendingUp size={32} />
             <span className="text-3xl font-bold">{stats.averageProgress}%</span>
           </div>
-          <p className="text-teal-100">Tiến độ TB</p>
+          <p className="text-teal-100">{t('admin.dashboard.avgProgress')}</p>
         </div>
       </div>
 
@@ -319,37 +321,37 @@ export const DashboardSimple: React.FC = () => {
       <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <TrendingUp className="text-[#53cafd]" size={20} />
-          Xu hướng học tập 6 tháng gần đây
+          {t('admin.dashboard.learningTrend')}
         </h3>
         <ResponsiveContainer width="100%" height={350}>
           <LineChart data={stats.learningTrend}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" />
-            <YAxis yAxisId="left" stroke="rgba(255,255,255,0.5)" label={{ value: 'Giờ học', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
-            <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.5)" label={{ value: 'Bài hoàn thành', angle: 90, position: 'insideRight', fill: 'rgba(255,255,255,0.5)' }} />
+            <YAxis yAxisId="left" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.learningHours'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
+            <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.lessonsCompleted'), angle: 90, position: 'insideRight', fill: 'rgba(255,255,255,0.5)' }} />
             <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             <Legend />
-            <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#3b82f6" strokeWidth={3} name="Giờ học" />
-            <Line yAxisId="right" type="monotone" dataKey="lessons" stroke="#10b981" strokeWidth={3} name="Bài hoàn thành" />
+            <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#3b82f6" strokeWidth={3} name={t('admin.dashboard.learningHours')} />
+            <Line yAxisId="right" type="monotone" dataKey="lessons" stroke="#10b981" strokeWidth={3} name={t('admin.dashboard.lessonsCompleted')} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* Department Comparison Chart - Grouped Bar Chart tối ưu hơn cho so sánh categorical */}
       <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
-        <h3 className="text-lg font-bold text-white mb-4">So sánh chỉ số học tập theo phòng ban</h3>
+        <h3 className="text-lg font-bold text-white mb-4">{t('admin.dashboard.departmentComparison')}</h3>
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={stats.departmentComparison}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-            <YAxis yAxisId="left" stroke="rgba(255,255,255,0.5)" label={{ value: 'Giờ học / Bài hoàn thành', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
-            <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.5)" label={{ value: 'Điểm TB / Số người', angle: 90, position: 'insideRight', fill: 'rgba(255,255,255,0.5)' }} />
+            <YAxis yAxisId="left" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.hoursAndLessons'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
+            <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.scoreAndPeople'), angle: 90, position: 'insideRight', fill: 'rgba(255,255,255,0.5)' }} />
             <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             <Legend />
-            <Bar yAxisId="left" dataKey="Giờ học" fill="#3b82f6" />
-            <Bar yAxisId="left" dataKey="Bài hoàn thành" fill="#10b981" />
-            <Bar yAxisId="right" dataKey="Điểm TB" fill="#f59e0b" />
-            <Bar yAxisId="right" dataKey="Số người" fill="#8b5cf6" />
+            <Bar yAxisId="left" dataKey="learningHours" name={t('admin.dashboard.learningHours')} fill="#3b82f6" />
+            <Bar yAxisId="left" dataKey="lessonsCompleted" name={t('admin.dashboard.lessonsCompleted')} fill="#10b981" />
+            <Bar yAxisId="right" dataKey="avgScore" name={t('admin.dashboard.avgScore')} fill="#f59e0b" />
+            <Bar yAxisId="right" dataKey="peopleCount" name={t('admin.dashboard.peopleCount')} fill="#8b5cf6" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -359,15 +361,15 @@ export const DashboardSimple: React.FC = () => {
         {/* Learning Forecast */}
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white">Dự đoán xu hướng học tập</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.learningForecast')}</h3>
             <div className="flex items-center gap-2 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span className="text-slate-300">Thực tế</span>
+                <span className="text-slate-300">{t('admin.dashboard.actual')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                <span className="text-slate-300">Dự đoán</span>
+                <span className="text-slate-300">{t('admin.dashboard.predicted')}</span>
               </div>
             </div>
           </div>
@@ -375,7 +377,7 @@ export const DashboardSimple: React.FC = () => {
             <LineChart data={stats.learningForecast}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" />
-              <YAxis stroke="rgba(255,255,255,0.5)" label={{ value: 'Giờ học', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
+              <YAxis stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.learningHours'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
               <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
               <Legend />
               <Line
@@ -383,7 +385,7 @@ export const DashboardSimple: React.FC = () => {
                 dataKey="actual"
                 stroke="#3b82f6"
                 strokeWidth={3}
-                name="Thực tế"
+                name={t('admin.dashboard.actual')}
                 dot={{ fill: '#3b82f6', r: 5 }}
               />
               <Line
@@ -392,28 +394,30 @@ export const DashboardSimple: React.FC = () => {
                 stroke="#8b5cf6"
                 strokeWidth={3}
                 strokeDasharray="5 5"
-                name="Dự đoán"
+                name={t('admin.dashboard.predicted')}
                 dot={{ fill: '#8b5cf6', r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>
           <div className="mt-4 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
             <p className="text-sm text-purple-200">
-              <span className="font-semibold">💡 Insight:</span> Dựa trên xu hướng 3 tháng gần đây, hệ thống dự đoán giờ học sẽ {
-                stats.learningForecast.length > 3 &&
+              <span className="font-semibold">{t('admin.dashboard.insight')}:</span>{' '}
+              {t('admin.dashboard.insightText', {
+                trend:
+                  stats.learningForecast.length > 3 &&
                   stats.learningForecast[stats.learningForecast.length - 1]?.predicted &&
                   stats.learningForecast[2]?.actual &&
                   stats.learningForecast[stats.learningForecast.length - 1].predicted! > stats.learningForecast[2].actual
-                  ? 'tăng'
-                  : 'giảm'
-              } trong 3 tháng tới.
+                    ? t('admin.dashboard.insightIncrease')
+                    : t('admin.dashboard.insightDecrease'),
+              })}
             </p>
           </div>
         </div>
 
         {/* Users by Position */}
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
-          <h3 className="text-lg font-bold text-white mb-4">Nhân viên theo chức vụ</h3>
+          <h3 className="text-lg font-bold text-white mb-4">{t('admin.dashboard.staffByPosition')}</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -438,15 +442,15 @@ export const DashboardSimple: React.FC = () => {
 
       {/* Learning by Department */}
       <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
-        <h3 className="text-lg font-bold text-white mb-4">Giờ học theo phòng ban</h3>
+        <h3 className="text-lg font-bold text-white mb-4">{t('admin.dashboard.hoursByDepartment')}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={stats.learningByDepartment}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-            <YAxis stroke="rgba(255,255,255,0.5)" label={{ value: 'Giờ học', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
+            <YAxis stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.learningHours'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
             <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             <Legend />
-            <Bar dataKey="hours" fill="#3b82f6" name="Giờ học" />
+            <Bar dataKey="hours" fill="#3b82f6" name={t('admin.dashboard.learningHours')} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -457,7 +461,7 @@ export const DashboardSimple: React.FC = () => {
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="text-yellow-400" size={24} />
-            <h3 className="text-lg font-bold text-white">Top 10 Học nhiều nhất</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.topLearners')}</h3>
           </div>
           <div className="space-y-2">
             {stats.topLearners.map((user, index) => (
@@ -482,7 +486,7 @@ export const DashboardSimple: React.FC = () => {
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
           <div className="flex items-center gap-2 mb-4">
             <Award className="text-green-400" size={24} />
-            <h3 className="text-lg font-bold text-white">Top 10 Điểm kiểm tra cao nhất</h3>
+            <h3 className="text-lg font-bold text-white">{t('admin.dashboard.topQuizScorers')}</h3>
           </div>
           <div className="space-y-2">
             {stats.topQuizScorers.length > 0 ? (
@@ -495,14 +499,14 @@ export const DashboardSimple: React.FC = () => {
                     </span>
                     <div>
                       <p className="font-medium text-white">{user.name}</p>
-                      <p className="text-xs text-slate-400">{user.quizCount} bài kiểm tra</p>
+                      <p className="text-xs text-slate-400">{t('admin.dashboard.quizCount', { count: user.quizCount })}</p>
                     </div>
                   </div>
-                  <span className="font-bold text-green-400">{user.score} điểm</span>
+                  <span className="font-bold text-green-400">{t('admin.dashboard.scorePoints', { score: user.score })}</span>
                 </div>
               ))
             ) : (
-              <p className="text-center text-slate-400 py-8">Chưa có dữ liệu kiểm tra</p>
+              <p className="text-center text-slate-400 py-8">{t('admin.dashboard.noQuizData')}</p>
             )}
           </div>
         </div>

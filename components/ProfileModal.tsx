@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { UserProfile } from '@/types/user';
 import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, X, Camera, Upload } from 'lucide-react';
 
@@ -14,6 +15,7 @@ interface ProfileModalProps {
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { userProfile: user } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [departmentName, setDepartmentName] = useState<string>('');
@@ -61,13 +63,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Vui lòng chọn file ảnh');
+      alert(t('profile.selectImage'));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Ảnh không được vượt quá 5MB');
+      alert(t('profile.imageTooLarge'));
       return;
     }
 
@@ -96,10 +98,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
       const data = await response.json();
       setPhotoURL(data.url);
-      alert('Upload ảnh thành công!');
+      alert(t('profile.uploadPhotoSuccess'));
     } catch (error) {
       console.error('Error uploading photo:', error);
-      alert('Lỗi khi upload ảnh');
+      alert(t('profile.uploadPhotoError'));
     } finally {
       setUploading(false);
     }
@@ -127,12 +129,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       };
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       
-      alert('Cập nhật thông tin thành công!');
+      alert(t('profile.updateSuccess'));
       onClose();
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Lỗi khi cập nhật thông tin');
+      alert(t('profile.updateError'));
     } finally {
       setLoading(false);
     }
@@ -146,8 +148,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-brand-600 to-brand-700 p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Thông tin cá nhân</h2>
-            <p className="text-white/80 text-sm mt-1">Cập nhật thông tin của bạn</p>
+            <h2 className="text-2xl font-bold text-white">{t('profile.titleAlt')}</h2>
+            <p className="text-white/80 text-sm mt-1">{t('profile.subtitle')}</p>
           </div>
           <button
             onClick={onClose}
@@ -189,13 +191,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   ) : (
                     <>
                       <Camera size={24} className="mx-auto mb-1" />
-                      <span className="text-xs">Đổi ảnh</span>
+                      <span className="text-xs">{t('profile.changePhoto')}</span>
                     </>
                   )}
                 </div>
               </label>
             </div>
-            <p className="text-sm text-slate-500 mt-2">Click vào ảnh để thay đổi</p>
+            <p className="text-sm text-slate-500 mt-2">{t('profile.clickToChangePhoto')}</p>
           </div>
 
           <div className="space-y-4">
@@ -203,14 +205,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <User size={16} className="text-brand-600" />
-                Họ và tên
+                {t('profile.fullName')}
               </label>
               <input
                 type="text"
                 value={formData.displayName}
                 onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                 className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
-                placeholder="Nhập họ và tên"
+                placeholder={t('profile.fullNamePlaceholder')}
               />
             </div>
 
@@ -218,7 +220,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <Mail size={16} className="text-brand-600" />
-                Email
+                {t('profile.email')}
               </label>
               <input
                 type="email"
@@ -226,21 +228,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 disabled
                 className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl bg-slate-50 text-slate-500 cursor-not-allowed"
               />
-              <p className="text-xs text-slate-500 mt-1">Email không thể thay đổi</p>
+              <p className="text-xs text-slate-500 mt-1">{t('profile.emailReadonly')}</p>
             </div>
 
             {/* Số điện thoại */}
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <Phone size={16} className="text-brand-600" />
-                Số điện thoại
+                {t('profile.phone')}
               </label>
               <input
                 type="tel"
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
-                placeholder="Nhập số điện thoại"
+                placeholder={t('profile.phonePlaceholder')}
               />
             </div>
 
@@ -248,7 +250,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <Calendar size={16} className="text-brand-600" />
-                Ngày sinh
+                {t('profile.dateOfBirth')}
               </label>
               <input
                 type="date"
@@ -262,14 +264,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <MapPin size={16} className="text-brand-600" />
-                Địa chỉ
+                {t('profile.address')}
               </label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
-                placeholder="Nhập địa chỉ"
+                placeholder={t('profile.addressPlaceholder')}
               />
             </div>
 
@@ -277,14 +279,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <Globe size={16} className="text-brand-600" />
-                Quốc gia
+                {t('profile.country')}
               </label>
               <input
                 type="text"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
-                placeholder="Nhập quốc gia"
+                placeholder={t('profile.countryPlaceholder')}
               />
             </div>
 
@@ -292,14 +294,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                 <Briefcase size={16} className="text-brand-600" />
-                Vị trí làm việc
+                {t('profile.workLocation')}
               </label>
               <input
                 type="text"
                 value={formData.workLocation}
                 onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
                 className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
-                placeholder="Nhập vị trí làm việc"
+                placeholder={t('profile.workLocationPlaceholder')}
               />
             </div>
 
@@ -308,7 +310,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                   <Building2 size={16} className="text-brand-600" />
-                  Phòng ban
+                  {t('profile.department')}
                 </label>
                 <input
                   type="text"
@@ -316,7 +318,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   disabled
                   className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl bg-slate-50 text-slate-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-slate-500 mt-1">Liên hệ admin để thay đổi</p>
+                <p className="text-xs text-slate-500 mt-1">{t('profile.contactAdmin')}</p>
               </div>
             )}
 
@@ -325,15 +327,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                   <DollarSign size={16} className="text-brand-600" />
-                  Lương cơ bản
+                  {t('profile.baseSalary')}
                 </label>
                 <input
                   type="text"
-                  value={`${user.monthlySalary.toLocaleString('vi-VN')} VNĐ`}
+                  value={`${user.monthlySalary.toLocaleString(dateLocale)} VNĐ`}
                   disabled
                   className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl bg-slate-50 text-slate-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-slate-500 mt-1">Liên hệ admin để thay đổi</p>
+                <p className="text-xs text-slate-500 mt-1">{t('profile.contactAdmin')}</p>
               </div>
             )}
           </div>
@@ -346,14 +348,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-xl hover:from-brand-700 hover:to-brand-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
             >
               <Save size={18} />
-              {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+              {loading ? t('common.saving') : t('profile.save')}
             </button>
             <button
               onClick={onClose}
               disabled={loading || uploading}
               className="px-6 py-3 border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Hủy
+              {t('profile.cancel')}
             </button>
           </div>
         </div>

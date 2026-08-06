@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
@@ -17,6 +18,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
   course,
   onUpdate
 }) => {
+  const { t, dateLocale } = useLanguage();
   const [currentCourse, setCurrentCourse] = useState<Course>(course);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [courseStudents, setCourseStudents] = useState<UserProfile[]>([]);
@@ -83,7 +85,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
       }
     } catch (error) {
       console.error('Error loading users:', error);
-      alert('Lỗi khi tải danh sách người dùng');
+      alert(t('admin.courseStudents.loadError'));
     } finally {
       setLoading(false);
     }
@@ -91,14 +93,14 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
 
   const handleAddStudents = async () => {
     if (selectedUserIds.length === 0) {
-      alert('Vui lòng chọn ít nhất một người');
+      alert(t('admin.courseStudents.selectAtLeastOne'));
       return;
     }
 
     // Filter out any undefined or empty values
     const validUserIds = selectedUserIds.filter(id => id && id.trim() !== '');
     if (validUserIds.length === 0) {
-      alert('Không có ID người dùng hợp lệ');
+      alert(t('admin.courseStudents.noValidUserIds'));
       return;
     }
 
@@ -114,7 +116,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
         });
       }
 
-      alert(`Đã thêm ${validUserIds.length} học viên vào khóa học!`);
+      alert(t('admin.courseStudents.addSuccess', { count: validUserIds.length }));
       setShowModal(false);
       setSelectedUserIds([]);
       // Reload course data and students list
@@ -125,17 +127,17 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
       onUpdate();
     } catch (error) {
       console.error('Error adding students:', error);
-      alert('Lỗi khi thêm học viên');
+      alert(t('admin.courseStudents.addError'));
     }
   };
 
   const handleRemoveStudent = async (userId: string) => {
     if (!userId || userId.trim() === '') {
-      alert('Lỗi: ID người dùng không hợp lệ');
+      alert(t('admin.courseStudents.invalidUserId'));
       return;
     }
 
-    if (!confirm('Bạn có chắc muốn xóa học viên này khỏi khóa học?')) {
+    if (!confirm(t('admin.courseStudents.confirmRemove'))) {
       return;
     }
 
@@ -146,7 +148,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
         updatedAt: new Date()
       });
 
-      alert('Đã xóa học viên khỏi khóa học!');
+      alert(t('admin.courseStudents.removeSuccess'));
       // Reload course data and students list
       const updatedCourse = await loadCourseData(currentCourse.id);
       if (updatedCourse) {
@@ -155,7 +157,22 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
       onUpdate();
     } catch (error) {
       console.error('Error removing student:', error);
-      alert('Lỗi khi xóa học viên');
+      alert(t('admin.courseStudents.removeError'));
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'student':
+        return t('admin.users.roles.student');
+      case 'staff':
+        return t('admin.users.roles.staff');
+      case 'teacher':
+        return t('admin.users.roles.teacherAlt');
+      case 'admin':
+        return t('admin.users.roles.admin');
+      default:
+        return role;
     }
   };
 
@@ -174,7 +191,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
   );
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
   return (
@@ -183,10 +200,10 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
         <div>
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
             <Users size={24} />
-            Học viên trong khóa học
+            {t('admin.courseStudents.titleAlt')}
           </h3>
           <p className="text-sm text-slate-300 mt-1">
-            Quản lý học viên đã tham gia khóa học này
+            {t('admin.courseStudents.subtitleAlt')}
           </p>
         </div>
         <Button
@@ -194,7 +211,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
           className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25"
         >
           <UserPlus size={18} />
-          Thêm học viên
+          {t('admin.courseStudents.addStudent')}
         </Button>
       </div>
 
@@ -202,8 +219,8 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
       {courseStudents.length === 0 ? (
         <div className="text-center py-12 bg-white/5 rounded-lg border border-white/10">
           <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-          <p className="text-slate-300">Chưa có học viên nào trong khóa học</p>
-          <p className="text-sm text-slate-400 mt-1">Nhấn "Thêm học viên" để bắt đầu</p>
+          <p className="text-slate-300">{t('admin.courseStudents.noStudents')}</p>
+          <p className="text-sm text-slate-400 mt-1">{t('admin.courseStudents.startHint')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -221,16 +238,13 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
                         student.role === 'teacher' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
                           'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                     }`}>
-                    {student.role === 'student' ? 'Học viên' :
-                      student.role === 'staff' ? 'Nhân viên' :
-                        student.role === 'teacher' ? 'Giáo viên' :
-                          student.role}
+                    {getRoleLabel(student.role)}
                   </span>
                 </div>
                 <button
                   onClick={() => handleRemoveStudent(student.uid)}
                   className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                  title="Xóa khỏi khóa học"
+                  title={t('admin.courseStudents.removeFromCourse')}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -245,7 +259,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#311898] border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Thêm học viên vào khóa học</h3>
+              <h3 className="text-xl font-bold text-white">{t('admin.courseStudents.addToCourse')}</h3>
               <button
                 onClick={() => {
                   setShowModal(false);
@@ -263,7 +277,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo tên hoặc email..."
+                placeholder={t('admin.courseStudents.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -274,7 +288,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
             <div className="flex-1 overflow-y-auto mb-4 space-y-2">
               {availableUsers.length === 0 ? (
                 <div className="text-center py-8 text-slate-400">
-                  {searchTerm ? 'Không tìm thấy người dùng phù hợp' : 'Không có người dùng khả dụng'}
+                  {searchTerm ? t('admin.courseStudents.noMatchUsers') : t('admin.courseStudents.noAvailableUsers')}
                 </div>
               ) : (
                 availableUsers.map((user) => (
@@ -301,11 +315,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
                             user.role === 'admin' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                               'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                       }`}>
-                      {user.role === 'student' ? 'Học viên' :
-                        user.role === 'staff' ? 'Nhân viên' :
-                          user.role === 'teacher' ? 'Giáo viên' :
-                            user.role === 'admin' ? 'Admin' :
-                              user.role}
+                      {getRoleLabel(user.role)}
                     </span>
                   </label>
                 ))
@@ -319,7 +329,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
                 className="flex-1 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25"
                 disabled={selectedUserIds.length === 0}
               >
-                Thêm {selectedUserIds.length > 0 && `(${selectedUserIds.length})`}
+                {t('admin.courseStudents.addSelected')}{selectedUserIds.length > 0 && ` (${selectedUserIds.length})`}
               </Button>
               <button
                 onClick={() => {
@@ -329,7 +339,7 @@ export const CourseStudentManagement: React.FC<CourseStudentManagementProps> = (
                 }}
                 className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5 text-white transition-colors"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
             </div>
           </div>

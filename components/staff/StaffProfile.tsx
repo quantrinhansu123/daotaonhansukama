@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { UserProfile, Position } from '@/types/user';
 import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, Edit2, X } from 'lucide-react';
 
 export const StaffProfile: React.FC = () => {
   const { userProfile: user } = useAuth();
+  const { t, dateLocale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [departmentName, setDepartmentName] = useState<string>('');
@@ -57,12 +59,12 @@ export const StaffProfile: React.FC = () => {
         ...formData,
         updatedAt: new Date(),
       });
-      alert('Cập nhật thông tin thành công!');
+      alert(t('staff.updateInfoSuccess'));
       setEditing(false);
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Lỗi khi cập nhật thông tin');
+      alert(t('staff.updateInfoError'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export const StaffProfile: React.FC = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#311898] flex items-center justify-center">
-        <div className="text-white">Đang tải...</div>
+        <div className="text-white">{t("common.loading")}</div>
       </div>
     );
   }
@@ -95,7 +97,7 @@ export const StaffProfile: React.FC = () => {
             <p className="text-slate-300">{user.email}</p>
             <div className="flex justify-center gap-2 mt-4">
               <span className="px-4 py-1 bg-white/10 rounded-full text-white text-sm font-medium border border-white/10">
-                {user.role === 'admin' ? 'Quản trị viên' : user.role === 'staff' ? 'Nhân viên' : user.role === 'teacher' ? 'Giáo viên' : 'Học viên'}
+                {user.role === 'admin' ? t('staff.roleAdmin') : user.role === 'staff' ? t('staff.roleStaff') : user.role === 'teacher' ? t('staff.roleTeacher') : t('staff.roleStudent')}
               </span>
               {user.position && (
                 <span className="px-4 py-1 bg-[#53cafd]/20 rounded-full text-[#53cafd] text-sm font-medium border border-[#53cafd]/30">
@@ -108,14 +110,14 @@ export const StaffProfile: React.FC = () => {
           {/* Info Section */}
           <div className="p-8">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Thông tin chi tiết</h3>
+              <h3 className="text-xl font-bold text-white">{t("staff.detailInfo")}</h3>
               {!editing ? (
                 <button
                   onClick={() => setEditing(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-[#53cafd] text-white rounded-xl hover:bg-[#3db9f5] transition-colors shadow-lg shadow-[#53cafd]/25"
                 >
                   <Edit2 size={18} />
-                  Chỉnh sửa
+                  {t("staff.edit")}
                 </button>
               ) : (
                 <div className="flex gap-2">
@@ -134,7 +136,7 @@ export const StaffProfile: React.FC = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors border border-white/10"
                   >
                     <X size={18} />
-                    Hủy
+                    {t("common.cancel")}
                   </button>
                   <button
                     onClick={handleSave}
@@ -142,7 +144,7 @@ export const StaffProfile: React.FC = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 shadow-lg shadow-green-500/25"
                   >
                     <Save size={18} />
-                    {loading ? 'Đang lưu...' : 'Lưu'}
+                    {loading ? t('common.saving') : t('common.save')}
                   </button>
                 </div>
               )}
@@ -153,7 +155,7 @@ export const StaffProfile: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <User className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Họ và tên</label>
+                  <label className="text-slate-400 text-sm">{t("profile.fullName")}</label>
                 </div>
                 {editing ? (
                   <input
@@ -171,28 +173,28 @@ export const StaffProfile: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <Mail className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Email</label>
+                  <label className="text-slate-400 text-sm">{t('profile.email')}</label>
                 </div>
                 <p className="text-white font-medium">{user.email}</p>
-                <p className="text-slate-500 text-xs mt-1">Email không thể thay đổi</p>
+                <p className="text-slate-500 text-xs mt-1">{t("staff.emailImmutable")}</p>
               </div>
 
               {/* Số điện thoại */}
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <Phone className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Số điện thoại</label>
+                  <label className="text-slate-400 text-sm">{t("profile.phone")}</label>
                 </div>
                 {editing ? (
                   <input
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    placeholder="Nhập số điện thoại"
+                    placeholder={t("staff.phonePlaceholder")}
                     className="w-full bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 focus:border-[#53cafd] focus:outline-none focus:ring-1 focus:ring-[#53cafd]"
                   />
                 ) : (
-                  <p className="text-white font-medium">{user.phoneNumber || 'Chưa cập nhật'}</p>
+                  <p className="text-white font-medium">{user.phoneNumber || t('staff.notUpdated')}</p>
                 )}
               </div>
 
@@ -200,7 +202,7 @@ export const StaffProfile: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <Calendar className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Ngày sinh</label>
+                  <label className="text-slate-400 text-sm">{t("profile.dateOfBirth")}</label>
                 </div>
                 {editing ? (
                   <input
@@ -211,7 +213,7 @@ export const StaffProfile: React.FC = () => {
                   />
                 ) : (
                   <p className="text-white font-medium">
-                    {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                    {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString(dateLocale) : t('staff.notUpdated')}
                   </p>
                 )}
               </div>
@@ -220,18 +222,18 @@ export const StaffProfile: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <MapPin className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Địa chỉ</label>
+                  <label className="text-slate-400 text-sm">{t("profile.address")}</label>
                 </div>
                 {editing ? (
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Nhập địa chỉ"
+                    placeholder={t("staff.addressPlaceholder")}
                     className="w-full bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 focus:border-[#53cafd] focus:outline-none focus:ring-1 focus:ring-[#53cafd]"
                   />
                 ) : (
-                  <p className="text-white font-medium">{user.address || 'Chưa cập nhật'}</p>
+                  <p className="text-white font-medium">{user.address || t('staff.notUpdated')}</p>
                 )}
               </div>
 
@@ -239,18 +241,18 @@ export const StaffProfile: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <Globe className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Quốc gia</label>
+                  <label className="text-slate-400 text-sm">{t("profile.country")}</label>
                 </div>
                 {editing ? (
                   <input
                     type="text"
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    placeholder="Nhập quốc gia"
+                    placeholder={t("staff.countryPlaceholder")}
                     className="w-full bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 focus:border-[#53cafd] focus:outline-none focus:ring-1 focus:ring-[#53cafd]"
                   />
                 ) : (
-                  <p className="text-white font-medium">{user.country || 'Chưa cập nhật'}</p>
+                  <p className="text-white font-medium">{user.country || t('staff.notUpdated')}</p>
                 )}
               </div>
 
@@ -258,18 +260,18 @@ export const StaffProfile: React.FC = () => {
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <div className="flex items-center gap-3 mb-2">
                   <Briefcase className="text-[#53cafd]" size={20} />
-                  <label className="text-slate-400 text-sm">Vị trí làm việc</label>
+                  <label className="text-slate-400 text-sm">{t("profile.workLocation")}</label>
                 </div>
                 {editing ? (
                   <input
                     type="text"
                     value={formData.workLocation}
                     onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
-                    placeholder="Nhập vị trí làm việc"
+                    placeholder={t("staff.workLocationPlaceholder")}
                     className="w-full bg-white/10 text-white px-4 py-2 rounded-lg border border-white/20 focus:border-[#53cafd] focus:outline-none focus:ring-1 focus:ring-[#53cafd]"
                   />
                 ) : (
-                  <p className="text-white font-medium">{user.workLocation || 'Chưa cập nhật'}</p>
+                  <p className="text-white font-medium">{user.workLocation || t('staff.notUpdated')}</p>
                 )}
               </div>
 
@@ -278,10 +280,10 @@ export const StaffProfile: React.FC = () => {
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <div className="flex items-center gap-3 mb-2">
                     <Building2 className="text-[#53cafd]" size={20} />
-                    <label className="text-slate-400 text-sm">Phòng ban</label>
+                    <label className="text-slate-400 text-sm">{t("profile.department")}</label>
                   </div>
                   <p className="text-white font-medium">{departmentName}</p>
-                  <p className="text-slate-500 text-xs mt-1">Liên hệ admin để thay đổi</p>
+                  <p className="text-slate-500 text-xs mt-1">{t("staff.contactAdminToChange")}</p>
                 </div>
               )}
 
@@ -290,10 +292,10 @@ export const StaffProfile: React.FC = () => {
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <div className="flex items-center gap-3 mb-2">
                     <DollarSign className="text-[#53cafd]" size={20} />
-                    <label className="text-slate-400 text-sm">Lương cơ bản</label>
+                    <label className="text-slate-400 text-sm">{t("staff.baseSalary")}</label>
                   </div>
-                  <p className="text-white font-medium">{user.monthlySalary.toLocaleString('vi-VN')} VNĐ</p>
-                  <p className="text-slate-500 text-xs mt-1">Liên hệ admin để thay đổi</p>
+                  <p className="text-white font-medium">{user.monthlySalary.toLocaleString(dateLocale)} {t('staff.currencyVnd')}</p>
+                  <p className="text-slate-500 text-xs mt-1">{t("staff.contactAdminToChange")}</p>
                 </div>
               )}
             </div>

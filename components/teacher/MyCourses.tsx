@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
-import { UserProfile } from '@/types/user';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { BookOpen } from 'lucide-react';
 import { CourseDetailPage } from '@/components/admin/CourseDetailPage';
 
 export const MyCourses: React.FC = () => {
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -27,7 +28,6 @@ export const MyCourses: React.FC = () => {
     try {
       setLoading(true);
 
-      // Load courses assigned to this teacher
       const coursesRef = collection(db, 'courses');
       const q = query(coursesRef, where('teacherId', '==', userProfile.uid));
       const snapshot = await getDocs(q);
@@ -51,9 +51,9 @@ export const MyCourses: React.FC = () => {
       advanced: 'bg-pink-500/20 text-pink-400'
     };
     const labels = {
-      beginner: 'Cơ bản',
-      intermediate: 'Trung cấp',
-      advanced: 'Nâng cao'
+      beginner: t('student.levelBeginner'),
+      intermediate: t('student.levelIntermediate'),
+      advanced: t('student.levelAdvanced')
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[level as keyof typeof styles]}`}>
@@ -63,7 +63,7 @@ export const MyCourses: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
   if (selectedCourse) {
@@ -80,39 +80,38 @@ export const MyCourses: React.FC = () => {
     return (
       <div className="text-center py-12 bg-[#5e3ed0]/20 rounded-xl border border-white/10 backdrop-blur-md">
         <BookOpen className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">Chưa có khóa học nào</h3>
-        <p className="text-slate-300">Admin sẽ phân công khóa học cho bạn</p>
+        <h3 className="text-lg font-semibold text-white mb-2">{t('teacher.noCoursesTitle')}</h3>
+        <p className="text-slate-300">{t('teacher.noCoursesHint')}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Khóa học của tôi</h2>
+      <h2 className="text-2xl font-bold text-white">{t('teacher.myCourses')}</h2>
 
-      {/* Course List Table */}
       <div className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Khóa học
+                  {t('teacher.courseCol')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Danh mục
+                  {t('teacher.categoryCol')}
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Cấp độ
+                  {t('teacher.levelCol')}
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Học viên
+                  {t('teacher.studentsCol')}
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Thời lượng
+                  {t('teacher.durationCol')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Thao tác
+                  {t('teacher.actionsCol')}
                 </th>
               </tr>
             </thead>
@@ -143,7 +142,7 @@ export const MyCourses: React.FC = () => {
                       className="px-5 py-2.5 bg-gradient-to-r from-[#53cafd] to-blue-600 text-white rounded-lg hover:from-[#3db9f5] hover:to-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium ml-auto"
                     >
                       <BookOpen size={16} />
-                      Quản lý lớp học
+                      {t('teacher.manageClass')}
                     </button>
                   </td>
                 </tr>

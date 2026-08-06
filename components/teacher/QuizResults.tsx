@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { Lesson, QuizResult, Question } from '@/types/lesson';
 import { ArrowLeft, Users, Award, Clock, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/Button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QuizResultsProps {
   lesson: Lesson;
@@ -13,6 +14,7 @@ interface QuizResultsProps {
 }
 
 export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
+  const { t, dateLocale } = useLanguage();
   const [results, setResults] = useState<QuizResult[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
       setQuestions(questionsData);
     } catch (error) {
       console.error('Error loading quiz results:', error);
-      alert('Lỗi khi tải kết quả: ' + (error as Error).message);
+      alert(t('teacher.loadResultsError', { message: (error as Error).message }));
     } finally {
       setLoading(false);
     }
@@ -83,7 +85,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
   const stats = calculateStats();
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t("common.loading")}</div>;
   }
 
   return (
@@ -93,12 +95,12 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
         <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 mb-6 backdrop-blur-md">
           <button onClick={onBack} className="text-[#53cafd] hover:text-[#3db9f5] mb-3 flex items-center gap-2 transition-colors">
             <ArrowLeft size={18} />
-            Quay lại quản lý bài kiểm tra
+            {t("teacher.backToQuizManagement")}
           </button>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold text-white mb-1">Kết quả bài kiểm tra</h3>
-              <p className="text-slate-300">Bài học: <span className="font-medium text-white">{lesson.title}</span></p>
+              <h3 className="text-2xl font-bold text-white mb-1">{t("teacher.quizResultsTitle")}</h3>
+              <p className="text-slate-300">{t("teacher.lessonLabel")}: <span className="font-medium text-white">{lesson.title}</span></p>
             </div>
           </div>
         </div>
@@ -109,8 +111,8 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
               <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/20">
                 <Users className="w-10 h-10 text-slate-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Chưa có giáo viên làm bài</h3>
-              <p className="text-slate-300">Kết quả sẽ hiển thị khi có giáo viên hoàn thành bài kiểm tra</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t("teacher.noResultsTitle")}</h3>
+              <p className="text-slate-300">{t("teacher.noResultsHint")}</p>
             </div>
           </div>
         ) : (
@@ -123,7 +125,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                     <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/30">
                       <Users className="w-5 h-5 text-blue-400" />
                     </div>
-                    <span className="text-sm font-medium text-slate-300">Giáo viên</span>
+                    <span className="text-sm font-medium text-slate-300">{t("teacher.teachers")}</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{stats.totalStudents}</p>
                 </div>
@@ -133,7 +135,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                     <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/30">
                       <Award className="w-5 h-5 text-green-400" />
                     </div>
-                    <span className="text-sm font-medium text-slate-300">Điểm TB</span>
+                    <span className="text-sm font-medium text-slate-300">{t("teacher.avgScore")}</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{stats.avgScore.toFixed(1)}</p>
                 </div>
@@ -143,7 +145,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                     <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/30">
                       <TrendingUp className="w-5 h-5 text-purple-400" />
                     </div>
-                    <span className="text-sm font-medium text-slate-300">Tỷ lệ đạt</span>
+                    <span className="text-sm font-medium text-slate-300">{t("teacher.passRate")}</span>
                   </div>
                   <p className="text-3xl font-bold text-white">{stats.passRate.toFixed(0)}%</p>
                 </div>
@@ -153,7 +155,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                     <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/30">
                       <Clock className="w-5 h-5 text-orange-400" />
                     </div>
-                    <span className="text-sm font-medium text-slate-300">Thời gian TB</span>
+                    <span className="text-sm font-medium text-slate-300">{t("teacher.avgTime")}</span>
                   </div>
                   <p className="text-3xl font-bold text-white">
                     {Math.floor(stats.avgTime / 60)}'
@@ -168,12 +170,12 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                 <table className="w-full">
                   <thead className="bg-white/5 border-b border-white/10">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-white">Giáo viên</th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-white">Điểm</th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-white">Đúng/Tổng</th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-white">Thời gian</th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-white">Hoàn thành</th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-white">Chi tiết</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-white">{t("teacher.teachers")}</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-white">{t("teacher.score")}</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-white">{t("teacher.correctTotal")}</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-white">{t("teacher.timeCol")}</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-white">{t("teacher.completedAt")}</th>
+                      <th className="px-6 py-4 text-center text-sm font-bold text-white">{t("teacher.details")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -181,7 +183,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                       <tr key={result.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-medium text-white">{result.userName || 'Giáo viên'}</p>
+                            <p className="font-medium text-white">{result.userName || t('teacher.teacherFallback')}</p>
                             <p className="text-sm text-slate-400">{result.userEmail}</p>
                           </div>
                         </td>
@@ -205,9 +207,9 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="text-sm text-slate-300">
-                            {result.completedAt.toLocaleDateString('vi-VN')}
+                            {result.completedAt.toLocaleDateString(dateLocale)}
                             <br />
-                            {result.completedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            {result.completedAt.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -215,7 +217,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                             onClick={() => setSelectedResult(result)}
                             className="bg-purple-600 hover:bg-purple-700 text-sm py-2 px-4 shadow-lg shadow-purple-600/25 text-white border-none"
                           >
-                            Xem chi tiết
+                            {t("teacher.viewDetails")}
                           </Button>
                         </td>
                       </tr>
@@ -233,15 +235,15 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
             <div className="bg-[#1a103d] rounded-2xl shadow-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-white/10">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-white">Chi tiết bài làm</h3>
-                  <p className="text-slate-300 mt-1">{selectedResult.userName || 'Giáo viên'}</p>
+                  <h3 className="text-2xl font-bold text-white">{t("teacher.attemptDetails")}</h3>
+                  <p className="text-slate-300 mt-1">{selectedResult.userName || t('teacher.teacherFallback')}</p>
                   <div className="flex items-center gap-4 mt-2 text-sm">
                     <span className="text-slate-300">
-                      Điểm: <span className="font-bold text-[#53cafd]">{selectedResult.score}</span>
+                      {t("teacher.scoreLabel")}: <span className="font-bold text-[#53cafd]">{selectedResult.score}</span>
                     </span>
                     <span className="text-slate-500">|</span>
                     <span className="text-slate-300">
-                      Đúng: <span className="font-bold text-green-400">{selectedResult.correctCount}/{selectedResult.totalQuestions}</span>
+                      {t("teacher.correctLabel")}: <span className="font-bold text-green-400">{selectedResult.correctCount}/{selectedResult.totalQuestions}</span>
                     </span>
                   </div>
                 </div>
@@ -272,7 +274,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                         </div>
                         <div className="flex-1">
                           {isEmpty ? (
-                            <p className="text-slate-300 font-medium mb-3">Câu hỏi trống (chỉ có đáp án)</p>
+                            <p className="text-slate-300 font-medium mb-3">{t("teacher.emptyQuestionAnswerOnly")}</p>
                           ) : (
                             <p className="text-white font-medium mb-3">{question.question}</p>
                           )}
@@ -293,7 +295,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                                     }`}
                                 >
                                   <span className="font-bold mr-2">{String.fromCharCode(65 + optIndex)}.</span>
-                                  {isEmpty ? `Đáp án ${String.fromCharCode(65 + optIndex)}` : option}
+                                  {isEmpty ? t("teacher.answerLetter", { letter: String.fromCharCode(65 + optIndex) }) : option}
                                   {isCorrectAnswer && (
                                     <CheckCircle className="inline-block ml-2 w-4 h-4 text-green-400" />
                                   )}
@@ -316,7 +318,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                   onClick={() => setSelectedResult(null)}
                   className="bg-slate-600 hover:bg-slate-700 text-white border-none"
                 >
-                  Đóng
+                  {t("common.close")}
                 </Button>
               </div>
             </div>

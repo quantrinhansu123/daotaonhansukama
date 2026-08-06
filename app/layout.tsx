@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SSOProvider } from "@/components/SSOProvider";
 import { CleanupAttributes } from "@/components/CleanupAttributes";
 
@@ -18,8 +19,8 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Kama - Nền tảng học tập trực tuyến",
-  description: "Nền tảng học tập trực tuyến với AI",
+  title: "Kama - Online Learning Platform | Nền tảng học tập trực tuyến",
+  description: "Online learning platform with AI | Nền tảng học tập trực tuyến với AI",
 };
 
 export default function RootLayout({
@@ -121,11 +122,13 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <CleanupAttributes />
-        <AuthProvider>
-          <SSOProvider>
-            {children}
-          </SSOProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <SSOProvider>
+              {children}
+            </SSOProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

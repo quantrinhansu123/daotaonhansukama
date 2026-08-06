@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const ChatbaseWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <>
@@ -11,7 +13,7 @@ export const ChatbaseWidget: React.FC = () => {
       {isOpen && (
         <div className="fixed bottom-24 right-6 w-[400px] h-[600px] bg-white rounded-lg shadow-2xl z-50 flex flex-col overflow-hidden">
           <div className="bg-brand-600 text-white p-4 flex justify-between items-center">
-            <h3 className="font-semibold">Trợ lý AI</h3>
+            <h3 className="font-semibold">{t('common.aiAssistant')}</h3>
             <button
               onClick={() => setIsOpen(false)}
               className="text-white hover:text-gray-200 transition-colors"

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FolderKanban, Plus, Edit2, Trash2, X, Save, Search, Users, Calendar, DollarSign, AlertCircle } from 'lucide-react';
@@ -10,6 +11,7 @@ import { UserProfile } from '@/types/user';
 import { Department } from '@/types/department';
 
 export const ProjectManagement: React.FC = () => {
+  const { t, dateLocale } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -126,7 +128,7 @@ export const ProjectManagement: React.FC = () => {
     } catch (error: any) {
       console.error('[ProjectManagement] Error loading data:', error);
       if (error.code === 'permission-denied') {
-        alert('Lỗi quyền truy cập Firestore. Vui lòng kiểm tra Firestore rules đã được deploy chưa.');
+        alert(t('admin.projects.firestorePermissionError'));
       }
     } finally {
       setLoading(false);
@@ -158,9 +160,9 @@ export const ProjectManagement: React.FC = () => {
     } catch (error: any) {
       console.error('[ProjectManagement] Error saving project:', error);
       if (error.code === 'permission-denied') {
-        alert('Lỗi quyền truy cập Firestore. Vui lòng kiểm tra Firestore rules đã được deploy chưa.');
+        alert(t('admin.projects.firestorePermissionError'));
       } else {
-        alert('Lỗi khi lưu project: ' + (error.message || 'Unknown error'));
+        alert(t('admin.projects.saveError', { error: error.message || 'Unknown error' }));
       }
     }
   };
@@ -184,14 +186,14 @@ export const ProjectManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa project này?')) return;
+    if (!confirm(t('admin.projects.confirmDelete'))) return;
 
     try {
       await deleteDoc(doc(db, 'projects', id));
       loadData();
     } catch (error) {
       console.error('Error deleting project:', error);
-      alert('Lỗi khi xóa project');
+      alert(t('admin.projects.deleteError'));
     }
   };
 
@@ -235,39 +237,39 @@ export const ProjectManagement: React.FC = () => {
 
   const getStatusLabel = (status: ProjectStatus) => {
     const labels: Record<ProjectStatus, string> = {
-      planning: 'Lên kế hoạch',
-      in_progress: 'Đang thực hiện',
-      completed: 'Hoàn thành',
-      on_hold: 'Tạm dừng',
-      cancelled: 'Đã hủy',
+      planning: t('admin.projects.statusPlanning'),
+      in_progress: t('admin.projects.statusInProgress'),
+      completed: t('admin.projects.statusCompleted'),
+      on_hold: t('admin.projects.statusOnHold'),
+      cancelled: t('admin.projects.statusCancelled'),
     };
     return labels[status];
   };
 
   const getPriorityLabel = (priority: ProjectPriority) => {
     const labels: Record<ProjectPriority, string> = {
-      low: 'Thấp',
-      medium: 'Trung bình',
-      high: 'Cao',
-      urgent: 'Khẩn cấp',
+      low: t('admin.projects.priorityLow'),
+      medium: t('admin.projects.priorityMedium'),
+      high: t('admin.projects.priorityHigh'),
+      urgent: t('admin.projects.priorityUrgent'),
     };
     return labels[priority];
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Đang tải...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Quản lý Project</h1>
-          <p className="text-slate-300">Quản lý và theo dõi các dự án</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('admin.projects.titleAlt')}</h1>
+          <p className="text-slate-300">{t('admin.projects.subtitleAlt')}</p>
         </div>
         <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
           <Plus size={20} />
-          Thêm Project
+          {t('admin.projects.addProjectAlt')}
         </Button>
       </div>
 
@@ -277,7 +279,7 @@ export const ProjectManagement: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Tìm kiếm project theo tên, mô tả, người quản lý..."
+            placeholder={t('admin.projects.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -288,32 +290,32 @@ export const ProjectManagement: React.FC = () => {
       {/* Filters */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo trạng thái</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.filterByStatus')}</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | 'all')}
             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
           >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="planning">Lên kế hoạch</option>
-            <option value="in_progress">Đang thực hiện</option>
-            <option value="completed">Hoàn thành</option>
-            <option value="on_hold">Tạm dừng</option>
-            <option value="cancelled">Đã hủy</option>
+            <option value="all">{t('admin.projects.allStatuses')}</option>
+            <option value="planning">{t('admin.projects.statusPlanning')}</option>
+            <option value="in_progress">{t('admin.projects.statusInProgress')}</option>
+            <option value="completed">{t('admin.projects.statusCompleted')}</option>
+            <option value="on_hold">{t('admin.projects.statusOnHold')}</option>
+            <option value="cancelled">{t('admin.projects.statusCancelled')}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Lọc theo mức độ</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.filterByPriority')}</label>
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value as ProjectPriority | 'all')}
             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
           >
-            <option value="all">Tất cả mức độ</option>
-            <option value="low">Thấp</option>
-            <option value="medium">Trung bình</option>
-            <option value="high">Cao</option>
-            <option value="urgent">Khẩn cấp</option>
+            <option value="all">{t('admin.projects.allPriorities')}</option>
+            <option value="low">{t('admin.projects.priorityLow')}</option>
+            <option value="medium">{t('admin.projects.priorityMedium')}</option>
+            <option value="high">{t('admin.projects.priorityHigh')}</option>
+            <option value="urgent">{t('admin.projects.priorityUrgent')}</option>
           </select>
         </div>
       </div>
@@ -324,7 +326,7 @@ export const ProjectManagement: React.FC = () => {
           <div className="text-center py-12">
             <FolderKanban className="w-16 h-16 text-slate-500 mx-auto mb-4" />
             <p className="text-slate-300">
-              {searchTerm ? 'Không tìm thấy project nào' : 'Chưa có project nào'}
+              {searchTerm ? t('admin.projects.notFound') : t('admin.projects.noProjectsAlt')}
             </p>
           </div>
         ) : (
@@ -333,28 +335,28 @@ export const ProjectManagement: React.FC = () => {
               <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Tên Project
+                    {t('admin.projects.nameAlt')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Trạng thái
+                    {t('admin.projects.status')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Mức độ
+                    {t('admin.projects.priority')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Người quản lý
+                    {t('admin.projects.manager')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Phòng ban
+                    {t('admin.projects.department')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Thành viên
+                    {t('admin.projects.members')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Ngân sách
+                    {t('admin.projects.budget')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Thao tác
+                    {t('common.actions')}
                   </th>
                 </tr>
               </thead>
@@ -412,7 +414,7 @@ export const ProjectManagement: React.FC = () => {
                       {project.budget ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm font-medium">
                           <DollarSign size={14} />
-                          {project.budget.toLocaleString('vi-VN')} đ
+                          {project.budget.toLocaleString(dateLocale)} đ
                         </span>
                       ) : (
                         <span className="text-slate-400 text-sm">-</span>
@@ -423,14 +425,14 @@ export const ProjectManagement: React.FC = () => {
                         <button
                           onClick={() => handleEdit(project)}
                           className="p-2 text-[#53cafd] hover:bg-white/10 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
+                          title={t('common.edit')}
                         >
                           <Edit2 size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(project.id)}
                           className="p-2 text-pink-500 hover:bg-white/10 rounded-lg transition-colors"
-                          title="Xóa"
+                          title={t('common.delete')}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -450,7 +452,7 @@ export const ProjectManagement: React.FC = () => {
           <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">
-                {editingProject ? 'Chỉnh sửa Project' : 'Thêm Project mới'}
+                {editingProject ? t('admin.projects.editProject') : t('admin.projects.addProjectNew')}
               </h3>
               <button onClick={() => { setShowModal(false); resetForm(); }} className="p-2 hover:bg-white/10 rounded-lg text-white">
                 <X size={20} />
@@ -458,62 +460,62 @@ export const ProjectManagement: React.FC = () => {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Tên Project *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.nameAlt')} *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                  placeholder="Ví dụ: Website công ty"
+                  placeholder={t('admin.projects.namePlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Mô tả</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                  placeholder="Mô tả về project..."
+                  placeholder={t('admin.projects.descriptionPlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Trạng thái</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.status')}</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
                   >
-                    <option value="planning">Lên kế hoạch</option>
-                    <option value="in_progress">Đang thực hiện</option>
-                    <option value="completed">Hoàn thành</option>
-                    <option value="on_hold">Tạm dừng</option>
-                    <option value="cancelled">Đã hủy</option>
+                    <option value="planning">{t('admin.projects.statusPlanning')}</option>
+                    <option value="in_progress">{t('admin.projects.statusInProgress')}</option>
+                    <option value="completed">{t('admin.projects.statusCompleted')}</option>
+                    <option value="on_hold">{t('admin.projects.statusOnHold')}</option>
+                    <option value="cancelled">{t('admin.projects.statusCancelled')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Mức độ ưu tiên</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.priorityFull')}</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as ProjectPriority })}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
                   >
-                    <option value="low">Thấp</option>
-                    <option value="medium">Trung bình</option>
-                    <option value="high">Cao</option>
-                    <option value="urgent">Khẩn cấp</option>
+                    <option value="low">{t('admin.projects.priorityLow')}</option>
+                    <option value="medium">{t('admin.projects.priorityMedium')}</option>
+                    <option value="high">{t('admin.projects.priorityHigh')}</option>
+                    <option value="urgent">{t('admin.projects.priorityUrgent')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Ngày bắt đầu</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.startDate')}</label>
                   <input
                     type="date"
                     value={formData.startDate}
@@ -523,7 +525,7 @@ export const ProjectManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Ngày kết thúc</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.endDate')}</label>
                   <input
                     type="date"
                     value={formData.endDate}
@@ -535,13 +537,13 @@ export const ProjectManagement: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Người quản lý</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.manager')}</label>
                   <select
                     value={formData.managerId}
                     onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
                   >
-                    <option value="">-- Chọn người quản lý --</option>
+                    <option value="">{t('admin.projects.selectManager')}</option>
                     {users.map(user => (
                       <option key={user.uid} value={user.uid}>{user.displayName}</option>
                     ))}
@@ -549,13 +551,13 @@ export const ProjectManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Phòng ban</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.department')}</label>
                   <select
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
                   >
-                    <option value="">-- Chọn phòng ban --</option>
+                    <option value="">{t('admin.users.selectDepartment')}</option>
                     {departments.map(dept => (
                       <option key={dept.id} value={dept.id}>{dept.name}</option>
                     ))}
@@ -564,7 +566,7 @@ export const ProjectManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Ngân sách (VNĐ)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.budgetVnd')}</label>
                 <input
                   type="number"
                   min="0"
@@ -577,11 +579,11 @@ export const ProjectManagement: React.FC = () => {
 
               <div className="p-6 border-t border-white/10 flex gap-3">
                 <Button onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
-                  Hủy
+                  {t('common.cancel')}
                 </Button>
                 <Button type="submit" className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
                   <Save size={18} />
-                  Lưu
+                  {t('common.save')}
                 </Button>
               </div>
             </form>

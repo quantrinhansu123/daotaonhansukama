@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
@@ -21,6 +22,7 @@ interface StudentApprovalPageProps {
 }
 
 export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack }) => {
+  const { t, dateLocale } = useLanguage();
   const [requests, setRequests] = useState<PendingRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<PendingRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
 
   const handleApprove = async (request: PendingRequest) => {
     if (!request.userId || request.userId.trim() === '' || !request.courseId || request.courseId.trim() === '') {
-      alert('Lỗi: Thông tin yêu cầu không hợp lệ');
+      alert(t('admin.approvals.invalidRequest'));
       return;
     }
 
@@ -115,11 +117,11 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
         pendingStudents: arrayRemove(validUserId)
       });
 
-      alert('Đã duyệt yêu cầu!');
+      alert(t('admin.approvals.approveSuccess'));
       loadRequests();
     } catch (error) {
       console.error('Error approving:', error);
-      alert('Lỗi khi duyệt yêu cầu');
+      alert(t('admin.approvals.approveError'));
     } finally {
       setProcessing(null);
     }
@@ -127,11 +129,11 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
 
   const handleReject = async (request: PendingRequest) => {
     if (!request.userId || request.userId.trim() === '' || !request.courseId || request.courseId.trim() === '') {
-      alert('Lỗi: Thông tin yêu cầu không hợp lệ');
+      alert(t('admin.approvals.invalidRequest'));
       return;
     }
 
-    if (!confirm(`Từ chối yêu cầu của ${request.userName}?`)) return;
+    if (!confirm(t('admin.approvals.confirmReject', { name: request.userName }))) return;
 
     try {
       setProcessing(request.userId + request.courseId);
@@ -142,18 +144,18 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
         pendingStudents: arrayRemove(validUserId)
       });
 
-      alert('Đã từ chối yêu cầu!');
+      alert(t('admin.approvals.rejectSuccess'));
       loadRequests();
     } catch (error) {
       console.error('Error rejecting:', error);
-      alert('Lỗi khi từ chối yêu cầu');
+      alert(t('admin.approvals.rejectError'));
     } finally {
       setProcessing(null);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Đang tải...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   return (
@@ -165,17 +167,17 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
           className="text-[#53cafd] hover:text-[#3db9f5] flex items-center gap-2 font-medium mb-4"
         >
           <ArrowLeft size={20} />
-          Quay lại
+          {t('common.back')}
         </button>
 
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-1">Duyệt yêu cầu đăng ký</h2>
-            <p className="text-slate-300">Phê duyệt hoặc từ chối yêu cầu đăng ký khóa học</p>
+            <h2 className="text-2xl font-bold text-white mb-1">{t('admin.approvals.titleAlt')}</h2>
+            <p className="text-slate-300">{t('admin.approvals.subtitleAlt')}</p>
           </div>
           <div className="text-center bg-yellow-500/20 px-6 py-3 rounded-xl border border-yellow-500/30">
             <div className="text-3xl font-bold text-yellow-400">{requests.length}</div>
-            <div className="text-sm text-yellow-400">Yêu cầu chờ duyệt</div>
+            <div className="text-sm text-yellow-400">{t('admin.approvals.pendingCount')}</div>
           </div>
         </div>
       </div>
@@ -185,7 +187,7 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
         <input
           type="text"
-          placeholder="Tìm kiếm theo tên khóa học, nhân viên..."
+          placeholder={t('admin.approvals.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
@@ -196,17 +198,17 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
       {filteredRequests.length === 0 ? (
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-12 text-center backdrop-blur-md">
           <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-          <p className="text-slate-300 text-lg">Không có yêu cầu nào đang chờ duyệt</p>
+          <p className="text-slate-300 text-lg">{t('admin.approvals.noPending')}</p>
         </div>
       ) : (
         <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
           <table className="w-full">
             <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Nhân viên</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Email</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Khóa học</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">Thao tác</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">{t('admin.approvals.employee')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">{t('common.email')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">{t('admin.approvals.course')}</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -229,7 +231,7 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
                           className="px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/50 rounded-lg hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium transition-colors"
                         >
                           <CheckCircle size={16} />
-                          {isProcessing ? 'Đang xử lý...' : 'Duyệt'}
+                          {isProcessing ? t('common.processing') : t('admin.approvals.approve')}
                         </button>
                         <button
                           onClick={() => handleReject(request)}
@@ -237,7 +239,7 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
                           className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium transition-colors"
                         >
                           <XCircle size={16} />
-                          Từ chối
+                          {isProcessing ? t('common.processing') : t('admin.approvals.reject')}
                         </button>
                       </div>
                     </td>

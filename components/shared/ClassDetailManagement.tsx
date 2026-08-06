@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Course } from '@/types/course';
 import { ArrowLeft, PlayCircle, Users, X } from 'lucide-react';
 import { LessonManagement } from '@/components/teacher/LessonManagement';
@@ -17,6 +18,7 @@ export const ClassDetailManagement: React.FC<ClassDetailManagementProps> = ({
   onClose,
   isAdmin = false 
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'lessons' | 'students'>('lessons');
 
   return (
@@ -31,7 +33,7 @@ export const ClassDetailManagement: React.FC<ClassDetailManagementProps> = ({
                 className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
               >
                 <ArrowLeft size={20} />
-                Quay lại
+                {t('admin.courseDetail.back')}
               </button>
               <button 
                 onClick={onClose}
@@ -43,10 +45,10 @@ export const ClassDetailManagement: React.FC<ClassDetailManagementProps> = ({
             
             <div>
               <h2 className="text-2xl font-bold text-slate-900 mb-1">{course.title}</h2>
-              <p className="text-slate-600">Giáo viên: {course.teacherName}</p>
+              <p className="text-slate-600">{t('admin.courseDetail.teacher', { name: course.teacherName })}</p>
               {isAdmin && (
                 <span className="inline-block mt-2 px-3 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
-                  Chế độ Admin
+                  {t('admin.courseDetail.adminMode')}
                 </span>
               )}
             </div>
@@ -62,7 +64,7 @@ export const ClassDetailManagement: React.FC<ClassDetailManagementProps> = ({
               }`}
             >
               <PlayCircle size={20} />
-              Quản lý bài học
+              {t('admin.courseDetail.manageLessons')}
             </button>
             <button
               onClick={() => setActiveTab('students')}
@@ -73,7 +75,7 @@ export const ClassDetailManagement: React.FC<ClassDetailManagementProps> = ({
               }`}
             >
               <Users size={20} />
-              Giáo viên & Thống kê
+              {t('admin.courseDetail.teacherStats')}
             </button>
           </div>
         </div>

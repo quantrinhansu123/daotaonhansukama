@@ -1,0 +1,146 @@
+export const landing = {
+  nav: {
+    login: 'Log in',
+    register: 'Sign Up Now',
+    backToDashboard: 'Back to Dashboard',
+  },
+  hero: {
+    badge: 'Internal Training Platform',
+    title1: 'Accelerate',
+    title2: 'Your',
+    title3: 'Career',
+    description:
+      'Not just a video library—this is the ultimate career accelerator for every employee. Hands-on courses help you level up skills quickly, gain confidence at work, and seize promotion opportunities sooner.',
+    currentCourse: 'Currently learning',
+    leadership: 'Leadership Skills',
+    rating: 'Rating',
+    stars: '4.9 Stars',
+    learningStaff: 'Employees learning',
+  },
+  features: {
+    eyebrow: 'Why choose us?',
+    title: 'A Complete Internal Training Platform',
+    subtitle:
+      'Not just a video library—this is a career accelerator for every employee in your organization.',
+    items: {
+      practical: {
+        title: 'Hands-on Learning',
+        description: 'Courses focused on practical skills you can apply to daily work immediately.',
+      },
+      video: {
+        title: 'High-Quality Video',
+        description: 'Professionally produced content that is clear and engaging.',
+      },
+      anytime: {
+        title: 'Learn Anytime, Anywhere',
+        description: 'Access courses 24/7 on any device, fitting your work schedule.',
+      },
+      department: {
+        title: 'Learn by Department',
+        description: 'Courses assigned by department to match specific job needs.',
+      },
+      progress: {
+        title: 'Track Progress',
+        description: 'Detailed tracking helps you and managers see learning progress clearly.',
+      },
+      growth: {
+        title: 'Level Up Fast',
+        description: 'Invest in skills today, advance your career tomorrow.',
+      },
+    },
+  },
+  footer: {
+    description:
+      'An internal training platform that helps employees grow skills, raise capability, and advance their careers.',
+    explore: 'Explore',
+    about: 'About us',
+    courses: 'Training courses',
+    roadmap: 'Growth roadmap',
+    news: 'Internal news',
+    support: 'Support',
+    guide: 'User guide',
+    faq: 'FAQ',
+    policy: 'Internal policy',
+    contactIT: 'Contact IT Support',
+    contact: 'Contact',
+    address: 'Training Dept - Floor 5',
+    copyright: '© 2024 Internal Training Platform. Develop people - Accelerate careers.',
+  },
+  pricing: {
+    title: 'Invest in Skills Today',
+    subtitle: 'Advance your career tomorrow with the right training plans.',
+    mostPopular: 'Most popular',
+    basic: {
+      name: 'Basic',
+      price: '0',
+      description: 'Free access to basic features.',
+      features: {
+        f1: 'Access 5 free courses',
+        f2: 'Basic community support',
+        f3: 'HD 720p video',
+        f4: 'Email support',
+      },
+      cta: 'Sign Up Free',
+    },
+    pro: {
+      name: 'Professional',
+      price: '199k',
+      period: '/month',
+      description: 'For serious learners who want to break through.',
+      features: {
+        f1: 'Access ALL courses',
+        f2: 'AI Mentor 24/7',
+        f3: 'Verified certificates',
+        f4: 'Offline video download',
+        f5: 'Priority support',
+      },
+      cta: 'Try 7 Days',
+    },
+    enterprise: {
+      name: 'Enterprise',
+      price: 'Contact us',
+      description: 'Complete workforce training solution.',
+      features: {
+        f1: 'Admin accounts',
+        f2: 'Employee progress reports',
+        f3: 'Custom learning paths',
+        f4: '1:1 technical support',
+        f5: 'API integration',
+      },
+      cta: 'Contact Sales',
+    },
+  },
+  courses: {
+    title: 'Training Courses',
+    subtitle: 'Skill development courses for employees in your organization.',
+    viewAll: 'View all courses',
+    viewDetails: 'View details',
+    staffCount: '({count} employees)',
+    internal: 'Internal',
+    c1: {
+      title: 'Leadership and Team Management',
+      instructor: 'HR Department',
+      duration: '2 months',
+      tag: 'Popular',
+    },
+    c2: {
+      title: 'Communication and Presentation Skills',
+      instructor: 'Training Department',
+      duration: '1 month',
+      tag: 'New',
+    },
+    c3: {
+      title: 'Time Management and Productivity',
+      instructor: 'Training Department',
+      duration: '3 weeks',
+      tag: 'Essential',
+    },
+  },
+  chatbot: {
+    greeting: "Hi! I'm EduBot. What area are you interested in? I can help recommend a learning path for you.",
+    error: 'Sorry, something went wrong.',
+    label: 'AI Advisor',
+    thinking: 'Thinking...',
+    placeholder: 'Ask about courses...',
+  },
+};

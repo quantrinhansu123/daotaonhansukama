@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Users, BookOpen, Building2, DollarSign, TrendingUp, Activity } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const Dashboard: React.FC = () => {
+  const { t } = useLanguage();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
@@ -43,10 +45,10 @@ export const Dashboard: React.FC = () => {
   };
 
   const statCards = [
-    { label: 'Tổng người dùng', value: stats.totalUsers, icon: Users, color: 'blue' },
-    { label: 'Khóa học', value: stats.totalCourses, icon: BookOpen, color: 'green' },
-    { label: 'Phòng ban', value: stats.totalDepartments, icon: Building2, color: 'purple' },
-    { label: 'Nhân viên', value: stats.totalStaff, icon: DollarSign, color: 'orange' },
+    { label: t('admin.dashboard.totalUsers'), value: stats.totalUsers, icon: Users, color: 'blue' },
+    { label: t('admin.dashboard.courses'), value: stats.totalCourses, icon: BookOpen, color: 'green' },
+    { label: t('admin.dashboard.totalDepartments'), value: stats.totalDepartments, icon: Building2, color: 'purple' },
+    { label: t('admin.dashboard.totalStaff'), value: stats.totalStaff, icon: DollarSign, color: 'orange' },
   ];
 
   const colorClasses = {
@@ -59,8 +61,8 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Tổng quan hệ thống</h1>
-        <p className="text-slate-300">Thống kê và báo cáo tổng quan</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('admin.dashboard.systemOverview')}</h1>
+        <p className="text-slate-300">{t('admin.dashboard.systemOverviewDesc')}</p>
       </div>
 
       {/* Stats Grid */}
@@ -90,29 +92,29 @@ export const Dashboard: React.FC = () => {
         <div className="bg-[#5e3ed0]/20 rounded-xl p-6 border border-white/10 backdrop-blur-md">
           <div className="flex items-center gap-3 mb-4">
             <Activity className="text-blue-400" size={24} />
-            <h2 className="text-xl font-bold text-white">Hoạt động gần đây</h2>
+            <h2 className="text-xl font-bold text-white">{t('admin.dashboard.recentActivity')}</h2>
           </div>
           <div className="text-center py-12 text-slate-400">
-            <p>Chưa có hoạt động nào</p>
+            <p>{t('admin.dashboard.noActivity')}</p>
           </div>
         </div>
 
         <div className="bg-[#5e3ed0]/20 rounded-xl p-6 border border-white/10 backdrop-blur-md">
           <div className="flex items-center gap-3 mb-4">
             <TrendingUp className="text-green-400" size={24} />
-            <h2 className="text-xl font-bold text-white">Thống kê tuần này</h2>
+            <h2 className="text-xl font-bold text-white">{t('admin.dashboard.weeklyStats')}</h2>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-slate-300">Người dùng mới</span>
+              <span className="text-slate-300">{t('admin.dashboard.newUsers')}</span>
               <span className="font-bold text-white">0</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-300">Khóa học mới</span>
+              <span className="text-slate-300">{t('admin.dashboard.newCourses')}</span>
               <span className="font-bold text-white">0</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-300">Hoàn thành</span>
+              <span className="text-slate-300">{t('admin.dashboard.completed')}</span>
               <span className="font-bold text-white">0</span>
             </div>
           </div>

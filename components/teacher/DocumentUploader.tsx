@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Upload, File, X, CheckCircle, AlertCircle, Loader } from 'lucide-react';
-import { Button } from '@/components/Button';
+import { Upload, File, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DocumentUploaderProps {
   lessonId: string;
@@ -19,6 +19,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   onUploadComplete,
   onRemove
 }) => {
+  const { t } = useLanguage();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -40,15 +41,13 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   const handleFileSelect = async (file: File) => {
     setError(null);
 
-    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Chỉ hỗ trợ file PDF, Word, PowerPoint, Excel, hoặc Text');
+      setError(t('teacher.invalidFileType'));
       return;
     }
 
-    // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      setError('File không được vượt quá 50MB');
+      setError(t('teacher.fileTooLarge'));
       return;
     }
 
@@ -56,13 +55,11 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
       setUploading(true);
       setUploadProgress(0);
 
-      // Create unique filename
       const timestamp = Date.now();
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const fileName = `${timestamp}_${sanitizedFileName}`;
       const filePath = `documents/${lessonId}/${fileName}`;
 
-      // Upload to Bunny Storage via API route
       const formData = new FormData();
       formData.append('file', file);
       formData.append('path', filePath);
@@ -85,13 +82,13 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           setUploadProgress(0);
         } else {
           const error = JSON.parse(xhr.responseText);
-          setError(error.error || 'Lỗi khi upload file');
+          setError(error.error || t('teacher.uploadFileError'));
           setUploading(false);
         }
       });
 
       xhr.addEventListener('error', () => {
-        setError('Lỗi kết nối khi upload file');
+        setError(t('teacher.uploadConnectionError'));
         setUploading(false);
       });
 
@@ -100,7 +97,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
 
     } catch (error: any) {
       console.error('Error uploading file:', error);
-      setError(error.message || 'Lỗi khi upload file');
+      setError(error.message || t('teacher.uploadFileError'));
       setUploading(false);
     }
   };
@@ -136,16 +133,14 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   const handleRemove = async () => {
     if (!currentDocumentUrl || !onRemove) return;
 
-    if (!confirm('Bạn có chắc muốn xóa tài liệu này?')) {
+    if (!confirm(t('teacher.confirmDeleteDocument'))) {
       return;
     }
 
     try {
-      // Extract file path from Bunny CDN URL
       const url = new URL(currentDocumentUrl);
-      const filePath = url.pathname.substring(1); // Remove leading slash
+      const filePath = url.pathname.substring(1);
 
-      // Delete via API route
       const response = await fetch('/api/delete-document', {
         method: 'DELETE',
         headers: {
@@ -161,7 +156,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
       onRemove();
     } catch (error) {
       console.error('Error deleting file:', error);
-      alert('Lỗi khi xóa file');
+      alert(t('teacher.deleteFileError'));
     }
   };
 
@@ -176,7 +171,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm font-medium text-green-400">Đã có tài liệu</span>
+                <span className="text-sm font-medium text-green-400">{t('teacher.documentHasFile')}</span>
               </div>
               <p className="text-sm text-green-200 truncate">{currentDocumentName}</p>
               <div className="flex gap-2 mt-2">
@@ -186,14 +181,14 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
                   rel="noopener noreferrer"
                   className="text-xs text-green-400 hover:text-green-300 underline"
                 >
-                  Xem tài liệu
+                  {t('teacher.viewDocument')}
                 </a>
                 {onRemove && (
                   <button
                     onClick={handleRemove}
                     className="text-xs text-red-400 hover:text-red-300 underline"
                   >
-                    Xóa
+                    {t('common.delete')}
                   </button>
                 )}
               </div>
@@ -216,7 +211,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
               <Loader className="w-12 h-12 text-[#53cafd] mx-auto animate-spin" />
               <div>
                 <p className="text-sm font-medium text-white mb-2">
-                  Đang upload... {uploadProgress}%
+                  {t('teacher.uploadingProgress', { progress: uploadProgress })}
                 </p>
                 <div className="w-full max-w-xs mx-auto h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
@@ -230,10 +225,10 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
             <>
               <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
               <p className="text-white font-medium mb-2">
-                Kéo thả file vào đây hoặc nhấn để chọn
+                {t('teacher.dragDropFile')}
               </p>
               <p className="text-sm text-slate-400 mb-4">
-                Hỗ trợ: PDF, Word, PowerPoint, Excel, Text (tối đa 50MB)
+                {t('teacher.supportedFormats')}
               </p>
               <label className="inline-block">
                 <input
@@ -244,7 +239,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
                   disabled={uploading}
                 />
                 <span className="inline-block px-6 py-3 bg-[#53cafd] hover:bg-[#3db9f5] text-white rounded-lg font-medium cursor-pointer transition-colors shadow-[#53cafd]/25">
-                  Chọn file
+                  {t('teacher.selectFile')}
                 </span>
               </label>
             </>

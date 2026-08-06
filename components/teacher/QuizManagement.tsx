@@ -8,6 +8,7 @@ import { Plus, Trash2, X, Save, FileText, Wand2, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/Button';
 import { QuizResults } from './QuizResults';
 import { BunnyDocumentUpload } from '@/components/shared/BunnyDocumentUpload';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QuizManagementProps {
   lesson: Lesson;
@@ -22,6 +23,7 @@ interface BulkForm {
 }
 
 export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, isReadOnly = false }) => {
+  const { t } = useLanguage();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -72,12 +74,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
 
   const handleBulkCreate = async () => {
     if (bulkData.count < 1 || bulkData.count > 100) {
-      alert('Số câu hỏi phải từ 1 đến 100');
+      alert(t('teacher.questionCountRange'));
       return;
     }
 
     if (bulkData.duration < 1 || bulkData.duration > 180) {
-      alert('Thời gian làm bài phải từ 1 đến 180 phút');
+      alert(t('teacher.durationRange'));
       return;
     }
 
@@ -119,12 +121,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
         updatedAt: new Date()
       });
 
-      alert(`Đã lưu bài kiểm tra với ${correctAnswers.length} câu hỏi!`);
+      alert(t("teacher.quizSaved", { count: correctAnswers.length }));
       setCorrectAnswers([]);
       loadQuestions();
     } catch (error) {
       console.error('Error saving quiz:', error);
-      alert('Lỗi khi lưu bài kiểm tra');
+      alert(t('teacher.saveQuizError'));
     }
   };
 
@@ -149,12 +151,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
     for (let i = 0; i < bulkForms.length; i++) {
       const form = bulkForms[i];
       if (!form.question.trim()) {
-        alert(`Câu hỏi ${i + 1}: Vui lòng nhập nội dung câu hỏi`);
+        alert(t("teacher.questionContentRequired", { n: i + 1 }));
         return;
       }
       for (let j = 0; j < form.options.length; j++) {
         if (!form.options[j].trim()) {
-          alert(`Câu hỏi ${i + 1}: Vui lòng nhập đáp án ${String.fromCharCode(65 + j)}`);
+          alert(t("teacher.optionRequired", { n: i + 1, letter: String.fromCharCode(65 + j) }));
           return;
         }
       }
@@ -196,19 +198,19 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
         updatedAt: new Date()
       });
 
-      alert(editingQuestion ? 'Cập nhật câu hỏi thành công!' : `Đã lưu ${bulkForms.length} câu hỏi!`);
+      alert(editingQuestion ? t('teacher.updateQuestionSuccess') : t('teacher.questionsSaved', { count: bulkForms.length }));
       setShowBulkFormModal(false);
       setBulkForms([]);
       setEditingQuestion(null);
       loadQuestions();
     } catch (error) {
       console.error('Error saving questions:', error);
-      alert('Lỗi khi lưu câu hỏi');
+      alert(t('teacher.saveQuestionsError'));
     }
   };
 
   const handleDeleteQuiz = async () => {
-    if (!confirm(`Bạn có chắc muốn xóa toàn bộ bài kiểm tra này?`)) {
+    if (!confirm(t("teacher.confirmDeleteQuiz"))) {
       return;
     }
 
@@ -227,16 +229,16 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
         updatedAt: new Date()
       });
 
-      alert('Xóa bài kiểm tra thành công!');
+      alert(t('teacher.deleteQuizSuccess'));
       loadQuestions();
     } catch (error) {
       console.error('Error deleting quiz:', error);
-      alert('Lỗi khi xóa bài kiểm tra');
+      alert(t('teacher.deleteQuizError'));
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t("common.loading")}</div>;
   }
 
   // Show results view
@@ -250,23 +252,23 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
         {/* Header */}
         <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 mb-6 backdrop-blur-md">
           <button onClick={onBack} className="text-[#53cafd] hover:text-[#3db9f5] mb-3 flex items-center gap-2 transition-colors">
-            ← Quay lại danh sách bài học
+            ← {t("teacher.backToLessons")}
           </button>
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold text-white mb-1">
-                {isReadOnly ? 'Xem bài kiểm tra' : 'Quản lý bài kiểm tra'}
+                {isReadOnly ? t('teacher.viewQuiz') : t('teacher.manageQuizzes')}
               </h3>
-              <p className="text-slate-300">Bài học: <span className="font-medium text-white">{lesson.title}</span></p>
+              <p className="text-slate-300">{t("teacher.lessonLabel")}: <span className="font-medium text-white">{lesson.title}</span></p>
               {questions.length > 0 && (
                 <p className="text-sm text-slate-400 mt-1">
-                  Tổng số câu: <span className="font-bold text-[#53cafd]">{questions.length}</span>
-                  {lesson.quizDuration && <span> | Thời gian: <span className="font-bold text-[#53cafd]">{lesson.quizDuration} phút</span></span>}
+                  {t("teacher.totalQuestions")}: <span className="font-bold text-[#53cafd]">{questions.length}</span>
+                  {lesson.quizDuration && <span> | {t("teacher.timeLabel")}: <span className="font-bold text-[#53cafd]">{lesson.quizDuration} {t("teacher.minutesUnit")}</span></span>}
                 </p>
               )}
               {isReadOnly && (
                 <p className="text-sm text-[#53cafd] mt-2">
-                  🔒 Chế độ chỉ xem - Không thể chỉnh sửa
+                  {t("teacher.readOnlyMode")}
                 </p>
               )}
             </div>
@@ -278,7 +280,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] shadow-lg shadow-[#53cafd]/25 text-white border-none"
                   >
                     <BarChart3 size={18} />
-                    Xem kết quả
+                    {t("teacher.viewResults")}
                   </Button>
                   {!isReadOnly && (
                     <button
@@ -286,7 +288,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                       className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 font-medium transition-colors flex items-center gap-2"
                     >
                       <Trash2 size={18} />
-                      Xóa bài kiểm tra
+                      {t("teacher.deleteQuiz")}
                     </button>
                   )}
                 </>
@@ -294,7 +296,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
               {!isReadOnly && (
                 <Button onClick={handleCreateQuiz} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/25 text-white border-none">
                   <Plus size={18} />
-                  {questions.length > 0 ? 'Tạo lại' : 'Tạo bài kiểm tra'}
+                  {questions.length > 0 ? t('teacher.recreate') : t('teacher.createQuiz')}
                 </Button>
               )}
             </div>
@@ -308,11 +310,11 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
               <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
                 <FileText className="w-10 h-10 text-purple-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Chưa có bài kiểm tra</h3>
-              <p className="text-slate-300 mb-6">Tạo bài kiểm tra với số câu hỏi và đáp án đúng</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t("teacher.noQuizzes")}</h3>
+              <p className="text-slate-300 mb-6">{t("teacher.noQuizzesHint")}</p>
               <Button onClick={handleCreateQuiz} className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/25 text-white border-none">
                 <Plus size={18} className="mr-2" />
-                Tạo bài kiểm tra
+                {t("teacher.createQuiz")}
               </Button>
             </div>
           </div>
@@ -321,20 +323,20 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
             <div className="mb-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Thiết lập đáp án đúng</h3>
-                  <p className="text-slate-300">Chọn đáp án đúng cho từng câu hỏi (A, B, C, hoặc D)</p>
+                  <h3 className="text-xl font-bold text-white mb-2">{t("teacher.setCorrectAnswers")}</h3>
+                  <p className="text-slate-300">{t("teacher.setCorrectAnswersHint")}</p>
                   <div className="mt-3 flex items-center gap-4 text-sm">
-                    <span className="text-slate-300">Thời gian:</span>
-                    <span className="font-bold text-[#53cafd]">{bulkData.duration} phút</span>
+                    <span className="text-slate-300">{t("teacher.timeLabel")}:</span>
+                    <span className="font-bold text-[#53cafd]">{bulkData.duration} {t("teacher.minutesUnit")}</span>
                     <span className="text-slate-500">|</span>
-                    <span className="text-slate-300">Tổng số câu:</span>
-                    <span className="font-bold text-[#53cafd]">{correctAnswers.length} câu</span>
+                    <span className="text-slate-300">{t("teacher.totalQuestionsCount")}:</span>
+                    <span className="font-bold text-[#53cafd]">{correctAnswers.length} {t("teacher.questionsUnit")}</span>
                   </div>
                 </div>
 
                 {/* Quick Actions */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <p className="text-xs font-bold text-slate-300 mb-3">⚡ Chọn nhanh tất cả:</p>
+                  <p className="text-xs font-bold text-slate-300 mb-3">{t("teacher.quickSelectAll")}</p>
                   <div className="flex gap-2">
                     {[0, 1, 2, 3].map((optIndex) => (
                       <button
@@ -344,13 +346,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                           setCorrectAnswers(newAnswers);
                         }}
                         className="w-10 h-10 rounded-lg font-bold text-sm bg-white/10 border border-white/20 hover:border-[#53cafd] hover:bg-[#53cafd]/20 transition-all shadow-sm text-white"
-                        title={`Đặt tất cả là ${String.fromCharCode(65 + optIndex)}`}
+                        title={t("teacher.setAllTo", { letter: String.fromCharCode(65 + optIndex) })}
                       >
                         {String.fromCharCode(65 + optIndex)}
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">Hoặc dùng phím 1, 2, 3, 4</p>
+                  <p className="text-xs text-slate-400 mt-2">{t("teacher.orUseKeys")}</p>
                 </div>
               </div>
             </div>
@@ -376,7 +378,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                   }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-300">Câu {index + 1}</span>
+                    <span className="text-xs font-bold text-slate-300">{t("teacher.questionN", { n: index + 1 })}</span>
                     <div className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${answer !== undefined
                         ? 'bg-green-500 text-white'
                         : 'bg-white/10 text-slate-400'
@@ -409,7 +411,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
             {/* Progress Indicator */}
             <div className="mb-6 bg-white/5 rounded-lg p-4 border border-white/10">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-300">Tiến độ hoàn thành</span>
+                <span className="text-sm font-medium text-slate-300">{t("teacher.completionProgress")}</span>
                 <span className="text-sm font-bold text-[#53cafd]">
                   {correctAnswers.filter(a => a !== undefined).length}/{correctAnswers.length}
                 </span>
@@ -425,13 +427,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  if (confirm('Hủy bỏ bài kiểm tra đang tạo?')) {
+                  if (confirm(t('teacher.cancelCreatingQuiz'))) {
                     setCorrectAnswers([]);
                   }
                 }}
                 className="px-6 py-3 border border-white/20 text-white rounded-lg hover:bg-white/10 font-medium transition-colors"
               >
-                Hủy
+                {t("common.cancel")}
               </button>
               <div className="flex-1" />
               <Button
@@ -439,7 +441,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                 className="flex items-center gap-2 bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/25 px-8 text-white border-none"
               >
                 <Save size={18} />
-                Lưu bài kiểm tra ({correctAnswers.length} câu)
+                {t("teacher.saveQuizWithCount", { count: correctAnswers.length })}
               </Button>
             </div>
           </div>
@@ -458,16 +460,16 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                       {isEmpty ? (
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-bold text-white">Câu hỏi trống</h3>
+                            <h3 className="text-lg font-bold text-white">{t("teacher.emptyQuestion")}</h3>
                             <span className="px-2 py-1 bg-orange-500/20 text-orange-400 text-xs font-medium rounded border border-orange-500/30">
-                              Chỉ có đáp án
+                              {t("teacher.answerOnly")}
                             </span>
                           </div>
                           <p className="text-sm text-slate-300 mb-3">
-                            Giáo viên sẽ chỉ thấy số câu và 4 nút A/B/C/D
+                            {t("teacher.emptyQuestionHint")}
                           </p>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-300">Đáp án đúng:</span>
+                            <span className="text-sm text-slate-300">{t("teacher.correctAnswer")}:</span>
                             <div className="px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-lg font-bold text-green-400">
                               {String.fromCharCode(65 + question.correctAnswer)}
                             </div>
@@ -478,7 +480,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="text-lg font-bold text-white">{question.question}</h3>
                             <span className="px-2 py-1 bg-[#53cafd]/20 text-[#53cafd] text-xs font-medium rounded border border-[#53cafd]/30">
-                              Có nội dung
+                              {t("teacher.hasContent")}
                             </span>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -493,7 +495,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                                 <span className="font-bold mr-2">{String.fromCharCode(65 + optIndex)}.</span>
                                 {option}
                                 {optIndex === question.correctAnswer && (
-                                  <span className="ml-2 text-green-400">✓ Đúng</span>
+                                  <span className="ml-2 text-green-400">✓ {t("teacher.correct")}</span>
                                 )}
                               </div>
                             ))}
@@ -515,8 +517,8 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
             <div className="bg-[#1a103d] rounded-2xl shadow-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto border border-white/10">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-white">Tạo hàng loạt câu hỏi</h3>
-                  <p className="text-sm text-slate-300 mt-1">Tạo câu hỏi trống, chỉ có đáp án đúng</p>
+                  <h3 className="text-2xl font-bold text-white">{t("teacher.bulkCreateTitle")}</h3>
+                  <p className="text-sm text-slate-300 mt-1">{t("teacher.bulkCreateHint")}</p>
                 </div>
                 <button
                   onClick={() => setShowBulkModal(false)}
@@ -528,7 +530,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2">Số lượng câu hỏi *</label>
+                  <label className="block text-sm font-bold text-slate-300 mb-2">{t("teacher.questionCountLabel")}</label>
                   <input
                     type="number"
                     value={bulkData.count}
@@ -537,11 +539,11 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     max={100}
                     className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:border-transparent bg-white/5 text-lg font-bold text-center text-white"
                   />
-                  <p className="text-xs text-slate-400 mt-2 text-center">Từ 1 đến 100 câu hỏi</p>
+                  <p className="text-xs text-slate-400 mt-2 text-center">{t("teacher.questionCountHint")}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-3">Đáp án đúng mặc định *</label>
+                  <label className="block text-sm font-bold text-slate-300 mb-3">{t("teacher.defaultCorrectAnswer")}</label>
                   <div className="grid grid-cols-2 gap-3">
                     {['A', 'B', 'C', 'D'].map((letter, index) => (
                       <label
@@ -562,7 +564,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                           <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center font-bold text-white border border-white/20">
                             {letter}
                           </div>
-                          <span className="font-medium text-slate-300">Đáp án {letter}</span>
+                          <span className="font-medium text-slate-300">{t("teacher.answerLetter", { letter })}</span>
                         </div>
                         {bulkData.correctAnswer === index && (
                           <span className="ml-auto text-green-500">✓</span>
@@ -573,7 +575,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2">Thời gian làm bài (phút) *</label>
+                  <label className="block text-sm font-bold text-slate-300 mb-2">{t("teacher.quizDurationLabel")}</label>
                   <input
                     type="number"
                     value={bulkData.duration}
@@ -582,12 +584,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     max={180}
                     className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:border-transparent bg-white/5 text-lg font-bold text-center text-white"
                   />
-                  <p className="text-xs text-slate-400 mt-2 text-center">Từ 1 đến 180 phút</p>
+                  <p className="text-xs text-slate-400 mt-2 text-center">{t("teacher.quizDurationHint")}</p>
                 </div>
 
                 <div>
                   <BunnyDocumentUpload
-                    label="Tài liệu đính kèm (không bắt buộc)"
+                    label={t("teacher.attachedDocument")}
                     currentDocument={bulkData.quizDocumentUrl}
                     currentDocumentName={bulkData.quizDocumentName}
                     onUploadComplete={(url, fileName) => {
@@ -596,7 +598,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     folder="quiz-documents"
                   />
                   <p className="text-xs text-slate-400 mt-1">
-                    Tài liệu tham khảo cho học viên khi làm bài (PDF, Word, PowerPoint, Excel)
+                    {t("teacher.attachedDocumentHint")}
                   </p>
                 </div>
 
@@ -606,10 +608,9 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                       <Wand2 className="w-5 h-5 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-purple-300 mb-1">Lưu ý</p>
+                      <p className="text-sm font-bold text-purple-300 mb-1">{t("teacher.note")}</p>
                       <p className="text-xs text-purple-200">
-                        Hệ thống sẽ tạo <span className="font-bold">{bulkData.count} câu hỏi trống</span> với đáp án đúng là <span className="font-bold">{String.fromCharCode(65 + bulkData.correctAnswer)}</span>.
-                        Giáo viên sẽ chỉ thấy số câu và 4 nút A/B/C/D.
+                        {t("teacher.bulkCreateNote", { count: bulkData.count, letter: String.fromCharCode(65 + bulkData.correctAnswer) })}
                       </p>
                     </div>
                   </div>
@@ -622,13 +623,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                   className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 py-3 shadow-lg shadow-purple-600/25 text-white border-none"
                 >
                   <Wand2 size={18} />
-                  Tạo {bulkData.count} câu hỏi
+                  {t("teacher.createNQuestions", { count: bulkData.count })}
                 </Button>
                 <button
                   onClick={() => setShowBulkModal(false)}
                   className="flex-1 px-4 py-3 border border-white/20 rounded-lg hover:bg-white/10 font-medium transition-colors text-white"
                 >
-                  Hủy
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -642,13 +643,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-[#1a103d] pb-4 border-b border-white/10 z-10">
                 <div>
                   <h3 className="text-2xl font-bold text-white">
-                    {editingQuestion ? 'Chỉnh sửa câu hỏi' : `Điền nội dung ${bulkForms.length} câu hỏi`}
+                    {editingQuestion ? t('teacher.editQuestion') : t('teacher.fillQuestions', { count: bulkForms.length })}
                   </h3>
-                  <p className="text-sm text-slate-300 mt-1">Điền đầy đủ câu hỏi và đáp án, tích chọn đáp án đúng</p>
+                  <p className="text-sm text-slate-300 mt-1">{t("teacher.fillQuestionsHint")}</p>
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm('Hủy bỏ tất cả câu hỏi đang nhập?')) {
+                    if (confirm(t('teacher.cancelAllQuestions'))) {
                       setShowBulkFormModal(false);
                       setBulkForms([]);
                       setEditingQuestion(null);
@@ -668,13 +669,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-purple-500/30">
                           {formIndex + 1}
                         </div>
-                        <h4 className="text-lg font-bold text-white">Câu hỏi {formIndex + 1}</h4>
+                        <h4 className="text-lg font-bold text-white">{t("teacher.questionN", { n: formIndex + 1 })}</h4>
                       </div>
                       {!editingQuestion && bulkForms.length > 1 && (
                         <button
                           onClick={() => handleRemoveFromModal(formIndex)}
                           className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Xóa câu hỏi này"
+                          title={t("teacher.deleteThisQuestion")}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -683,7 +684,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2">Nội dung câu hỏi *</label>
+                        <label className="block text-sm font-bold text-slate-300 mb-2">{t("teacher.questionContentLabel")}</label>
                         <textarea
                           value={form.question}
                           onChange={(e) => {
@@ -693,12 +694,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                           }}
                           rows={2}
                           className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:border-transparent bg-white/5 text-white placeholder-slate-500"
-                          placeholder="Nhập câu hỏi..."
+                          placeholder={t("teacher.questionPlaceholder")}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2">Các đáp án *</label>
+                        <label className="block text-sm font-bold text-slate-300 mb-2">{t("teacher.optionsLabel")}</label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {form.options.map((option, optIndex) => (
                             <div
@@ -731,7 +732,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                                   setBulkForms(newForms);
                                 }}
                                 className="flex-1 px-3 py-2 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] bg-transparent text-sm text-white placeholder-slate-500"
-                                placeholder={`Đáp án ${String.fromCharCode(65 + optIndex)}`}
+                                placeholder={t("teacher.optionPlaceholder", { letter: String.fromCharCode(65 + optIndex) })}
                               />
                             </div>
                           ))}
@@ -749,7 +750,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     className="px-6 py-3 border border-purple-500/50 text-purple-400 rounded-lg hover:bg-purple-500/10 font-medium transition-colors flex items-center gap-2"
                   >
                     <Plus size={18} />
-                    Thêm câu hỏi
+                    {t("teacher.addQuestion")}
                   </button>
                 )}
                 <div className="flex-1" />
@@ -757,7 +758,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                   <>
                     <button
                       onClick={() => {
-                        if (confirm('Hủy bỏ tất cả câu hỏi đang nhập?')) {
+                        if (confirm(t('teacher.cancelAllQuestions'))) {
                           setShowBulkFormModal(false);
                           setBulkForms([]);
                           setEditingQuestion(null);
@@ -765,14 +766,14 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                       }}
                       className="px-6 py-3 border border-white/20 rounded-lg hover:bg-white/10 font-medium transition-colors text-white"
                     >
-                      Hủy
+                      {t("common.cancel")}
                     </button>
                     <Button
                       onClick={handleSaveBulkForms}
                       className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 py-3 shadow-lg shadow-purple-600/25 text-white border-none"
                     >
                       <Save size={18} />
-                      {editingQuestion ? 'Cập nhật' : `Lưu ${bulkForms.length} câu hỏi`}
+                      {editingQuestion ? t('common.update') : t('teacher.saveNQuestions', { count: bulkForms.length })}
                     </Button>
                   </>
                 )}
@@ -785,7 +786,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     }}
                     className="px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 font-medium transition-colors"
                   >
-                    Đóng
+                    {t("common.close")}
                   </button>
                 )}
               </div>

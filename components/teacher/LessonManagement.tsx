@@ -10,6 +10,7 @@ import { Button } from '@/components/Button';
 import { QuizManagement } from './QuizManagement';
 import { DocumentUploader } from './DocumentUploader';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface LessonManagementProps {
   course: Course;
@@ -18,6 +19,7 @@ interface LessonManagementProps {
 
 export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBack }) => {
   const { userProfile: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -102,7 +104,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   const handleSave = async () => {
     try {
       if (!formData.title) {
-        alert('Vui lòng nhập tên bài học');
+        alert(t('teacher.pleaseEnterLessonName'));
         return;
       }
 
@@ -113,7 +115,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
           ...formData,
           updatedAt: new Date()
         });
-        alert('Cập nhật bài học thành công!');
+        alert(t('teacher.updateLessonSuccess'));
       } else {
         const newLesson: Lesson = {
           id: `lesson_${Date.now()}`,
@@ -123,19 +125,19 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
           updatedAt: new Date()
         };
         await setDoc(doc(db, 'lessons', newLesson.id), newLesson);
-        alert('Thêm bài học thành công!');
+        alert(t('teacher.addLessonSuccess'));
       }
 
       setShowModal(false);
       loadLessons();
     } catch (error) {
       console.error('Error saving lesson:', error);
-      alert('Lỗi khi lưu bài học');
+      alert(t('teacher.saveLessonError'));
     }
   };
 
   const handleDelete = async (lesson: Lesson) => {
-    if (!confirm(`Bạn có chắc muốn xóa bài học "${lesson.title}"?`)) {
+    if (!confirm(t("teacher.confirmDeleteLesson", { title: lesson.title }))) {
       return;
     }
 
@@ -149,11 +151,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
       // Delete lesson from Firestore
       await deleteDoc(doc(db, 'lessons', lesson.id));
-      alert('Xóa bài học thành công!');
+      alert(t('teacher.deleteLessonSuccess'));
       loadLessons();
     } catch (error) {
       console.error('Error deleting lesson:', error);
-      alert('Lỗi khi xóa bài học');
+      alert(t('teacher.deleteLessonError'));
     }
   };
 
@@ -184,7 +186,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
       
       if (!videoId) {
         console.error('[LessonManagement] No video ID in response:', videoData);
-        throw new Error('Không nhận được video ID từ Bunny API');
+        throw new Error(t('teacher.noVideoIdError'));
       }
       
       console.log('[LessonManagement] Video created with ID:', videoId);
@@ -195,7 +197,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
       
       if (!libraryId || !apiKey) {
         console.error('[LessonManagement] Missing Bunny Stream environment variables');
-        throw new Error('Thiếu cấu hình Bunny Stream. Vui lòng kiểm tra NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID và NEXT_PUBLIC_BUNNY_STREAM_API_KEY.');
+        throw new Error(t('teacher.missingBunnyConfig'));
       }
 
       // Upload video file
@@ -217,7 +219,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
       if (!uploadResponse.ok) {
         const errorMessage = uploadResponseText || `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
         console.error('[LessonManagement] Failed to upload video file:', errorMessage);
-        throw new Error(`Lỗi khi upload video file: ${errorMessage}`);
+        throw new Error(t("teacher.uploadVideoFileError", { message: errorMessage }));
       }
 
       console.log('[LessonManagement] Video file uploaded successfully');
@@ -231,19 +233,19 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         updatedAt: new Date()
       });
 
-      alert('Upload video thành công!');
+      alert(t('teacher.uploadVideoSuccess'));
       loadLessons();
     } catch (error: any) {
       console.error('[LessonManagement] Error uploading video:', error);
-      const errorMessage = error.message || 'Lỗi không xác định khi upload video';
-      alert(`Lỗi khi upload video: ${errorMessage}`);
+      const errorMessage = error.message || t('teacher.uploadVideoUnknownError');
+      alert(t("teacher.uploadVideoError", { message: errorMessage }));
     } finally {
       setUploading(false);
     }
   };
 
   const handleVideoDelete = async (lesson: Lesson) => {
-    if (!confirm('Bạn có chắc muốn xóa video này?')) {
+    if (!confirm(t('teacher.confirmDeleteVideo'))) {
       return;
     }
 
@@ -268,11 +270,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         updatedAt: new Date()
       });
 
-      alert('Xóa video thành công!');
+      alert(t('teacher.deleteVideoSuccess'));
       loadLessons();
     } catch (error) {
       console.error('Error deleting video:', error);
-      alert('Lỗi khi xóa video');
+      alert(t('teacher.deleteVideoError'));
     } finally {
       setLoading(false);
     }
@@ -288,11 +290,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         updatedAt: new Date()
       });
 
-      alert('Upload tài liệu thành công!');
+      alert(t('teacher.uploadDocumentSuccess'));
       loadLessons();
     } catch (error) {
       console.error('Error saving document info:', error);
-      alert('Lỗi khi lưu thông tin tài liệu');
+      alert(t('teacher.saveDocumentError'));
     }
   };
 
@@ -305,11 +307,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         updatedAt: new Date()
       });
 
-      alert('Xóa tài liệu thành công!');
+      alert(t('teacher.deleteDocumentSuccess'));
       loadLessons();
     } catch (error) {
       console.error('Error removing document:', error);
-      alert('Lỗi khi xóa tài liệu');
+      alert(t('teacher.deleteDocumentError'));
     }
   };
 
@@ -325,7 +327,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   }
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="text-center py-8">{t("common.loading")}</div>;
   }
 
   return (
@@ -335,14 +337,14 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 mb-6 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold text-white mb-1">Quản lý bài học</h3>
-              <p className="text-slate-300">Khóa học: <span className="font-medium text-[#53cafd]">{course.title}</span></p>
-              <p className="text-sm text-slate-400 mt-1">Tổng số bài học: <span className="font-bold text-[#53cafd]">{lessons.length}</span></p>
+              <h3 className="text-2xl font-bold text-white mb-1">{t("teacher.manageLessons")}</h3>
+              <p className="text-slate-300">{t("teacher.courseLabel")}: <span className="font-medium text-[#53cafd]">{course.title}</span></p>
+              <p className="text-sm text-slate-400 mt-1">{t("teacher.totalLessonsCount")}: <span className="font-bold text-[#53cafd]">{lessons.length}</span></p>
             </div>
             {canManage && (
               <Button onClick={handleAdd} className="flex items-center gap-2 shadow-lg bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
                 <Plus size={18} />
-                Thêm bài học
+                {t("teacher.addLesson")}
               </Button>
             )}
           </div>
@@ -355,14 +357,14 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
               <div className="w-20 h-20 bg-[#53cafd]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#53cafd]/30">
                 <Play className="w-10 h-10 text-[#53cafd]" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Chưa có bài học nào</h3>
+              <h3 className="text-xl font-bold text-white mb-2">{t("teacher.noLessonsTitle")}</h3>
               <p className="text-slate-300 mb-6">
-                {canManage ? 'Thêm bài học đầu tiên cho khóa học này' : 'Khóa học này chưa có bài học nào'}
+                {canManage ? t('teacher.noLessonsHint') : t('teacher.noLessonsReadonly')}
               </p>
               {canManage && (
                 <Button onClick={handleAdd} className="shadow-lg bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
                   <Plus size={18} className="mr-2" />
-                  Thêm bài học
+                  {t("teacher.addLesson")}
                 </Button>
               )}
             </div>
@@ -397,10 +399,10 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     )}
                     {canManage && (
                       <div className="flex gap-1">
-                        <button onClick={() => handleEdit(lesson)} className="p-2 text-[#53cafd] hover:bg-[#53cafd]/20 rounded-lg transition-colors" title="Sửa">
+                        <button onClick={() => handleEdit(lesson)} className="p-2 text-[#53cafd] hover:bg-[#53cafd]/20 rounded-lg transition-colors" title={t("common.edit")}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDelete(lesson)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title="Xóa">
+                        <button onClick={() => handleDelete(lesson)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title={t("common.delete")}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -415,14 +417,14 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <div className="w-6 h-6 bg-green-500/20 rounded-md flex items-center justify-center border border-green-500/30">
                           <Play className="w-3.5 h-3.5 text-green-400" />
                         </div>
-                        <h4 className="font-semibold text-white text-xs">Video</h4>
+                        <h4 className="font-semibold text-white text-xs">{t("teacher.video")}</h4>
                       </div>
 
                       {lesson.videoId ? (
                         <div className="space-y-2">
                           <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
                             <CheckCircle size={14} />
-                            Đã upload
+                            {t("teacher.uploaded")}
                           </div>
                           {lesson.duration && (
                             <p className="text-xs text-slate-400 flex items-center gap-1">
@@ -436,13 +438,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                               className="flex-1 px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md hover:bg-green-500/30 text-xs font-medium flex items-center justify-center gap-1 transition-colors"
                             >
                               <Play size={12} />
-                              Xem
+                              {t("teacher.view")}
                             </button>
                             {canManage && (
                               <button
                                 onClick={() => handleVideoDelete(lesson)}
                                 className="px-2 py-1.5 bg-red-500/20 text-red-400 border border-red-500/50 rounded-md hover:bg-red-500/30 text-xs font-medium flex items-center justify-center transition-colors"
-                                title="Xóa video"
+                                title={t("teacher.deleteVideo")}
                               >
                                 <Trash2 size={12} />
                               </button>
@@ -463,11 +465,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                           />
                           <div className="px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md hover:bg-green-500/30 flex items-center justify-center gap-1 text-xs font-medium transition-colors">
                             <Upload size={12} />
-                            Upload
+                            {t("common.upload")}
                           </div>
                         </label>
                       ) : (
-                        <p className="text-xs text-slate-500 italic">Chưa có video</p>
+                        <p className="text-xs text-slate-500 italic">{t("teacher.noVideo")}</p>
                       )}
                     </div>
 
@@ -477,7 +479,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <div className="w-6 h-6 bg-blue-500/20 rounded-md flex items-center justify-center border border-blue-500/30">
                           <FileText className="w-3.5 h-3.5 text-blue-400" />
                         </div>
-                        <h4 className="font-semibold text-white text-xs">Tài liệu</h4>
+                        <h4 className="font-semibold text-white text-xs">{t("teacher.documents")}</h4>
                       </div>
 
                       {canManage ? (
@@ -492,7 +494,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <div className="space-y-2">
                           <div className="flex items-center gap-1.5 text-xs text-blue-400 font-medium">
                             <CheckCircle size={14} />
-                            Có tài liệu
+                            {t("teacher.hasDocument")}
                           </div>
                           <a
                             href={lesson.documentUrl}
@@ -501,11 +503,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                             className="block px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded-md hover:bg-blue-500/30 text-xs font-medium text-center transition-colors"
                           >
                             <FileText size={12} className="inline mr-1" />
-                            Xem
+                            {t("teacher.view")}
                           </a>
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-500 italic">Chưa có tài liệu</p>
+                        <p className="text-xs text-slate-500 italic">{t("teacher.noDocument")}</p>
                       )}
                     </div>
 
@@ -515,14 +517,14 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <div className="w-6 h-6 bg-purple-500/20 rounded-md flex items-center justify-center border border-purple-500/30">
                           <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
                         </div>
-                        <h4 className="font-semibold text-white text-xs">Bài kiểm tra</h4>
+                        <h4 className="font-semibold text-white text-xs">{t("teacher.quizzes")}</h4>
                       </div>
 
                       <div className="space-y-2">
                         {lesson.hasQuiz && (
                           <div className="flex items-center gap-1.5 text-xs text-purple-400 font-medium">
                             <CheckCircle size={14} />
-                            Có câu hỏi
+                            {t("teacher.hasQuestions")}
                           </div>
                         )}
                         <button
@@ -530,7 +532,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                           className="w-full px-2 py-1.5 bg-purple-500/20 text-purple-400 border border-purple-500/50 rounded-md hover:bg-purple-500/30 flex items-center justify-center gap-1 text-xs font-medium transition-colors"
                         >
                           <HelpCircle size={12} />
-                          {canManage ? 'Quản lý' : 'Xem'}
+                          {canManage ? t('teacher.manage') : t('teacher.view')}
                         </button>
                       </div>
                     </div>
@@ -548,9 +550,9 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-white">
-                    {editingLesson ? 'Chỉnh sửa bài học' : 'Thêm bài học mới'}
+                    {editingLesson ? t('teacher.editLessonTitle') : t('teacher.addLessonTitle')}
                   </h3>
-                  <p className="text-sm text-slate-300 mt-1">Điền thông tin cơ bản của bài học</p>
+                  <p className="text-sm text-slate-300 mt-1">{t("teacher.lessonBasicInfo")}</p>
                 </div>
                 <button
                   onClick={() => setShowModal(false)}
@@ -562,29 +564,29 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-bold text-white mb-2">Tên bài học *</label>
+                  <label className="block text-sm font-bold text-white mb-2">{t("teacher.lessonNameRequired")}</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
-                    placeholder="Ví dụ: Giới thiệu về React"
+                    placeholder={t("teacher.lessonNamePlaceholder")}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-white mb-2">Mô tả</label>
+                  <label className="block text-sm font-bold text-white mb-2">{t("common.description")}</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400 resize-none"
-                    placeholder="Mô tả nội dung bài học..."
+                    placeholder={t("teacher.descriptionPlaceholder")}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-white mb-2">Thứ tự hiển thị</label>
+                  <label className="block text-sm font-bold text-white mb-2">{t("teacher.displayOrder")}</label>
                   <input
                     type="number"
                     value={formData.order}
@@ -592,11 +594,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     min={1}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white text-center text-lg font-bold"
                   />
-                  <p className="text-xs text-slate-400 mt-2">Bài học sẽ được sắp xếp theo thứ tự này</p>
+                  <p className="text-xs text-slate-400 mt-2">{t("teacher.displayOrderHint")}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-white mb-2">Tags</label>
+                  <label className="block text-sm font-bold text-white mb-2">{t("teacher.tags")}</label>
                   <div className="flex gap-2 mb-2">
                     <input
                       type="text"
@@ -604,14 +606,14 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                       className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
-                      placeholder="Nhập tag và nhấn Enter"
+                      placeholder={t("teacher.tagPlaceholder")}
                     />
                     <button
                       type="button"
                       onClick={handleAddTag}
                       className="px-4 py-2 bg-[#53cafd] text-white rounded-xl hover:bg-[#3db9f5] transition-colors font-medium shadow-[#53cafd]/25"
                     >
-                      Thêm
+                      {t("common.add")}
                     </button>
                   </div>
                   {formData.tags.length > 0 && (
@@ -633,20 +635,20 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                       ))}
                     </div>
                   )}
-                  <p className="text-xs text-slate-400 mt-2">Ví dụ: cơ bản, quan trọng, nâng cao</p>
+                  <p className="text-xs text-slate-400 mt-2">{t("teacher.tagHint")}</p>
                 </div>
               </div>
 
               <div className="flex gap-3 mt-8">
                 <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 py-3 shadow-lg bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
                   <Save size={18} />
-                  {editingLesson ? 'Cập nhật' : 'Thêm bài học'}
+                  {editingLesson ? t('common.update') : t('teacher.addLesson')}
                 </Button>
                 <button
                   onClick={() => setShowModal(false)}
                   className="flex-1 px-4 py-3 border border-white/10 rounded-lg hover:bg-white/5 font-medium transition-colors text-white"
                 >
-                  Hủy
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -657,8 +659,8 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-[#311898] border border-white/10 rounded-2xl shadow-2xl p-8 text-center">
               <div className="w-20 h-20 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-xl text-white font-bold mb-2">Đang upload...</p>
-              <p className="text-sm text-slate-300">Vui lòng đợi, đừng đóng trang này</p>
+              <p className="text-xl text-white font-bold mb-2">{t("teacher.uploading")}</p>
+              <p className="text-sm text-slate-300">{t("teacher.uploadingHint")}</p>
             </div>
           </div>
         )}
@@ -688,13 +690,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     controlsList="nodownload"
                     src={`https://${CDN_HOSTNAME}/${previewingLesson.videoId}/play_720p.mp4`}
                   >
-                    Trình duyệt của bạn không hỗ trợ video.
+                    {t("teacher.videoNotSupported")}
                   </video>
                 </div>
                 {previewingLesson.duration && (
                   <div className="mt-4 flex items-center gap-2 text-sm text-slate-300">
                     <Clock size={16} />
-                    <span>Thời lượng: {formatDuration(previewingLesson.duration)}</span>
+                    <span>{t("teacher.durationLabel")}: {formatDuration(previewingLesson.duration)}</span>
                   </div>
                 )}
               </div>
