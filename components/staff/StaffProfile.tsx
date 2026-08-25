@@ -6,11 +6,12 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserProfile, Position } from '@/types/user';
-import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, Edit2, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, Edit2, X, Languages } from 'lucide-react';
+import { Locale } from '@/lib/i18n/types';
 
 export const StaffProfile: React.FC = () => {
   const { userProfile: user } = useAuth();
-  const { t, dateLocale } = useLanguage();
+  const { t, dateLocale, locale, setLocale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [departmentName, setDepartmentName] = useState<string>('');
@@ -298,6 +299,39 @@ export const StaffProfile: React.FC = () => {
                   <p className="text-slate-500 text-xs mt-1">{t("staff.contactAdminToChange")}</p>
                 </div>
               )}
+
+              {/* Ngôn ngữ */}
+              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center gap-3 mb-3">
+                  <Languages className="text-[#53cafd]" size={20} />
+                  <label className="text-slate-400 text-sm">{t('profile.language')}</label>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLocale('vi' as Locale)}
+                    className={`px-4 py-2.5 rounded-xl border font-medium transition-all ${
+                      locale === 'vi'
+                        ? 'border-[#53cafd] bg-[#53cafd]/20 text-white'
+                        : 'border-white/20 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    {t('profile.languageVi')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLocale('en' as Locale)}
+                    className={`px-4 py-2.5 rounded-xl border font-medium transition-all ${
+                      locale === 'en'
+                        ? 'border-[#53cafd] bg-[#53cafd]/20 text-white'
+                        : 'border-white/20 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    {t('profile.languageEn')}
+                  </button>
+                </div>
+                <p className="text-slate-500 text-xs mt-2">{t('profile.languageHint')}</p>
+              </div>
             </div>
           </div>
         </div>

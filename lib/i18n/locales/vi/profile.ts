@@ -32,4 +32,8 @@ export const profile = {
   uploadPhotoError: 'Lỗi khi upload ảnh',
   updateSuccess: 'Cập nhật thông tin thành công!',
   updateError: 'Lỗi khi cập nhật thông tin',
+  language: 'Ngôn ngữ',
+  languageHint: 'Chọn ngôn ngữ hiển thị của hệ thống',
+  languageVi: 'Tiếng Việt',
+  languageEn: 'English',
 };

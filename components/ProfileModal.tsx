@@ -6,7 +6,8 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserProfile } from '@/types/user';
-import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, X, Camera, Upload } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, X, Camera, Upload, Languages } from 'lucide-react';
+import { Locale } from '@/lib/i18n/types';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ interface ProfileModalProps {
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { userProfile: user } = useAuth();
-  const { t, dateLocale } = useLanguage();
+  const { t, dateLocale, locale, setLocale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [departmentName, setDepartmentName] = useState<string>('');
@@ -338,6 +339,39 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <p className="text-xs text-slate-500 mt-1">{t('profile.contactAdmin')}</p>
               </div>
             )}
+
+            {/* Ngôn ngữ */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                <Languages size={16} className="text-brand-600" />
+                {t('profile.language')}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLocale('vi' as Locale)}
+                  className={`px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${
+                    locale === 'vi'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {t('profile.languageVi')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale('en' as Locale)}
+                  className={`px-4 py-2.5 rounded-xl border-2 font-medium transition-all ${
+                    locale === 'en'
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {t('profile.languageEn')}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">{t('profile.languageHint')}</p>
+            </div>
           </div>
 
           {/* Actions */}

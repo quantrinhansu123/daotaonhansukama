@@ -32,4 +32,8 @@ export const profile = {
   uploadPhotoError: 'Failed to upload photo',
   updateSuccess: 'Information updated successfully!',
   updateError: 'Failed to update information',
+  language: 'Language',
+  languageHint: 'Choose the display language for the system',
+  languageVi: 'Tiếng Việt',
+  languageEn: 'English',
 };
