@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -143,7 +144,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className={`transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'} flex flex-col fixed h-screen z-50 bg-[#311898]/50 backdrop-blur-xl border-r border-white/10`}>
+      <aside className={`transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'} flex flex-col fixed h-screen z-50 bg-[#0a0814]/85 backdrop-blur-xl border-r border-white/[0.06]`}>
         {/* Logo */}
         <div className="p-4 flex items-center justify-between">
           {sidebarOpen ? (
@@ -227,7 +228,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <div className="flex items-center gap-3 mb-2">
                 {userProfile?.photoURL ? (
                   <img
-                    src={userProfile.photoURL}
+                    src={proxyBunnyUrl(userProfile.photoURL)}
                     alt={userProfile.displayName}
                     className="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-md group-hover:border-brand-400 transition-all"
                   />
@@ -254,7 +255,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             >
               {userProfile?.photoURL ? (
                 <img
-                  src={userProfile.photoURL}
+                  src={proxyBunnyUrl(userProfile.photoURL)}
                   alt={userProfile.displayName}
                   className="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-md"
                 />

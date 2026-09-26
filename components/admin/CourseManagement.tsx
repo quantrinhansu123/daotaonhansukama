@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
-import { Search, Plus, Edit2, Trash2, X, Save, BookOpen, Users } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, X, Save, BookOpen, Users, Clock, Layers, Signal, GraduationCap, Filter } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { CourseDetailPage } from './CourseDetailPage';
 import { BunnyImageUpload } from '@/components/shared/BunnyImageUpload';
 import { BunnyVideoUpload } from '@/components/shared/BunnyVideoUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { proxyBunnyUrl } from '@/lib/bunny-media';
 
 interface CourseManagementProps {
   onNavigateToApproval?: () => void;
@@ -397,9 +398,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
   const getLevelBadge = (level: string) => {
     const styles = {
-      beginner: 'bg-green-100 text-green-700',
-      intermediate: 'bg-yellow-100 text-yellow-700',
-      advanced: 'bg-red-100 text-red-700'
+      beginner: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25',
+      intermediate: 'bg-amber-500/15 text-amber-300 border border-amber-500/25',
+      advanced: 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
     };
     const labels = {
       beginner: t('admin.courses.levelBeginner'),
@@ -407,14 +408,34 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       advanced: t('admin.courses.levelAdvanced')
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${styles[level as keyof typeof styles]}`}>
+      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap ${styles[level as keyof typeof styles]}`}>
         {labels[level as keyof typeof labels]}
       </span>
     );
   };
 
+  const hasActiveFilters =
+    Boolean(searchTerm) ||
+    filterLevel !== 'all' ||
+    filterCategory !== 'all' ||
+    Boolean(filterProjectId);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterLevel('all');
+    setFilterCategory('all');
+    setFilterProjectId('');
+  };
+
   if (loading) {
-    return <div className="text-center py-8">{t('common.loading')}</div>;
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-2 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-300">{t('common.loading')}</p>
+        </div>
+      </div>
+    );
   }
 
   // Show course detail page
@@ -435,18 +456,28 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-white">{t('admin.courses.title')}</h2>
+    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px]">
+      {/* Page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#53cafd]/70">
+            Fabico Learning
+          </p>
+          <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-white">
+            {t('admin.courses.title')}
+          </h2>
+          <p className="text-sm text-slate-500 max-w-xl">
+            {t('admin.courses.pageSubtitle')}
+          </p>
           {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
             <p className="text-sm text-[#53cafd] mt-1">
-              🏢 {t('admin.courses.managerScope')}: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
+              {t('admin.courses.managerScope')}: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
             </p>
           )}
         </div>
-        <div className="flex gap-3">
-          <Button
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
             onClick={async () => {
               if (!confirm(t('admin.courses.syncStudentsConfirm'))) {
                 return;
@@ -468,69 +499,96 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 setLoading(false);
               }
             }}
-            className="flex items-center gap-2 bg-[#5e3ed0]/20 hover:bg-[#5e3ed0]/40 text-white border border-white/10"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-300 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] transition-colors"
           >
-            <Users size={18} />
-            {t('admin.courses.manageStudents')}
-          </Button>
-          {/* Chỉ admin mới được thêm khóa học */}
+            <Users size={16} />
+            {t('admin.courses.syncStudents')}
+          </button>
           {currentUser?.role === 'admin' && (
-            <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
-              <Plus size={18} />
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-[#0b1b2b] bg-[#53cafd] hover:bg-[#3db9f5] transition-colors shadow-[0_0_24px_rgba(83,202,253,0.25)]"
+            >
+              <Plus size={16} />
               {t('admin.courses.addCourse')}
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: t('admin.courses.totalCourses'), value: courses.length, icon: Layers, tone: 'text-white', ring: 'from-[#53cafd]/20' },
+          { label: t('admin.courses.levelBeginner'), value: courses.filter(c => c.level === 'beginner').length, icon: GraduationCap, tone: 'text-emerald-300', ring: 'from-emerald-400/20' },
+          { label: t('admin.courses.levelIntermediate'), value: courses.filter(c => c.level === 'intermediate').length, icon: Signal, tone: 'text-amber-300', ring: 'from-amber-400/20' },
+          { label: t('admin.courses.levelAdvanced'), value: courses.filter(c => c.level === 'advanced').length, icon: BookOpen, tone: 'text-rose-300', ring: 'from-rose-400/20' },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-black/30 backdrop-blur-md p-4`}
+            >
+              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${stat.ring} to-transparent opacity-80`} />
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs text-slate-400 font-medium">{stat.label}</p>
+                  <p className={`mt-2 text-3xl font-semibold tracking-tight ${stat.tone}`}>{stat.value}</p>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+                  <Icon size={18} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Toolbar */}
+      <div className="rounded-2xl border border-white/[0.06] bg-black/30 backdrop-blur-md p-3 lg:p-4 space-y-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
             type="text"
             placeholder={t('admin.courses.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+            className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 focus:border-[#53cafd]/30 text-sm text-white placeholder-slate-600"
           />
         </div>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.courses.filterByLevel')}</label>
-          <select
-            value={filterLevel}
-            onChange={(e) => setFilterLevel(e.target.value as any)}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white [&>option]:whitespace-nowrap"
-          >
-            <option value="all">{t('admin.courses.allLevels')}</option>
-            <option value="beginner">{t('admin.courses.levelBeginner')}</option>
-            <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
-            <option value="advanced">{t('admin.courses.levelAdvanced')}</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.courses.filterByCategory')}</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+            <select
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value as any)}
+              className="w-full appearance-none pl-9 pr-8 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 [&>option]:bg-[#12101f]"
+              aria-label={t('admin.courses.filterByLevel')}
+            >
+              <option value="all">{t('admin.courses.allLevels')}</option>
+              <option value="beginner">{t('admin.courses.levelBeginner')}</option>
+              <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
+              <option value="advanced">{t('admin.courses.levelAdvanced')}</option>
+            </select>
+          </div>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 [&>option]:bg-[#12101f]"
+            aria-label={t('admin.courses.filterByCategory')}
           >
             <option value="all">{t('admin.courses.allCategories')}</option>
             {categories.map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.courses.filterByProject')}</label>
           <select
             value={filterProjectId}
             onChange={(e) => setFilterProjectId(e.target.value)}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 [&>option]:bg-[#12101f]"
+            aria-label={t('admin.courses.filterByProject')}
           >
             <option value="">{t('admin.courses.allProjects')}</option>
             {projects.map(project => (
@@ -540,141 +598,163 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             ))}
           </select>
         </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.courses.totalCourses')}</p>
-          <p className="text-2xl font-bold text-white">{courses.length}</p>
-        </div>
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.courses.levelBeginner')}</p>
-          <p className="text-2xl font-bold text-green-400">{courses.filter(c => c.level === 'beginner').length}</p>
-        </div>
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.courses.levelIntermediate')}</p>
-          <p className="text-2xl font-bold text-yellow-400">{courses.filter(c => c.level === 'intermediate').length}</p>
-        </div>
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.courses.levelAdvanced')}</p>
-          <p className="text-2xl font-bold text-red-400">{courses.filter(c => c.level === 'advanced').length}</p>
+        <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
+          <span>{t('admin.courses.showingCount', { count: filteredCourses.length, total: courses.length })}</span>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-[#53cafd] hover:text-[#7dd9ff] font-medium transition-colors"
+            >
+              {t('admin.courses.clearFilters')}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Course List Table */}
-      <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
+      {/* Course list */}
+      <div className="rounded-2xl border border-white/[0.06] bg-black/35 backdrop-blur-md overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+          <table className="w-full min-w-[1100px]">
+            <thead>
+              <tr className="border-b border-white/[0.06] bg-black/25">
+                <th className="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.courseName')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.category')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.level')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.audience')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.projectsLabel')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.students')}
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
                   {t('admin.courses.durationLabel')}
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-right text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] w-[1%] whitespace-nowrap">
                   {t('common.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-white/[0.04]">
               {filteredCourses.map((course) => (
-                <tr key={course.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4">
-                    <div>
-                      <div className="font-medium text-white">{course.title}</div>
-                      <div className="text-sm text-slate-300 line-clamp-1">{course.description}</div>
+                <tr key={course.id} className="group hover:bg-white/[0.03] transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-11 w-11 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
+                        {course.thumbnail ? (
+                          <img
+                            src={proxyBunnyUrl(course.thumbnail)}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="h-full w-full items-center justify-center text-[#53cafd]/70"
+                          style={{ display: course.thumbnail ? 'none' : 'flex' }}
+                        >
+                          <BookOpen size={18} />
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-white truncate">{course.title}</div>
+                        <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">{course.description}</div>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-white">
-                    {course.category}
+                  <td className="px-4 py-4 text-sm text-slate-200">
+                    {course.category || <span className="text-slate-500">—</span>}
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-4">
                     {getLevelBadge(course.level)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     {course.departmentId === 'all' ? (
-                      <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                        🌐 {t('admin.courses.audienceAllShort')}
+                      <span className="inline-flex px-2.5 py-1 bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 rounded-md text-xs font-medium">
+                        {t('admin.courses.audienceAllShort')}
                       </span>
                     ) : course.departmentId ? (
-                      <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                        🏢 {departments.find(d => d.id === course.departmentId)?.name || 'N/A'}
+                      <span className="inline-flex px-2.5 py-1 bg-violet-500/15 text-violet-300 border border-violet-500/25 rounded-md text-xs font-medium">
+                        {departments.find(d => d.id === course.departmentId)?.name || 'N/A'}
                       </span>
                     ) : (
-                      <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-sm font-medium">
-                        🔒 {t('admin.courses.draft')}
+                      <span className="inline-flex px-2.5 py-1 bg-white/5 text-slate-400 border border-white/10 rounded-md text-xs font-medium">
+                        {t('admin.courses.draft')}
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     {course.projectNames && course.projectNames.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
-                        {course.projectNames.map((projectName, idx) => (
+                        {course.projectNames.slice(0, 2).map((projectName, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
+                            className="inline-flex items-center px-2 py-0.5 bg-white/5 text-slate-300 border border-white/10 rounded-md text-[11px] font-medium"
                           >
                             {projectName}
                           </span>
                         ))}
+                        {course.projectNames.length > 2 && (
+                          <span className="text-[11px] text-slate-500">+{course.projectNames.length - 2}</span>
+                        )}
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-sm">-</span>
+                      <span className="text-slate-500 text-sm">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-                      <span>{course.students?.length || 0}</span>
-                      <span className="text-xs">{t('admin.courses.people')}</span>
+                  <td className="px-4 py-4 text-center">
+                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-200">
+                      <Users size={14} className="text-slate-500" />
+                      {course.students?.length || 0}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center text-sm text-white">
-                    {course.duration}h
+                  <td className="px-4 py-4 text-center">
+                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-200">
+                      <Clock size={14} className="text-slate-500" />
+                      {course.duration}h
+                    </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
                       <button
+                        type="button"
                         onClick={() => setDetailCourse(course)}
-                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 bg-[#53cafd]/90 text-[#061018] hover:bg-[#53cafd] transition-colors"
                         title={t('admin.courses.classDetail')}
                       >
-                        <BookOpen size={16} />
-                        {t('common.details')}
+                        <BookOpen size={14} className="shrink-0" />
+                        <span className="whitespace-nowrap">{t('common.details')}</span>
                       </button>
-
-                      {/* Chỉ admin mới thấy các nút chỉnh sửa và xóa */}
                       {currentUser?.role === 'admin' && (
                         <>
                           <button
+                            type="button"
                             onClick={() => handleEdit(course)}
-                            className="p-2 text-[#53cafd] hover:bg-white/10 rounded-lg transition-colors"
+                            className="inline-flex p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
                             title={t('common.edit')}
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={15} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDelete(course)}
-                            className="p-2 text-pink-500 hover:bg-white/10 rounded-lg transition-colors"
+                            className="inline-flex p-2 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors shrink-0"
                             title={t('common.delete')}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </>
                       )}
@@ -687,262 +767,264 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         </div>
 
         {filteredCourses.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-300">
+          <div className="text-center py-16 px-6">
+            <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-slate-400" />
+            </div>
+            <p className="text-white font-medium mb-1">
               {searchTerm || filterProjectId || filterCategory !== 'all' || filterLevel !== 'all'
                 ? t('admin.courses.noMatchFilter')
                 : t('admin.courses.notFound')}
+            </p>
+            <p className="text-sm text-slate-400">
+              {currentUser?.role === 'admin' ? t('admin.courses.emptyHint') : t('admin.courses.emptyHintStaff')}
             </p>
           </div>
         )}
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">
-                {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
-              </h3>
-              <button onClick={() => setShowModal(false)} disabled={uploadingVideo} className="text-slate-400 hover:text-white disabled:opacity-50">
-                <X size={24} />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0e0c1a]/98 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center gap-3 px-6 py-4 border-b border-white/[0.06] shrink-0">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[#53cafd]/80 font-medium">Bunny Stream</p>
+                <h3 className="text-lg font-semibold text-white">
+                  {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
+                </h3>
+              </div>
+              <button onClick={() => setShowModal(false)} disabled={uploadingVideo} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-50">
+                <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.courseName')} *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.description')}</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.category')} *</label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder={t('admin.courses.categoryPlaceholder')}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.audience')} *</label>
-                <select
-                  value={formData.departmentId}
-                  onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                  disabled={!!(currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid))}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white disabled:bg-white/10 disabled:cursor-not-allowed [&>option]:bg-[#311898] [&>option]:text-white"
-                >
-                  <option value="">{t('admin.courses.audienceNone')}</option>
-                  <option value="all">{t('admin.courses.audienceAll')}</option>
-                  {departments.map(dept => (
-                    <option key={dept.id} value={dept.id}>🏢 {dept.name}</option>
-                  ))}
-                </select>
-                {currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid) ? (
-                  <p className="text-xs text-[#53cafd] mt-1">
-                    🔒 {t('admin.courses.managerCreateHint')}
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-400 mt-1">
-                    • <strong>{t('admin.courses.audienceAll')}</strong>: {t('admin.courses.audienceHintAll')}<br />
-                    • <strong>{t('admin.courses.audienceHintDeptLabel')}</strong>: {t('admin.courses.audienceHintDept')}<br />
-                    • <strong>{t('admin.courses.audienceNone')}</strong>: {t('admin.courses.audienceHintNone')}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  {t('admin.courses.projectsLabel')}
-                  {formData.projects.length > 0 && (
-                    <span className="ml-2 text-xs text-[#53cafd]">
-                      ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
-                    </span>
-                  )}
-                </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
-                  {projects.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4">{t('admin.courses.noProjectsYet')}</p>
-                  ) : (
-                    projects.map(project => {
-                      const isChecked = formData.projects.includes(project.id);
-                      return (
-                        <label
-                          key={project.id}
-                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                            isChecked 
-                              ? 'bg-[#53cafd]/20 border border-[#53cafd]/30' 
-                              : 'hover:bg-white/10 border border-transparent'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData({
-                                  ...formData,
-                                  projects: [...formData.projects, project.id],
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  projects: formData.projects.filter(id => id !== project.id),
-                                });
-                              }
-                            }}
-                            className="w-4 h-4 text-[#53cafd] bg-white/5 border-white/20 rounded focus:ring-[#53cafd] focus:ring-2"
-                          />
-                          <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
-                            {project.name}
-                          </span>
-                          {isChecked && (
-                            <span className="text-xs text-[#53cafd]">✓</span>
-                          )}
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
-                {formData.projects.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {formData.projects.map(projectId => {
-                      const project = projects.find(p => p.id === projectId);
-                      return project ? (
-                        <span
-                          key={projectId}
-                          className="inline-flex items-center px-2 py-1 bg-[#53cafd]/20 text-[#53cafd] rounded-md text-xs font-medium"
-                        >
-                          {project.name}
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6 p-6 overflow-y-auto flex-1">
+              <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">{t('admin.courses.formSectionBasic')}</h4>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.level')}</label>
-                  <select
-                    value={formData.level}
-                    onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
-                  >
-                    <option value="beginner">{t('admin.courses.levelBeginner')}</option>
-                    <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
-                    <option value="advanced">{t('admin.courses.levelAdvanced')}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.courses.durationHours')}</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.courseName')} *</label>
                   <input
-                    type="number"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 focus:border-[#53cafd]/40 text-sm text-white"
                   />
                 </div>
-              </div>
 
-              <BunnyImageUpload
-                label={t('admin.courses.thumbnailLabel')}
-                currentImage={formData.thumbnail}
-                onUploadStart={() => setUploadingThumbnail(true)}
-                onUploadEnd={() => setUploadingThumbnail(false)}
-                onUploadComplete={(url) => setFormData(prev => ({ ...prev, thumbnail: url }))}
-                folder="courses/thumbnails"
-              />
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.description')}</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 focus:border-[#53cafd]/40 text-sm text-white resize-none"
+                  />
+                </div>
 
-              <div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.category')} *</label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder={t('admin.courses.categoryPlaceholder')}
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 focus:border-[#53cafd]/40 text-sm text-white placeholder-slate-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.level')}</label>
+                    <select
+                      value={formData.level}
+                      onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
+                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 text-sm text-white [&>option]:bg-[#311898]"
+                    >
+                      <option value="beginner">{t('admin.courses.levelBeginner')}</option>
+                      <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
+                      <option value="advanced">{t('admin.courses.levelAdvanced')}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.durationHours')}</label>
+                    <input
+                      type="number"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 text-sm text-white"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">{t('admin.courses.formSectionAudience')}</h4>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.audience')} *</label>
+                  <select
+                    value={formData.departmentId}
+                    onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
+                    disabled={!!(currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid))}
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 text-sm text-white disabled:opacity-60 disabled:cursor-not-allowed [&>option]:bg-[#311898]"
+                  >
+                    <option value="">{t('admin.courses.audienceNone')}</option>
+                    <option value="all">{t('admin.courses.audienceAll')}</option>
+                    {departments.map(dept => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                  {currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid) ? (
+                    <p className="text-xs text-[#53cafd] mt-1.5">
+                      {t('admin.courses.managerCreateHint')}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      {t('admin.courses.audienceHintAll')} · {t('admin.courses.audienceHintDept')} · {t('admin.courses.audienceHintNone')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    {t('admin.courses.projectsLabel')}
+                    {formData.projects.length > 0 && (
+                      <span className="ml-2 text-xs text-[#53cafd]">
+                        ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
+                      </span>
+                    )}
+                  </label>
+                  <div className="space-y-1.5 max-h-44 overflow-y-auto border border-white/10 rounded-xl p-2 bg-black/20">
+                    {projects.length === 0 ? (
+                      <p className="text-xs text-slate-400 text-center py-4">{t('admin.courses.noProjectsYet')}</p>
+                    ) : (
+                      projects.map(project => {
+                        const isChecked = formData.projects.includes(project.id);
+                        return (
+                          <label
+                            key={project.id}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                              isChecked
+                                ? 'bg-[#53cafd]/15 border border-[#53cafd]/30'
+                                : 'hover:bg-white/5 border border-transparent'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    projects: [...formData.projects, project.id],
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    projects: formData.projects.filter(id => id !== project.id),
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-[#53cafd] bg-white/5 border-white/20 rounded focus:ring-[#53cafd] focus:ring-2"
+                            />
+                            <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
+                              {project.name}
+                            </span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                  {formData.projects.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {formData.projects.map(projectId => {
+                        const project = projects.find(p => p.id === projectId);
+                        return project ? (
+                          <span
+                            key={projectId}
+                            className="inline-flex items-center px-2 py-1 bg-[#53cafd]/15 text-[#53cafd] border border-[#53cafd]/25 rounded-md text-xs font-medium"
+                          >
+                            {project.name}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">{t('admin.courses.formSectionMedia')}</h4>
                 <BunnyImageUpload
-                  label={t('admin.courses.bannerLabel')}
-                  currentImage={formData.banner}
-                  onUploadStart={() => {
-                    console.log('⏳ Banner upload started...');
-                    setUploadingBanner(true);
-                  }}
-                  onUploadEnd={() => {
-                    console.log('✅ Banner upload ended');
-                    setUploadingBanner(false);
-                  }}
-                  onUploadComplete={(url) => {
-                    console.log('🎉 Banner uploaded, URL:', url);
-                    setFormData(prev => {
-                      const updated = { ...prev, banner: url };
-                      console.log('📝 Updated formData with banner:', updated);
-                      return updated;
-                    });
-                  }}
-                  folder="courses/banners"
+                  label={t('admin.courses.thumbnailLabel')}
+                  currentImage={formData.thumbnail}
+                  onUploadStart={() => setUploadingThumbnail(true)}
+                  onUploadEnd={() => setUploadingThumbnail(false)}
+                  onUploadComplete={(url) => setFormData(prev => ({ ...prev, thumbnail: url }))}
+                  folder="courses/thumbnails"
+                  variant="dark"
                 />
-                <p className="text-xs text-slate-500 mt-1">
-                  📐 {t('admin.courses.bannerRecommend')}<br />
-                  📦 {t('admin.courses.bannerMaxSize')}<br />
-                  📄 {t('admin.courses.bannerFormats')}
-                </p>
-                {uploadingBanner && (
-                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-700 font-semibold">⏳ {t('admin.courses.bannerUploading')}</p>
-                  </div>
-                )}
-                {!uploadingBanner && formData.banner && (
-                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-xs text-green-700 font-semibold mb-1">✅ {t('admin.courses.bannerUploaded')}</p>
-                    <p className="text-xs text-green-600 break-all font-mono">{formData.banner}</p>
-                  </div>
-                )}
+
+                <div>
+                  <BunnyImageUpload
+                    label={t('admin.courses.bannerLabel')}
+                    currentImage={formData.banner}
+                    onUploadStart={() => setUploadingBanner(true)}
+                    onUploadEnd={() => setUploadingBanner(false)}
+                    onUploadComplete={(url) => setFormData(prev => ({ ...prev, banner: url }))}
+                    folder="courses/banners"
+                    variant="dark"
+                  />
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    {t('admin.courses.bannerRecommend')} · {t('admin.courses.bannerMaxSize')} · {t('admin.courses.bannerFormats')}
+                  </p>
+                  {uploadingBanner && (
+                    <div className="mt-2 px-3 py-2 bg-[#53cafd]/10 border border-[#53cafd]/25 rounded-xl">
+                      <p className="text-xs text-[#53cafd] font-medium">{t('admin.courses.bannerUploading')}</p>
+                    </div>
+                  )}
+                  {!uploadingBanner && formData.banner && (
+                    <div className="mt-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
+                      <p className="text-xs text-emerald-300 font-medium">{t('admin.courses.bannerUploaded')}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                  <BunnyVideoUpload
+                    label={t('admin.courses.videoDemoLabel')}
+                    currentVideoId={formData.demoVideoId}
+                    onUploadComplete={(videoId) => setFormData(prev => ({ ...prev, demoVideoId: videoId }))}
+                    onUploadStateChange={setUploadingVideo}
+                    variant="dark"
+                  />
+                </div>
+              </section>
+            </div>
+
+            <div className="shrink-0 border-t border-white/[0.06] px-6 py-4 space-y-2 bg-[#0e0c1a]">
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSave}
+                  disabled={uploadingThumbnail || uploadingBanner || uploadingVideo}
+                  className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save size={18} />
+                  {uploadingVideo ? t('admin.courses.uploadingVideo') : uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
+                </Button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  disabled={uploadingVideo}
+                  className="flex-1 px-4 py-2.5 border border-white/10 rounded-xl hover:bg-white/10 text-sm font-medium text-white disabled:opacity-50 transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
               </div>
-
-              <BunnyVideoUpload
-                label={t('admin.courses.videoDemoLabel')}
-                currentVideoId={formData.demoVideoId}
-                onUploadComplete={(videoId) => setFormData(prev => ({ ...prev, demoVideoId: videoId }))}
-                onUploadStateChange={setUploadingVideo}
-              />
+              {(uploadingThumbnail || uploadingBanner) && (
+                <p className="text-xs text-amber-300/90 text-center">
+                  {t('admin.courses.waitUploadBeforeSave')}
+                </p>
+              )}
             </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                onClick={handleSave}
-                disabled={uploadingThumbnail || uploadingBanner || uploadingVideo}
-                className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save size={18} />
-                {uploadingVideo ? t('admin.courses.uploadingVideo') : uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
-              </Button>
-              <button
-                onClick={() => setShowModal(false)}
-                disabled={uploadingVideo}
-                className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/10 text-white disabled:opacity-50"
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-            {(uploadingThumbnail || uploadingBanner) && (
-              <p className="text-xs text-orange-600 text-center mt-2">
-                {t('admin.courses.waitUploadBeforeSave')}
-              </p>
-            )}
           </div>
         </div>
       )}

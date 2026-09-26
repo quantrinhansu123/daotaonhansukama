@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { UserProfile } from '@/types/user';
 import { User, Mail, Phone, MapPin, Globe, Briefcase, Calendar, Building2, DollarSign, Save, X, Camera, Upload, Languages } from 'lucide-react';
 import { Locale } from '@/lib/i18n/types';
+import { proxyBunnyUrl } from '@/lib/bunny-media';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -167,7 +168,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div className="relative group">
               {photoURL ? (
                 <img 
-                  src={photoURL}
+                  src={proxyBunnyUrl(photoURL)}
                   alt={user.displayName} 
                   className="w-32 h-32 rounded-full object-cover border-4 border-brand-500 shadow-xl"
                 />

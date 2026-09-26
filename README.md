@@ -8,7 +8,8 @@
 2. Sao chép `.env.example` thành `.env.local` và điền:
    - `BUNNY_STREAM_API_KEY`: **Library API Key** từ tab API của Video Library; chỉ dùng trên server.
    - `BUNNY_STREAM_LIBRARY_ID`: ID của cùng Video Library.
-   - `NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME`: hostname CDN của library, ví dụ `vz-xxxx.b-cdn.net`, không có `https://`.
+   - `NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID`: cùng ID (public) — dùng iframe embed phát video.
+   - `NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME`: (tuỳ chọn) hostname CDN, ví dụ `vz-xxxx.b-cdn.net`. Copy đúng từ dashboard; hostname sai sẽ `ERR_NAME_NOT_RESOLVED`. Player mặc định dùng iframe nên có thể để trống.
 3. Điền các biến Firebase hiện có, rồi chạy `npm install` và `npm run dev`.
 4. Trên Vercel, đặt cùng các biến ở **Project Settings → Environment Variables** và triển khai lại. Cần đặt CDN hostname trước lúc build vì biến `NEXT_PUBLIC_` được đưa vào mã trình duyệt khi build.
 

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Course } from '@/types/course';
 import { BookOpen, Clock, Play } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Hls from 'hls.js';
+import { proxyBunnyUrl } from '@/lib/bunny-media';
 
 interface CourseCardProps {
   course: Course;
@@ -20,34 +20,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 }) => {
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!isHovered || !course.demoVideoId || !CDN_HOSTNAME || !video) return;
-
-    const source = `https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`;
-    let hls: Hls | null = null;
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = source;
-    } else if (Hls.isSupported()) {
-      hls = new Hls();
-      hls.loadSource(source);
-      hls.attachMedia(video);
-    }
-
-    const timer = setTimeout(() => video.play().catch(() => {}), 300);
-
-    return () => {
-      clearTimeout(timer);
-      video.pause();
-      hls?.destroy();
-      video.removeAttribute('src');
-      video.load();
-    };
-  }, [isHovered, course.demoVideoId, CDN_HOSTNAME]);
 
   const getLevelBadge = (level: string) => {
     const styles = {
@@ -67,38 +39,17 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     );
   };
 
-  const getBorderColor = () => {
-    return 'border-white/10';
-  };
-
   return (
     <div
-      className={`bg-[#5e3ed0]/20 backdrop-blur-md rounded-xl border ${getBorderColor()} overflow-hidden transition-all duration-300 ${isHovered ? 'shadow-2xl scale-105 z-10 border-[#53cafd]/50' : 'shadow-sm hover:shadow-lg hover:bg-[#5e3ed0]/30'
+      className={`bg-[#5e3ed0]/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden transition-all duration-300 ${isHovered ? 'shadow-2xl scale-105 z-10 border-[#53cafd]/50' : 'shadow-sm hover:shadow-lg hover:bg-[#5e3ed0]/30'
         }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Thumbnail/Video Area */}
       <div className="aspect-video bg-gradient-to-br from-[#53cafd] to-blue-600 flex items-center justify-center relative overflow-hidden">
-        {/* Video Demo (shows on hover) */}
-        {course.demoVideoId && CDN_HOSTNAME && (
-          <video
-            ref={videoRef}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'
-              }`}
-            muted
-            loop
-            playsInline
-          />
-        )}
-
-        {/* Thumbnail (shows when not hovering) */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-300 ${isHovered && course.demoVideoId && CDN_HOSTNAME ? 'opacity-0' : 'opacity-100'
-            }`}
-        >
+        <div className="absolute inset-0">
           {course.thumbnail ? (
-            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+            <img src={proxyBunnyUrl(course.thumbnail)} alt={course.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <BookOpen className="w-16 h-16 text-white" />
@@ -106,8 +57,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
         </div>
 
-        {/* Play Icon Overlay */}
-        {course.demoVideoId && CDN_HOSTNAME && !isHovered && (
+        {course.demoVideoId && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="bg-white/90 rounded-full p-4">
               <Play className="w-8 h-8 text-[#53cafd]" fill="currentColor" />
@@ -116,49 +66,31 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         )}
       </div>
 
-      {/* Content */}
       <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-bold text-white line-clamp-2 flex-1">{course.title}</h3>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="font-semibold text-white line-clamp-2 flex-1">{course.title}</h3>
           {getLevelBadge(course.level)}
         </div>
-        <p className="text-sm text-slate-300 mb-2 line-clamp-2">{course.description}</p>
-        <div className="flex items-center justify-between text-sm text-slate-400 mb-2">
-          <span>👨‍🏫 {course.teacherName}</span>
-          <span className="text-slate-400">{course.category}</span>
-        </div>
 
-        <div className="mb-3 flex items-center gap-2">
-          {course.departmentId === 'all' ? (
-            <span className="inline-block px-2 py-1 bg-green-500/20 text-green-300 rounded-full text-xs font-medium border border-green-500/30">
-              🌐 {t("student.general")}
-            </span>
-          ) : departmentName ? (
-            <span className="inline-block px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-medium border border-purple-500/30">
-              🏢 {departmentName}
-            </span>
-          ) : null}
-          {course.students && course.students.length > 0 && (
-            <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-medium border border-blue-500/30">
-              👥 {t("student.studentsCount", { count: course.students.length })}
+        {course.description && (
+          <p className="text-sm text-slate-300 line-clamp-2 mb-3">{course.description}</p>
+        )}
+
+        <div className="flex items-center gap-3 text-xs text-slate-400 mb-4">
+          {course.duration > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Clock size={14} />
+              {course.duration}h
             </span>
           )}
+          {departmentName && <span>{departmentName}</span>}
         </div>
 
-        <div className="flex items-center text-sm mb-3">
-          <span className="text-slate-400 flex items-center gap-1">
-            <Clock size={14} />
-            {course.duration}h
-          </span>
-        </div>
-
-        {/* Action Button */}
-        <Button
-          onClick={() => onView?.(course.id)}
-          className="w-full bg-[#53cafd] hover:bg-[#3db9f5] text-white shadow-lg shadow-[#53cafd]/20"
-        >
-          {t("student.learnNow")}
-        </Button>
+        {onView && (
+          <Button onClick={() => onView(course.id)} className="w-full">
+            {t('student.startLearning')}
+          </Button>
+        )}
       </div>
     </div>
   );

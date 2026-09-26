@@ -11,6 +11,7 @@ interface BunnyImageUploadProps {
   folder?: string;
   onUploadStart?: () => void;
   onUploadEnd?: () => void;
+  variant?: 'light' | 'dark';
 }
 
 export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
@@ -19,12 +20,14 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
   label,
   folder = 'courses',
   onUploadStart,
-  onUploadEnd
+  onUploadEnd,
+  variant = 'light',
 }) => {
   const { t } = useLanguage();
   const resolvedLabel = label ?? t('shared.uploadImage');
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const dark = variant === 'dark';
 
   // Convert storage.bunnycdn.com URL to proxy API URL (avoids CDN suspension)
   const convertToProxyUrl = (url: string | null | undefined): string | null => {
@@ -135,7 +138,7 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{resolvedLabel}</label>
+      <label className={`block text-sm font-medium ${dark ? 'text-slate-300' : 'text-slate-700'}`}>{resolvedLabel}</label>
       
       {preview ? (
         <div className="space-y-2">
@@ -143,16 +146,13 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
             <img
               src={preview}
               alt="Preview"
-              className="w-full h-48 object-cover rounded-lg border border-slate-200"
+              className={`w-full h-48 object-cover rounded-xl border ${dark ? 'border-white/10' : 'border-slate-200'}`}
               onError={(e) => {
-                // preview is guaranteed to be non-null here because of the {preview ? ...} check
                 const previewUrl = preview as string;
                 console.error('❌ Preview image load error:', previewUrl);
-                // Try to use proxy if direct URL fails
                 if (previewUrl.includes('storage.bunnycdn.com')) {
                   e.currentTarget.src = `/api/banner?url=${encodeURIComponent(previewUrl)}`;
                 } else if (previewUrl.includes('b-cdn.net')) {
-                  // CDN URL failed, try proxy with original storage URL
                   const originalUrl = currentImage || previewUrl;
                   if (originalUrl && originalUrl.includes('storage.bunnycdn.com')) {
                     e.currentTarget.src = `/api/banner?url=${encodeURIComponent(originalUrl)}`;
@@ -173,10 +173,9 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
               <X size={16} />
             </button>
           </div>
-          {/* Display URL below image */}
-          <div className="p-2 bg-slate-50 rounded border border-slate-200">
-            <p className="text-xs text-slate-500 mb-1">{t('shared.urlLabel')}</p>
-            <p className="text-xs text-slate-700 break-all font-mono">
+          <div className={`p-2 rounded-lg border ${dark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+            <p className={`text-xs mb-1 ${dark ? 'text-slate-400' : 'text-slate-500'}`}>{t('shared.urlLabel')}</p>
+            <p className={`text-xs break-all font-mono ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
               {currentImage || preview}
             </p>
             <button
@@ -187,7 +186,7 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
                   alert(t('shared.urlCopied'));
                 }
               }}
-              className="mt-1 text-xs text-blue-600 hover:text-blue-700 underline"
+              className={`mt-1 text-xs underline ${dark ? 'text-[#53cafd] hover:text-[#3db9f5]' : 'text-blue-600 hover:text-blue-700'}`}
               type="button"
             >
               {t('shared.copyUrl')}
@@ -195,20 +194,24 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
           </div>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-brand-500 hover:bg-slate-50 transition-colors">
+        <label className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+          dark
+            ? 'border-white/20 bg-white/5 hover:border-[#53cafd]/60 hover:bg-white/10'
+            : 'border-slate-300 hover:border-brand-500 hover:bg-slate-50'
+        }`}>
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             {uploading ? (
               <>
-                <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <p className="text-sm text-slate-600">{t('shared.uploading')}</p>
+                <div className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-3 ${dark ? 'border-[#53cafd]' : 'border-brand-500'}`}></div>
+                <p className={`text-sm ${dark ? 'text-slate-200' : 'text-slate-600'}`}>{t('shared.uploading')}</p>
               </>
             ) : (
               <>
-                <ImageIcon className="w-12 h-12 text-slate-400 mb-3" />
-                <p className="mb-2 text-sm text-slate-600">
+                <ImageIcon className={`w-12 h-12 mb-3 ${dark ? 'text-[#53cafd]/70' : 'text-slate-400'}`} />
+                <p className={`mb-2 text-sm ${dark ? 'text-slate-200' : 'text-slate-600'}`}>
                   <span className="font-semibold">{t('shared.clickToUploadImage')}</span>
                 </p>
-                <p className="text-xs text-slate-500">{t('shared.imageFormatsHint')}</p>
+                <p className={`text-xs ${dark ? 'text-slate-400' : 'text-slate-500'}`}>{t('shared.imageFormatsHint')}</p>
               </>
             )}
           </div>
