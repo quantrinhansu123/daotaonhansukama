@@ -9,7 +9,10 @@ export async function GET(
 ) {
   const { videoId } = await params;
   try {
-    if (!BUNNY_API_KEY || !LIBRARY_ID) {
+    const apiKey = process.env.BUNNY_STREAM_API_KEY || BUNNY_API_KEY;
+    const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID || LIBRARY_ID;
+
+    if (!apiKey || !libraryId) {
       return NextResponse.json(
         { error: 'Thiếu cấu hình Bunny Stream API' },
         { status: 500 }
@@ -17,23 +20,26 @@ export async function GET(
     }
 
     const response = await fetch(
-      `https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`,
+      `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
       {
         headers: {
-          'AccessKey': BUNNY_API_KEY,
+          'AccessKey': apiKey,
         },
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to get video');
+      return NextResponse.json(
+        { error: response.status === 404 ? 'Video không có trong Bunny library hiện tại.' : 'Không lấy được video từ Bunny Stream.' },
+        { status: response.status === 404 ? 404 : 502 }
+      );
     }
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : 'Không lấy được video từ Bunny Stream.' },
       { status: 500 }
     );
   }
@@ -45,7 +51,10 @@ export async function DELETE(
 ) {
   const { videoId } = await params;
   try {
-    if (!BUNNY_API_KEY || !LIBRARY_ID) {
+    const apiKey = process.env.BUNNY_STREAM_API_KEY || BUNNY_API_KEY;
+    const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID || LIBRARY_ID;
+
+    if (!apiKey || !libraryId) {
       return NextResponse.json(
         { error: 'Thiếu cấu hình Bunny Stream API' },
         { status: 500 }
@@ -53,23 +62,29 @@ export async function DELETE(
     }
 
     const response = await fetch(
-      `https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`,
+      `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
       {
         method: 'DELETE',
         headers: {
-          'AccessKey': BUNNY_API_KEY,
+          'AccessKey': apiKey,
         },
       }
     );
 
+    if (response.status === 404) {
+      return NextResponse.json(
+        { error: 'Video không có trong Bunny library hiện tại.', notFound: true },
+        { status: 404 }
+      );
+    }
     if (!response.ok) {
-      throw new Error('Failed to delete video');
+      return NextResponse.json({ error: 'Không xóa được video trên Bunny Stream.' }, { status: 502 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : 'Không xóa được video trên Bunny Stream.' },
       { status: 500 }
     );
   }
