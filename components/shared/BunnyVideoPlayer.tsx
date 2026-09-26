@@ -19,7 +19,10 @@ export function BunnyVideoPlayer({
   className,
 }: BunnyVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const source = videoUrl || (cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : '');
+  // Prioritize active cdnHostname with videoId, or fix any outdated b-cdn.net domain in videoUrl
+  const source = (videoId && cdnHostname)
+    ? `https://${cdnHostname}/${videoId}/playlist.m3u8`
+    : (videoUrl ? (cdnHostname ? videoUrl.replace(/https:\/\/[^/]+\.b-cdn\.net\//, `https://${cdnHostname}/`) : videoUrl) : '');
 
   useEffect(() => {
     const video = videoRef.current;

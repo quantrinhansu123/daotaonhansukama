@@ -149,8 +149,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           {sidebarOpen ? (
             <>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl">K</span>
+                <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg border border-white/20 flex-shrink-0">
+                  <img src="/logo.png" alt="Fabico" className="h-full w-full object-contain" />
                 </div>
                 <div>
                   <h1 className="font-bold text-lg text-white">{t('admin.systemName')}</h1>
@@ -162,8 +162,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </button>
             </>
           ) : (
-            <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-white/10 rounded-lg mx-auto transition-colors text-slate-300">
-              <Menu size={20} />
+            <button onClick={() => setSidebarOpen(true)} className="p-1 hover:bg-white/10 rounded-xl mx-auto transition-colors flex items-center justify-center">
+              <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-md">
+                <img src="/logo.png" alt="Fabico" className="h-full w-full object-contain" />
+              </div>
             </button>
           )}
         </div>

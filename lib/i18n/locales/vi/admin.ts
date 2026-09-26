@@ -9,7 +9,7 @@ export const admin = {
     projects: 'Quản lý Dự án',
     attendance: 'Quản lý chấm công',
   },
-  systemName: 'Kama System',
+  systemName: 'Fabico System',
   tagline: 'Quản lý & Đào tạo',
   logout: 'Đăng xuất',
   dashboard: {

@@ -31,7 +31,7 @@ export const auth = {
     '"We will build ships to sail the oceans. But first we must have the finest people, who know how to hate and how to love."',
   quoteAuthor: 'The Communist',
   quoteAuthorSub: 'Determined to fight and to win.\nKnow how to fight - dare to fight - and know how to win',
-  footer: '© 2024 Kama Inc. Privacy Policy & Terms.',
+  footer: '© 2024 Fabico Inc. Privacy Policy & Terms.',
   countries: {
     vietnam: 'Vietnam',
     usa: 'United States',

@@ -9,7 +9,7 @@ export const admin = {
     projects: 'Project management',
     attendance: 'Attendance management',
   },
-  systemName: 'Kama System',
+  systemName: 'Fabico System',
   tagline: 'Management & Training',
   logout: 'Log out',
   dashboard: {

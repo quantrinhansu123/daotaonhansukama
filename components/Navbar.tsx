@@ -65,10 +65,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div onClick={handleLogoClick} className="flex items-center gap-3 cursor-pointer group">
-            <img src="/logo.png" alt="Kama" className="h-12 w-auto" />
-            <span className={`text-2xl font-bold tracking-tight transition-colors ${logoColorClass}`}>
-              Kama
-            </span>
+            <div className="h-10 px-3 py-1 bg-white rounded-xl flex items-center justify-center shadow-sm">
+              <img src="/logo.png" alt="Fabico" className="h-7 w-auto object-contain" />
+            </div>
           </div>
 
           {/* Desktop Nav */}

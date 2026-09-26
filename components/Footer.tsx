@@ -14,8 +14,10 @@ export const Footer: React.FC = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-white">
-              <img src="/logo.png" alt="Kama" className="h-10 w-auto" />
-              <span className="text-xl font-bold">Kama</span>
+              <div className="h-9 px-2.5 py-1 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                <img src="/logo.png" alt="Fabico" className="h-6 w-auto object-contain" />
+              </div>
+              <span className="text-xl font-bold">Fabico</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               {t('landing.footer.description')}

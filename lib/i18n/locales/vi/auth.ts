@@ -31,7 +31,7 @@ export const auth = {
     '"Ta sẽ đóng những con tàu đi khắp đại dương. Nhưng trước hết phải có những con người đẹp nhất, biết căm thù và biết yêu thương."',
   quoteAuthor: 'Người Cộng Sản',
   quoteAuthorSub: 'Quyết đánh và quyết thắng.\nBiết đánh - dám đánh và biết thắng',
-  footer: '© 2024 Kama Inc. Privacy Policy & Terms.',
+  footer: '© 2024 Fabico Inc. Privacy Policy & Terms.',
   countries: {
     vietnam: 'Việt Nam',
     usa: 'Hoa Kỳ',

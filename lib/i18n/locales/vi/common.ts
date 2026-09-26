@@ -1,5 +1,5 @@
 export const common = {
-  appName: 'Kama',
+  appName: 'Fabico',
   appTagline: 'Quản lý & Đào tạo',
   loading: 'Đang tải...',
   redirecting: 'Đang chuyển hướng...',

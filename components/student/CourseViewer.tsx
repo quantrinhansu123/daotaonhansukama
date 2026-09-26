@@ -160,7 +160,11 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const initializeVideo = async () => {
     if (!selectedLesson || !videoRef.current) return;
 
-    const videoUrl = selectedLesson.videoUrl || `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`;
+    const videoUrl = selectedLesson.videoId && CDN_HOSTNAME
+      ? `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`
+      : (selectedLesson.videoUrl
+          ? (CDN_HOSTNAME ? selectedLesson.videoUrl.replace(/https:\/\/[^/]+\.b-cdn\.net\//, `https://${CDN_HOSTNAME}/`) : selectedLesson.videoUrl)
+          : '');
     const savedProgress = progress[selectedLesson.id];
 
     console.log('🎬 Initializing video for lesson:', selectedLesson.title);
@@ -792,7 +796,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   onDoubleClick={handleFullscreen}
                   style={isStaff ? { pointerEvents: 'none' } : {}}
                 >
-                  <source src={`https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`} type="application/x-mpegURL" />
+                  <source
+                    src={selectedLesson.videoId && CDN_HOSTNAME
+                      ? `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`
+                      : (selectedLesson.videoUrl
+                          ? (CDN_HOSTNAME ? selectedLesson.videoUrl.replace(/https:\/\/[^/]+\.b-cdn\.net\//, `https://${CDN_HOSTNAME}/`) : selectedLesson.videoUrl)
+                          : '')}
+                    type="application/x-mpegURL"
+                  />
                   {t("student.videoNotSupported")}
                 </video>
 
