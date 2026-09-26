@@ -5,6 +5,7 @@ import { Course } from '@/types/course';
 import { BookOpen, Clock, Play } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import Hls from 'hls.js';
 
 interface CourseCardProps {
   course: Course;
@@ -20,32 +21,33 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
 
   useEffect(() => {
-    if (isHovered && course.demoVideoId && videoRef.current) {
-      // Delay video play slightly for smooth transition
-      hoverTimeoutRef.current = setTimeout(() => {
-        videoRef.current?.play().catch(err => {
-          console.log('Video autoplay prevented:', err);
-        });
-      }, 300);
-    } else if (!isHovered && videoRef.current) {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
+    const video = videoRef.current;
+    if (!isHovered || !course.demoVideoId || !CDN_HOSTNAME || !video) return;
+
+    const source = `https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`;
+    let hls: Hls | null = null;
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = source;
+    } else if (Hls.isSupported()) {
+      hls = new Hls();
+      hls.loadSource(source);
+      hls.attachMedia(video);
     }
 
+    const timer = setTimeout(() => video.play().catch(() => {}), 300);
+
     return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
+      clearTimeout(timer);
+      video.pause();
+      hls?.destroy();
+      video.removeAttribute('src');
+      video.load();
     };
-  }, [isHovered, course.demoVideoId]);
+  }, [isHovered, course.demoVideoId, CDN_HOSTNAME]);
 
   const getLevelBadge = (level: string) => {
     const styles = {
@@ -79,7 +81,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       {/* Thumbnail/Video Area */}
       <div className="aspect-video bg-gradient-to-br from-[#53cafd] to-blue-600 flex items-center justify-center relative overflow-hidden">
         {/* Video Demo (shows on hover) */}
-        {course.demoVideoId && (
+        {course.demoVideoId && CDN_HOSTNAME && (
           <video
             ref={videoRef}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'
@@ -87,18 +89,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             muted
             loop
             playsInline
-
-          >
-            <source
-              src={`https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`}
-              type="application/x-mpegURL"
-            />
-          </video>
+          />
         )}
 
         {/* Thumbnail (shows when not hovering) */}
         <div
-          className={`absolute inset-0 transition-opacity duration-300 ${isHovered && course.demoVideoId ? 'opacity-0' : 'opacity-100'
+          className={`absolute inset-0 transition-opacity duration-300 ${isHovered && course.demoVideoId && CDN_HOSTNAME ? 'opacity-0' : 'opacity-100'
             }`}
         >
           {course.thumbnail ? (
@@ -111,7 +107,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {/* Play Icon Overlay */}
-        {course.demoVideoId && !isHovered && (
+        {course.demoVideoId && CDN_HOSTNAME && !isHovered && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="bg-white/90 rounded-full p-4">
               <Play className="w-8 h-8 text-[#53cafd]" fill="currentColor" />

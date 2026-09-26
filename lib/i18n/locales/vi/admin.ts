@@ -274,6 +274,7 @@ export const admin = {
     bannerUploaded: 'Banner đã được tải lên',
     videoDemoLabel: 'Video Demo (Video giới thiệu khóa học)',
     uploadingImages: 'Đang tải ảnh...',
+    uploadingVideo: 'Đang tải video...',
     syncStudentsConfirm: 'Cập nhật lại danh sách học viên cho TẤT CẢ khóa học dựa trên phòng ban?\n\nLưu ý: Thao tác này sẽ ghi đè danh sách học viên hiện tại.',
     syncStudentsSuccess: 'Đã cập nhật {count} khóa học!',
     syncStudentsError: 'Lỗi khi cập nhật!',

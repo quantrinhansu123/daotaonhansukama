@@ -274,6 +274,7 @@ export const admin = {
     bannerUploaded: 'Banner uploaded',
     videoDemoLabel: 'Demo video (course intro)',
     uploadingImages: 'Uploading images...',
+    uploadingVideo: 'Uploading video...',
     syncStudentsConfirm: 'Update student lists for ALL courses based on departments?\n\nNote: This will overwrite current student lists.',
     syncStudentsSuccess: 'Updated {count} courses!',
     syncStudentsError: 'Update failed!',

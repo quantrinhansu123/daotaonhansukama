@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Play, Pause, Lock, CheckCircle, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
+import { BunnyVideoPlayer } from '@/components/shared/BunnyVideoPlayer';
 
 interface CourseViewerProps {
   course: Course;
@@ -43,7 +44,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const attentionCheckTimer = useRef<NodeJS.Timeout | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
 
-  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || 'vz-69258c0a-d89.b-cdn.net';
+  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
@@ -159,7 +160,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const initializeVideo = async () => {
     if (!selectedLesson || !videoRef.current) return;
 
-    const videoUrl = `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`;
+    const videoUrl = selectedLesson.videoUrl || `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`;
     const savedProgress = progress[selectedLesson.id];
 
     console.log('🎬 Initializing video for lesson:', selectedLesson.title);
@@ -688,15 +689,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-6 mb-6 border border-[#0056D2] shadow-2xl">
             <h2 className="text-xl font-bold text-white mb-4">{t("student.introVideo")}</h2>
             <div className="aspect-video bg-black rounded-lg overflow-hidden border border-white/10">
-              <video
-                src={`https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`}
-                controls
-                className="w-full h-full"
-                poster={`https://${CDN_HOSTNAME}/${course.demoVideoId}/thumbnail.jpg`}
-              >
-                <source src={`https://${CDN_HOSTNAME}/${course.demoVideoId}/playlist.m3u8`} type="application/x-mpegURL" />
-                {t("student.videoNotSupported")}
-              </video>
+              <BunnyVideoPlayer videoId={course.demoVideoId} cdnHostname={CDN_HOSTNAME} className="w-full h-full" />
             </div>
           </div>
         </div>

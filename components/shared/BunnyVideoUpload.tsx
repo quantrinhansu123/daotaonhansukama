@@ -1,19 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Upload, X, Video, Play } from 'lucide-react';
+import { X, Video } from 'lucide-react';
+import { uploadVideoToBunny } from '@/lib/bunny-upload';
+import { BunnyVideoPlayer } from './BunnyVideoPlayer';
 
 interface BunnyVideoUploadProps {
   onUploadComplete: (videoId: string) => void;
   currentVideoId?: string;
   label?: string;
+  onUploadStateChange?: (uploading: boolean) => void;
 }
 
 export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
   onUploadComplete,
   currentVideoId,
-  label
+  label,
+  onUploadStateChange,
 }) => {
   const { t } = useLanguage();
   const resolvedLabel = label ?? t('shared.uploadVideo');
@@ -22,6 +26,8 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
   const [videoId, setVideoId] = useState<string | null>(currentVideoId || null);
 
   const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
+
+  useEffect(() => setVideoId(currentVideoId || null), [currentVideoId]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,51 +39,14 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
       return;
     }
 
-    // Validate file size (max 500MB)
-    if (file.size > 500 * 1024 * 1024) {
-      alert(t('shared.fileTooLarge500MB'));
-      return;
-    }
-
     try {
+      if (!CDN_HOSTNAME) {
+        throw new Error('Thiếu NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME.');
+      }
       setUploading(true);
+      onUploadStateChange?.(true);
       setUploadProgress(0);
-
-      const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID;
-      const apiKey = process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY;
-
-      // Step 1: Create video
-      const createResponse = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos`, {
-        method: 'POST',
-        headers: {
-          'AccessKey': apiKey!,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: file.name,
-        }),
-      });
-
-      if (!createResponse.ok) {
-        throw new Error('Failed to create video');
-      }
-
-      const videoData = await createResponse.json();
-      const newVideoId = videoData.guid;
-
-      // Step 2: Upload video file
-      const uploadResponse = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${newVideoId}`, {
-        method: 'PUT',
-        headers: {
-          'AccessKey': apiKey!,
-          'Content-Type': 'application/octet-stream',
-        },
-        body: file,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload video');
-      }
+      const newVideoId = await uploadVideoToBunny(file, file.name, setUploadProgress);
 
       setVideoId(newVideoId);
       onUploadComplete(newVideoId);
@@ -85,10 +54,12 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
       alert(t('shared.videoUploadSuccess'));
     } catch (error) {
       console.error('Error uploading video:', error);
-      alert(t('shared.videoUploadError'));
+      alert(error instanceof Error ? error.message : t('shared.videoUploadError'));
       setVideoId(currentVideoId || null);
     } finally {
       setUploading(false);
+      onUploadStateChange?.(false);
+      e.target.value = '';
     }
   };
 
@@ -104,15 +75,7 @@ export const BunnyVideoUpload: React.FC<BunnyVideoUploadProps> = ({
       {videoId ? (
         <div className="relative">
           <div className="w-full aspect-video bg-slate-900 rounded-lg overflow-hidden">
-            <video
-              src={`https://${CDN_HOSTNAME}/${videoId}/playlist.m3u8`}
-              controls
-              className="w-full h-full"
-              poster={`https://${CDN_HOSTNAME}/${videoId}/thumbnail.jpg`}
-            >
-              <source src={`https://${CDN_HOSTNAME}/${videoId}/playlist.m3u8`} type="application/x-mpegURL" />
-              {t('shared.browserNoVideo')}
-            </video>
+            <BunnyVideoPlayer videoId={videoId} cdnHostname={CDN_HOSTNAME} className="w-full h-full" />
           </div>
           <button
             onClick={handleRemove}

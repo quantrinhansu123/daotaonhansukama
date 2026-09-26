@@ -8,6 +8,7 @@ import { Search, Plus, Edit2, Trash2, X, Save, BookOpen, Users } from 'lucide-re
 import { Button } from '@/components/Button';
 import { CourseDetailPage } from './CourseDetailPage';
 import { BunnyImageUpload } from '@/components/shared/BunnyImageUpload';
+import { BunnyVideoUpload } from '@/components/shared/BunnyVideoUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -47,6 +48,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -703,7 +705,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
               <h3 className="text-xl font-bold text-white">
                 {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowModal(false)} disabled={uploadingVideo} className="text-slate-400 hover:text-white disabled:opacity-50">
                 <X size={24} />
               </button>
             </div>
@@ -911,25 +913,27 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 )}
               </div>
 
-              {/* <BunnyVideoUpload
+              <BunnyVideoUpload
                 label={t('admin.courses.videoDemoLabel')}
                 currentVideoId={formData.demoVideoId}
-                onUploadComplete={(videoId) => setFormData({ ...formData, demoVideoId: videoId })}
-              /> */}
+                onUploadComplete={(videoId) => setFormData(prev => ({ ...prev, demoVideoId: videoId }))}
+                onUploadStateChange={setUploadingVideo}
+              />
             </div>
 
             <div className="flex gap-3 mt-6">
               <Button
                 onClick={handleSave}
-                disabled={uploadingThumbnail || uploadingBanner}
+                disabled={uploadingThumbnail || uploadingBanner || uploadingVideo}
                 className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={18} />
-                {uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
+                {uploadingVideo ? t('admin.courses.uploadingVideo') : uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
               </Button>
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/10 text-white"
+                disabled={uploadingVideo}
+                className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/10 text-white disabled:opacity-50"
               >
                 {t('common.cancel')}
               </button>

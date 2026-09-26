@@ -11,6 +11,8 @@ import { QuizManagement } from './QuizManagement';
 import { DocumentUploader } from './DocumentUploader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { uploadVideoToBunny } from '@/lib/bunny-upload';
+import { BunnyVideoPlayer } from '@/components/shared/BunnyVideoPlayer';
 
 interface LessonManagementProps {
   course: Course;
@@ -25,6 +27,8 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   const [showModal, setShowModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLessonId, setUploadingLessonId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [managingQuiz, setManagingQuiz] = useState<Lesson | null>(null);
   const [previewingLesson, setPreviewingLesson] = useState<Lesson | null>(null);
   const [formData, setFormData] = useState({
@@ -38,7 +42,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   // Check if user can manage lessons (admin or course teacher)
   const canManage = currentUser?.role === 'admin' || currentUser?.uid === course.teacherId;
 
-  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || 'vz-69258c0a-d89.b-cdn.net';
+  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
 
   useEffect(() => {
     loadLessons();
@@ -161,68 +165,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
   const handleVideoUpload = async (lesson: Lesson, file: File) => {
     try {
-      setUploading(true);
-
-      console.log('[LessonManagement] Starting video upload for lesson:', lesson.title);
-      console.log('[LessonManagement] File size:', file.size, 'bytes');
-      console.log('[LessonManagement] File type:', file.type);
-
-      // Create video in Bunny.net
-      const createResponse = await fetch('/api/bunny/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: lesson.title || 'Untitled Video' })
-      });
-
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json().catch(() => ({ error: 'Unknown error' }));
-        const errorMessage = errorData.error || `HTTP ${createResponse.status}: ${createResponse.statusText}`;
-        console.error('[LessonManagement] Failed to create video:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const videoData = await createResponse.json();
-      const videoId = videoData.guid || videoData.id;
-      
-      if (!videoId) {
-        console.error('[LessonManagement] No video ID in response:', videoData);
-        throw new Error(t('teacher.noVideoIdError'));
-      }
-      
-      console.log('[LessonManagement] Video created with ID:', videoId);
-
-      // Check environment variables
-      const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID;
-      const apiKey = process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY;
-      
-      if (!libraryId || !apiKey) {
-        console.error('[LessonManagement] Missing Bunny Stream environment variables');
+      if (!CDN_HOSTNAME) {
         throw new Error(t('teacher.missingBunnyConfig'));
       }
-
-      // Upload video file
-      console.log('[LessonManagement] Uploading video file to Bunny...');
-      const uploadResponse = await fetch(
-        `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'AccessKey': apiKey,
-          },
-          body: file
-        }
-      );
-
-      const uploadResponseText = await uploadResponse.text();
-      console.log('[LessonManagement] Upload response status:', uploadResponse.status);
-      
-      if (!uploadResponse.ok) {
-        const errorMessage = uploadResponseText || `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
-        console.error('[LessonManagement] Failed to upload video file:', errorMessage);
-        throw new Error(t("teacher.uploadVideoFileError", { message: errorMessage }));
-      }
-
-      console.log('[LessonManagement] Video file uploaded successfully');
+      setUploading(true);
+      setUploadingLessonId(lesson.id);
+      setUploadProgress(0);
+      const videoId = await uploadVideoToBunny(file, lesson.title, setUploadProgress);
 
       // Update lesson with video info
       const lessonRef = doc(db, 'lessons', lesson.id);
@@ -235,12 +184,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
       alert(t('teacher.uploadVideoSuccess'));
       loadLessons();
-    } catch (error: any) {
+    } catch (error) {
       console.error('[LessonManagement] Error uploading video:', error);
-      const errorMessage = error.message || t('teacher.uploadVideoUnknownError');
+      const errorMessage = error instanceof Error ? error.message : t('teacher.uploadVideoUnknownError');
       alert(t("teacher.uploadVideoError", { message: errorMessage }));
     } finally {
       setUploading(false);
+      setUploadingLessonId(null);
     }
   };
 
@@ -465,7 +415,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                           />
                           <div className="px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md hover:bg-green-500/30 flex items-center justify-center gap-1 text-xs font-medium transition-colors">
                             <Upload size={12} />
-                            {t("common.upload")}
+                            {uploadingLessonId === lesson.id ? `${uploadProgress}%` : t("common.upload")}
                           </div>
                         </label>
                       ) : (
@@ -683,15 +633,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
               </div>
               <div className="p-6">
                 <div className="bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                  <video
-                    className="w-full h-full"
-                    controls
+                  <BunnyVideoPlayer
+                    videoId={previewingLesson.videoId}
+                    videoUrl={previewingLesson.videoUrl}
+                    cdnHostname={CDN_HOSTNAME}
                     autoPlay
-                    controlsList="nodownload"
-                    src={`https://${CDN_HOSTNAME}/${previewingLesson.videoId}/play_720p.mp4`}
-                  >
-                    {t("teacher.videoNotSupported")}
-                  </video>
+                    className="w-full h-full"
+                  />
                 </div>
                 {previewingLesson.duration && (
                   <div className="mt-4 flex items-center gap-2 text-sm text-slate-300">

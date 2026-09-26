@@ -111,7 +111,7 @@ export const teacher = {
   uploadVideoError: 'Error uploading video: {message}',
   uploadVideoUnknownError: 'Unknown error uploading video',
   noVideoIdError: 'Did not receive a video ID from Bunny API',
-  missingBunnyConfig: 'Missing Bunny Stream configuration. Please check NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID and NEXT_PUBLIC_BUNNY_STREAM_API_KEY.',
+  missingBunnyConfig: 'Missing Bunny Stream CDN configuration. Please check NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME.',
   uploadVideoFileError: 'Error uploading video file: {message}',
   deleteVideoSuccess: 'Video deleted successfully!',
   deleteVideoError: 'Error deleting video',

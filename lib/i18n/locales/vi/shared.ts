@@ -36,7 +36,7 @@ export const shared = {
   urlCopied: 'Đã copy URL!',
   viewDocumentLink: 'Xem tài liệu →',
   documentFormatsHint: 'PDF, Word, PowerPoint, Excel (MAX. 50MB)',
-  videoFormatsHint: 'MP4, MOV, AVI (MAX. 500MB)',
+  videoFormatsHint: 'MP4, MOV, AVI',
   imageFormatsHint: 'PNG, JPG, GIF (MAX. 5MB)',
   browserNoVideo: 'Trình duyệt của bạn không hỗ trợ video.',
   videoIdLabel: 'Video ID: {id}',

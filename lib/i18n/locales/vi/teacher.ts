@@ -111,7 +111,7 @@ export const teacher = {
   uploadVideoError: 'Lỗi khi upload video: {message}',
   uploadVideoUnknownError: 'Lỗi không xác định khi upload video',
   noVideoIdError: 'Không nhận được video ID từ Bunny API',
-  missingBunnyConfig: 'Thiếu cấu hình Bunny Stream. Vui lòng kiểm tra NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID và NEXT_PUBLIC_BUNNY_STREAM_API_KEY.',
+  missingBunnyConfig: 'Thiếu cấu hình Bunny Stream CDN. Vui lòng kiểm tra NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME.',
   uploadVideoFileError: 'Lỗi khi upload video file: {message}',
   deleteVideoSuccess: 'Xóa video thành công!',
   deleteVideoError: 'Lỗi khi xóa video',
