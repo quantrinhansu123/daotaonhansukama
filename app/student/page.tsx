@@ -1,147 +1,168 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { BookOpen, LogOut } from 'lucide-react';
+import { BookOpen, CheckCircle2, ClipboardCheck, LogOut, PlayCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { CourseEnrollment } from '@/components/student/CourseEnrollment';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getVideoPoints, VIDEO_POINTS_PER_LESSON } from '@/lib/learning-progress';
+
+interface LearningStats {
+  points: number;
+  completedVideos: number;
+  inProgressVideos: number;
+  passedQuizzes: number;
+}
+
+const emptyStats: LearningStats = {
+  points: 0,
+  completedVideos: 0,
+  inProgressVideos: 0,
+  passedQuizzes: 0,
+};
 
 export default function StudentPage() {
   const { userProfile, loading, signOut } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
-  const [stats, setStats] = useState({
-    totalCourses: 0,
-    completedCourses: 0,
-    inProgressCourses: 0,
-    totalLearningTime: 0,
-    averageProgress: 0,
-    certificatesEarned: 0
-  });
+  const [stats, setStats] = useState<LearningStats>(emptyStats);
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (!userProfile) {
-        router.push('/');
-      } else if (userProfile.role !== 'student' && userProfile.role !== 'staff') {
-        router.push('/');
-      } else {
-        loadLearningStats();
-      }
+    if (loading) return;
+    if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff')) {
+      router.push('/');
+      return;
     }
-  }, [userProfile, loading, router]);
 
-  const loadLearningStats = async () => {
-    if (!userProfile?.uid) return;
+    let active = true;
+    const loadLearningStats = async () => {
+      try {
+        setLoadingStats(true);
+        const [progressSnapshot, quizSnapshot] = await Promise.all([
+          getDocs(query(collection(db, 'progress'), where('userId', '==', userProfile.uid))),
+          getDocs(query(collection(db, 'quizResults'), where('userId', '==', userProfile.uid))),
+        ]);
 
-    try {
-      setLoadingStats(true);
+        // A lesson may have old duplicate records; count each video only once.
+        const videos = new Map<string, { lessonId: string; completed: boolean }>();
+        progressSnapshot.docs.forEach(snapshot => {
+          const record = snapshot.data();
+          if (!record.lessonId) return;
+          const previous = videos.get(record.lessonId);
+          videos.set(record.lessonId, {
+            lessonId: record.lessonId,
+            completed: Boolean(previous?.completed || record.completed),
+          });
+        });
+        const videoProgress = Array.from(videos.values());
 
-      const enrollmentsRef = collection(db, 'enrollments');
-      const q = query(enrollmentsRef, where('userId', '==', userProfile.uid));
-      const snapshot = await getDocs(q);
+        const passedLessons = new Set<string>();
+        quizSnapshot.docs.forEach(snapshot => {
+          const result = snapshot.data();
+          if (result.lessonId && result.score >= 70) passedLessons.add(result.lessonId);
+        });
 
-      let totalProgress = 0;
-      let completed = 0;
-      let inProgress = 0;
-      let totalTime = 0;
-      let certificates = 0;
-
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        const progress = data.progress || 0;
-        totalProgress += progress;
-
-        if (progress >= 100) {
-          completed++;
-          certificates++;
-        } else if (progress > 0) {
-          inProgress++;
+        if (active) {
+          setStats({
+            points: getVideoPoints(videoProgress),
+            completedVideos: videoProgress.filter(video => video.completed).length,
+            inProgressVideos: videoProgress.filter(video => !video.completed).length,
+            passedQuizzes: passedLessons.size,
+          });
         }
-
-        totalTime += (progress / 100) * 10;
-      });
-
-      setStats({
-        totalCourses: snapshot.docs.length,
-        completedCourses: completed,
-        inProgressCourses: inProgress,
-        totalLearningTime: Math.round(totalTime),
-        averageProgress: snapshot.docs.length > 0 ? Math.round(totalProgress / snapshot.docs.length) : 0,
-        certificatesEarned: certificates
-      });
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    } finally {
-      setLoadingStats(false);
-    }
-  };
+      } catch (error) {
+        console.error('Error loading learning stats:', error);
+      } finally {
+        if (active) setLoadingStats(false);
+      }
+    };
+    void loadLearningStats();
+    return () => { active = false; };
+  }, [userProfile, loading, router]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">{t('common.loading')}</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#080d19] text-slate-300">
+        {t('common.loading')}
       </div>
     );
   }
 
-  if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff')) {
-    return null;
-  }
+  if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff')) return null;
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
   };
 
+  const statCards = [
+    { label: t('student.videoPoints'), value: stats.points, icon: Sparkles, accent: 'text-cyan-300', iconBg: 'bg-cyan-400/10' },
+    { label: t('student.completedVideos'), value: stats.completedVideos, icon: CheckCircle2, accent: 'text-emerald-300', iconBg: 'bg-emerald-400/10' },
+    { label: t('student.inProgressVideos'), value: stats.inProgressVideos, icon: PlayCircle, accent: 'text-blue-300', iconBg: 'bg-blue-400/10' },
+    { label: t('student.passedQuizzes'), value: stats.passedQuizzes, icon: ClipboardCheck, accent: 'text-violet-300', iconBg: 'bg-violet-400/10' },
+  ];
+
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-[#5e3ed0]/20 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#53cafd]/20 p-2 rounded-lg">
-                <BookOpen className="w-6 h-6 text-[#53cafd]" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">{t('student.dashboardTitle')}</h1>
-                <p className="text-xs text-slate-300">{t('student.myLearning')}</p>
-              </div>
+    <div className="min-h-screen bg-[#080d19] text-slate-100">
+      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#0a1220]/95 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex min-h-16 items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2.5">
+              <BookOpen className="w-5 h-5 text-cyan-300" />
             </div>
-            <div className="flex items-center gap-4">
-              <LanguageSwitcher variant="light" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-white">{userProfile.displayName}</p>
-                <p className="text-xs text-slate-300">{userProfile.email}</p>
-              </div>
-              <Button onClick={handleSignOut} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border-none">
-                <LogOut size={16} />
-                {t('common.logout')}
-              </Button>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-semibold text-white truncate">{t('student.dashboardTitle')}</h1>
+              <p className="text-xs text-slate-400">{t('student.myLearning')}</p>
             </div>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <LanguageSwitcher variant="light" />
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium text-slate-100">{userProfile.displayName}</p>
+              <p className="text-xs text-slate-400">{userProfile.email}</p>
+            </div>
+            <Button onClick={handleSignOut} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700">
+              <LogOut size={16} />
+              <span className="hidden sm:inline">{t('common.logout')}</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-[#5e3ed0]/40 to-[#53cafd]/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-white mb-8">
-          <h2 className="text-3xl font-bold mb-2">{t('student.welcomeShort', { name: userProfile.displayName })}</h2>
-          <p className="text-slate-200">{t('student.welcomeSub')}</p>
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <section className="relative overflow-hidden rounded-3xl border border-slate-700/60 bg-gradient-to-br from-[#14243c] via-[#101b2e] to-[#0c1525] p-6 sm:p-8">
+          <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+          <div className="relative">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
+              <Sparkles size={13} /> {t('student.myLearning')}
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white mb-2">
+              {t('student.welcomeShort', { name: userProfile.displayName || userProfile.email || '' })}
+            </h2>
+            <p className="text-slate-300">{t('student.welcomeSub')}</p>
+            <p className="mt-5 text-sm text-cyan-200">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
+          </div>
+        </section>
 
-        {/* Course Enrollment */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label={t('student.learningStats')}>
+          {statCards.map(card => {
+            const Icon = card.icon;
+            return (
+              <div key={card.label} className="rounded-2xl border border-slate-800 bg-[#111b2b] p-4 sm:p-5 shadow-xl shadow-black/10">
+                <div className={`mb-5 inline-flex rounded-xl p-2.5 ${card.iconBg}`}><Icon className={`w-5 h-5 ${card.accent}`} /></div>
+                <p className="text-2xl sm:text-3xl font-semibold tabular-nums text-white">{loadingStats ? '—' : card.value}</p>
+                <p className="mt-1 text-xs sm:text-sm text-slate-400">{card.label}</p>
+              </div>
+            );
+          })}
+        </section>
+
         <CourseEnrollment />
       </main>
     </div>

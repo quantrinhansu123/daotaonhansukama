@@ -92,7 +92,7 @@ export const CourseEnrollment: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">{t("common.loading")}</div>;
+    return <div className="text-center py-8 text-slate-400">{t("common.loading")}</div>;
   }
 
   return (
@@ -100,19 +100,19 @@ export const CourseEnrollment: React.FC = () => {
       {/* All Available Courses */}
       <div>
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">{t("student.yourCourses")}</h2>
+          <h2 className="text-2xl font-semibold text-white mb-2">{t("student.yourCourses")}</h2>
           {userProfile?.departmentId ? (
-            <p className="text-slate-300">
+            <p className="text-slate-400 text-sm">
               {t("student.deptCoursesHint")}
             </p>
           ) : (
-            <p className="text-slate-300">
+            <p className="text-slate-400 text-sm">
               {t("student.noDeptHint")}
             </p>
           )}
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
@@ -120,13 +120,13 @@ export const CourseEnrollment: React.FC = () => {
               placeholder={t("student.searchCourses")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#111b2b] border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/40 text-white placeholder-slate-500"
             />
           </div>
           <select
             value={filterLevel}
-            onChange={(e) => setFilterLevel(e.target.value as any)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
+            onChange={(e) => setFilterLevel(e.target.value as typeof filterLevel)}
+            className="px-4 py-2.5 bg-[#111b2b] border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/40 text-white [&>option]:bg-[#111b2b]"
           >
             <option value="all">{t("student.allLevels")}</option>
             <option value="beginner">{t("student.levelBeginner")}</option>
@@ -136,7 +136,7 @@ export const CourseEnrollment: React.FC = () => {
         </div>
 
         {filteredCourses.length === 0 ? (
-          <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-center py-12 bg-[#111b2b] rounded-2xl border border-slate-800">
             <BookOpen className="w-16 h-16 text-slate-500 mx-auto mb-4" />
             <p className="text-slate-400">{t("student.noCoursesFound")}</p>
           </div>

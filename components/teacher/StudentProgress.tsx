@@ -72,7 +72,7 @@ export const StudentProgress: React.FC<StudentProgressProps> = ({ course, onClos
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
 
     if (hours > 0) {
       return `${hours}h ${mins}m`;
@@ -82,7 +82,7 @@ export const StudentProgress: React.FC<StudentProgressProps> = ({ course, onClos
 
   const getStudentStats = (studentId: string) => {
     const studentProgress = progress[studentId] || [];
-    const totalWatched = studentProgress.reduce((sum, p) => sum + p.watchedSeconds, 0);
+    const totalWatched = studentProgress.reduce((sum, p) => sum + (p.viewedSeconds ?? p.watchedSeconds), 0);
     const completedLessons = studentProgress.filter(p => p.completed).length;
     const totalLessons = lessons.filter(l => l.videoId).length;
     const completionRate = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
@@ -182,7 +182,7 @@ export const StudentProgress: React.FC<StudentProgressProps> = ({ course, onClos
                       {lessons.filter(l => l.videoId).map((lesson) => {
                         const lessonProgress = studentProgress.find(p => p.lessonId === lesson.id);
                         const watchedPercent = lessonProgress
-                          ? (lessonProgress.watchedSeconds / lessonProgress.totalSeconds) * 100
+                          ? ((lessonProgress.viewedSeconds ?? lessonProgress.watchedSeconds) / lessonProgress.totalSeconds) * 100
                           : 0;
 
                         return (
@@ -201,7 +201,7 @@ export const StudentProgress: React.FC<StudentProgressProps> = ({ course, onClos
                                     />
                                   </div>
                                   <span className="text-xs text-slate-500 whitespace-nowrap">
-                                    {formatDuration(lessonProgress.watchedSeconds)} / {formatDuration(lessonProgress.totalSeconds)}
+                                    {formatDuration(lessonProgress.viewedSeconds ?? lessonProgress.watchedSeconds)} / {formatDuration(lessonProgress.totalSeconds)}
                                   </span>
                                 </div>
                               ) : (

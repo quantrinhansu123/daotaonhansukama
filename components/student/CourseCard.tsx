@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Course } from '@/types/course';
-import { BookOpen, Clock, Play } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Clock, Play } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
@@ -19,13 +19,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   departmentName
 }) => {
   const { t } = useLanguage();
-  const [isHovered, setIsHovered] = useState(false);
-
   const getLevelBadge = (level: string) => {
     const styles = {
-      beginner: 'bg-green-100 text-green-700',
-      intermediate: 'bg-yellow-100 text-yellow-700',
-      advanced: 'bg-red-100 text-red-700'
+      beginner: 'bg-emerald-400/10 text-emerald-300 border border-emerald-400/20',
+      intermediate: 'bg-amber-400/10 text-amber-300 border border-amber-400/20',
+      advanced: 'bg-rose-400/10 text-rose-300 border border-rose-400/20'
     };
     const labels = {
       beginner: t('student.levelBeginner'),
@@ -40,35 +38,30 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   return (
-    <div
-      className={`bg-[#5e3ed0]/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden transition-all duration-300 ${isHovered ? 'shadow-2xl scale-105 z-10 border-[#53cafd]/50' : 'shadow-sm hover:shadow-lg hover:bg-[#5e3ed0]/30'
-        }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="aspect-video bg-gradient-to-br from-[#53cafd] to-blue-600 flex items-center justify-center relative overflow-hidden">
+    <article className="group rounded-2xl border border-slate-800 bg-[#111b2b] overflow-hidden shadow-xl shadow-black/10 transition-all duration-200 hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-cyan-950/20">
+      <div className="aspect-video bg-gradient-to-br from-[#172e49] to-[#0a1729] flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0">
           {course.thumbnail ? (
             <img src={proxyBunnyUrl(course.thumbnail)} alt={course.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <BookOpen className="w-16 h-16 text-white" />
+              <BookOpen className="w-14 h-14 text-cyan-300/40" />
             </div>
           )}
         </div>
 
         {course.demoVideoId && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-            <div className="bg-white/90 rounded-full p-4">
-              <Play className="w-8 h-8 text-[#53cafd]" fill="currentColor" />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <div className="bg-slate-950/80 border border-white/20 rounded-full p-3.5 backdrop-blur-sm">
+              <Play className="w-7 h-7 text-cyan-300" fill="currentColor" />
             </div>
           </div>
         )}
       </div>
 
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-semibold text-white line-clamp-2 flex-1">{course.title}</h3>
+          <h3 className="font-semibold text-white line-clamp-2 flex-1 group-hover:text-cyan-100">{course.title}</h3>
           {getLevelBadge(course.level)}
         </div>
 
@@ -87,11 +80,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {onView && (
-          <Button onClick={() => onView(course.id)} className="w-full">
-            {t('student.startLearning')}
+          <Button onClick={() => onView(course.id)} className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-cyan-400 hover:text-slate-950 text-cyan-100 border border-slate-700 hover:border-cyan-300">
+            {t('student.startLearning')} <ArrowUpRight size={16} />
           </Button>
         )}
       </div>
-    </div>
+    </article>
   );
 };

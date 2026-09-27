@@ -10,6 +10,7 @@ import { UserProfile } from '@/types/user';
 import { ArrowLeft, Users, Clock, CheckCircle, TrendingUp, BookOpen, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getVideoPoints } from '@/lib/learning-progress';
 
 interface CourseDetailProps {
   course: Course;
@@ -67,7 +68,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
       allUsers.forEach(user => {
         const uid = user.uid || '';
         const uidStr = String(uid).trim();
-        const docId = (user as any).docId || '';
+        const docId = user.docId;
         
         // Check if user is enrolled (by uid or docId)
         const isEnrolled = uid && (
@@ -135,7 +136,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
 
   const getStudentStats = (studentId: string) => {
     const studentProgress = progress[studentId] || [];
-    const totalWatched = studentProgress.reduce((sum, p) => sum + p.watchedSeconds, 0);
+    const totalWatched = studentProgress.reduce((sum, p) => sum + (p.viewedSeconds ?? p.watchedSeconds), 0);
     const completedLessons = studentProgress.filter(p => p.completed).length;
     const totalLessons = lessons.filter(l => l.videoId).length;
     const completionRate = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
@@ -144,7 +145,8 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
       totalWatched,
       completedLessons,
       totalLessons,
-      completionRate
+      completionRate,
+      videoPoints: getVideoPoints(studentProgress)
     };
   };
 
@@ -236,7 +238,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
               <Clock size={20} className="text-purple-400" />
             </div>
             <span className="text-2xl font-bold text-white">
-              {formatDuration(Object.values(progress).flat().reduce((sum, p) => sum + p.watchedSeconds, 0))}
+              {formatDuration(Object.values(progress).flat().reduce((sum, p) => sum + (p.viewedSeconds ?? p.watchedSeconds), 0))}
             </span>
           </div>
           <p className="text-sm text-slate-300">{t("teacher.totalLearningTime")}</p>
@@ -302,6 +304,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                             <CheckCircle size={12} />
                             {stats.completedLessons}/{stats.totalLessons}
                           </span>
+                          <span className="text-cyan-300 font-medium">{stats.videoPoints} {t('student.videoPoints')}</span>
                         </div>
                         <div className="mt-2">
                           <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -350,7 +353,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                   {(() => {
                     const stats = getStudentStats(selectedStudent.uid);
                     return (
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-[#53cafd]">{formatDuration(stats.totalWatched)}</div>
                           <div className="text-xs text-slate-300">{t("teacher.totalTime")}</div>
@@ -362,6 +365,10 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                         <div className="text-center">
                           <div className="text-2xl font-bold text-purple-400">{stats.completionRate.toFixed(0)}%</div>
                           <div className="text-xs text-slate-300">{t("common.progress")}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-cyan-300">{stats.videoPoints}</div>
+                          <div className="text-xs text-slate-300">{t('student.videoPoints')}</div>
                         </div>
                       </div>
                     );
@@ -375,7 +382,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                       const studentProgress = progress[selectedStudent.uid] || [];
                       const lessonProgress = studentProgress.find(p => p.lessonId === lesson.id);
                       const watchedPercent = lessonProgress
-                        ? (lessonProgress.watchedSeconds / lessonProgress.totalSeconds) * 100
+                        ? ((lessonProgress.viewedSeconds ?? lessonProgress.watchedSeconds) / lessonProgress.totalSeconds) * 100
                         : 0;
 
                       return (
@@ -405,7 +412,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-4 text-xs text-slate-400">
-                                    <span>{t("teacher.watched")}: {formatDuration(lessonProgress.watchedSeconds)}</span>
+                                    <span>{t("teacher.watched")}: {formatDuration(lessonProgress.viewedSeconds ?? lessonProgress.watchedSeconds)}</span>
                                     <span>•</span>
                                     <span>{t("teacher.total")}: {formatDuration(lessonProgress.totalSeconds)}</span>
                                   </div>

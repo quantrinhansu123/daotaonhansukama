@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, getDocs, query, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
-import { Lesson } from '@/types/lesson';
+import { Lesson, QuizResult } from '@/types/lesson';
+import type Hls from 'hls.js';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Play, Pause, Lock, CheckCircle, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
 import { BunnyVideoPlayer } from '@/components/shared/BunnyVideoPlayer';
+import { getLessonCompletionPercent, getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
 
 interface CourseViewerProps {
   course: Course;
@@ -26,7 +28,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<Record<string, LessonProgress>>({});
   const [progressLoaded, setProgressLoaded] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [viewMode, setViewMode] = useState<'video' | 'document' | 'quiz'>('video');
   const [takingQuiz, setTakingQuiz] = useState(false);
   const [showAttentionCheck, setShowAttentionCheck] = useState(false);
@@ -34,13 +35,13 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [selectedCourseId, setSelectedCourseId] = useState<string>(course.id);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
-  const [quizResults, setQuizResults] = useState<Record<string, any>>({});
+  const [quizResults, setQuizResults] = useState<Record<string, QuizResult>>({});
   const [bannerError, setBannerError] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true); // Toggle sidebar visibility - default to true
   const [showQuizSection, setShowQuizSection] = useState(true); // Toggle quiz section visibility - default to true
   const videoRef = useRef<HTMLVideoElement>(null);
-  const saveProgressTimer = useRef<NodeJS.Timeout | null>(null);
-  const hlsRef = useRef<any>(null);
+  const lastProgressSaveAt = useRef(0);
+  const hlsRef = useRef<Hls | null>(null);
   const attentionCheckTimer = useRef<NodeJS.Timeout | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +68,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   useEffect(() => {
     if (selectedCourseId) {
+      setProgressLoaded(false);
+      setProgress({});
       loadLessons();
       loadProgress();
       loadQuizResults();
@@ -83,7 +86,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   useEffect(() => {
     if (selectedLesson && selectedLesson.videoId && progressLoaded) {
-      setCurrentTime(0);
+      lastProgressSaveAt.current = 0;
       initializeVideo();
     }
 
@@ -293,7 +296,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       const q = query(
         progressRef,
         where('userId', '==', userProfile.uid),
-        where('courseId', '==', course.id)
+        where('courseId', '==', selectedCourseId)
       );
       const snapshot = await getDocs(q);
       const progressMap: Record<string, LessonProgress> = {};
@@ -322,13 +325,13 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       const q = query(
         resultsRef,
         where('userId', '==', userProfile.uid),
-        where('courseId', '==', course.id)
+        where('courseId', '==', selectedCourseId)
       );
       const snapshot = await getDocs(q);
-      const resultsMap: Record<string, any> = {};
+      const resultsMap: Record<string, QuizResult> = {};
 
       snapshot.docs.forEach(doc => {
-        const data = doc.data();
+        const data = doc.data() as QuizResult;
         resultsMap[data.lessonId] = data;
       });
 
@@ -360,19 +363,42 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const handleTimeUpdate = () => {
     if (!videoRef.current || !selectedLesson) return;
 
-    const currentTime = videoRef.current.currentTime;
-    const duration = videoRef.current.duration;
+    const video = videoRef.current;
+    const currentTime = video.currentTime;
+    const duration = video.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    const playedRanges = getPlayedRanges(video);
+    const completionReached = !progress[selectedLesson.id]?.completed &&
+      getViewedSeconds(mergeWatchedRanges(playedRanges, duration)) / duration >= VIDEO_COMPLETION_RATIO;
 
-    setCurrentTime(currentTime);
-
-    // Debounce save
-    if (saveProgressTimer.current) {
-      clearTimeout(saveProgressTimer.current);
+    // Persist every 30 seconds, and immediately when the video reaches 90% viewed.
+    const saveInterval = completionReached ? 5000 : 30000;
+    if (Date.now() - lastProgressSaveAt.current >= saveInterval) {
+      lastProgressSaveAt.current = Date.now();
+      void saveProgress(currentTime, duration, playedRanges);
     }
+  };
 
-    saveProgressTimer.current = setTimeout(() => {
-      saveProgress(currentTime, duration);
-    }, 3000);
+  const getPlayedRanges = (video: HTMLVideoElement): WatchedRange[] => {
+    const ranges: WatchedRange[] = [];
+    for (let index = 0; index < video.played.length; index++) {
+      ranges.push({ start: video.played.start(index), end: video.played.end(index) });
+    }
+    return ranges;
+  };
+
+  const handleVideoPause = () => {
+    const video = videoRef.current;
+    if (video && !video.ended) {
+      void saveProgress(video.currentTime, video.duration, getPlayedRanges(video));
+    }
+  };
+
+  const handleVideoEnded = () => {
+    const video = videoRef.current;
+    if (video) {
+      void saveProgress(video.currentTime, video.duration, getPlayedRanges(video));
+    }
   };
 
   const handleAttentionCheckContinue = () => {
@@ -399,28 +425,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
     try {
       if (document.fullscreenElement) {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
-        }
+        await document.exitFullscreen();
       } else {
-        // Enter fullscreen
-        const element = videoContainerRef.current;
-        if (element.requestFullscreen) {
-          await element.requestFullscreen();
-        } else if ((element as any).webkitRequestFullscreen) {
-          await (element as any).webkitRequestFullscreen();
-        } else if ((element as any).mozRequestFullScreen) {
-          await (element as any).mozRequestFullScreen();
-        } else if ((element as any).msRequestFullscreen) {
-          await (element as any).msRequestFullscreen();
-        }
+        await videoContainerRef.current.requestFullscreen();
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
@@ -439,56 +446,53 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     setIsPlaying(true);
   };
 
-  const saveProgress = async (watchedSeconds: number, totalSeconds: number) => {
+  const saveProgress = async (watchedSeconds: number, totalSeconds: number, playedRanges: WatchedRange[]) => {
     if (!selectedLesson || !userProfile || !userProfile.uid) return;
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0 || !Number.isFinite(watchedSeconds)) return;
 
     try {
       const progressId = `${userProfile.uid}_${selectedLesson.id}`;
-      const existingProgress = progress[selectedLesson.id];
+      const progressRef = doc(db, 'progress', progressId);
+      const lessonId = selectedLesson.id;
+      const userId = userProfile.uid;
+      const progressData = await runTransaction(db, async transaction => {
+        const snapshot = await transaction.get(progressRef);
+        const existingProgress = snapshot.exists() ? snapshot.data() as Partial<LessonProgress> : null;
+        const watchedRanges = mergeWatchedRanges(
+          [...(existingProgress?.watchedRanges || []), ...playedRanges],
+          totalSeconds
+        );
+        const viewedSeconds = getViewedSeconds(watchedRanges);
+        const finalWatchedSeconds = Math.max(
+          Math.floor(Math.min(watchedSeconds, totalSeconds)),
+          existingProgress?.watchedSeconds || 0
+        );
+        const completed = Boolean(existingProgress?.completed) || viewedSeconds / totalSeconds >= VIDEO_COMPLETION_RATIO;
 
-      // Calculate if should be completed
-      const shouldBeCompleted = watchedSeconds / totalSeconds > 0.9;
-
-      // Determine final values with rules:
-      // 1. completed: once true, always true
-      // 2. watchedSeconds: only update if new value is greater
-      const finalCompleted = existingProgress?.completed || shouldBeCompleted;
-      const finalWatchedSeconds = Math.max(
-        Math.floor(watchedSeconds),
-        existingProgress?.watchedSeconds || 0
-      );
-
-      // Only save if there's an actual change
-      if (existingProgress &&
-        existingProgress.completed === finalCompleted &&
-        existingProgress.watchedSeconds >= finalWatchedSeconds) {
-        console.log('⏭️ No progress update needed');
-        return;
-      }
-
-      const progressData: LessonProgress = {
-        id: progressId,
-        userId: userProfile.uid,
-        courseId: course.id,
-        lessonId: selectedLesson.id,
-        watchedSeconds: finalWatchedSeconds,
-        totalSeconds: Math.floor(totalSeconds),
-        completed: finalCompleted,
-        lastWatchedAt: new Date()
-      };
-
-      console.log('💾 Saving progress:', {
-        lesson: selectedLesson.title,
-        watchedSeconds: finalWatchedSeconds,
-        completed: finalCompleted,
-        previous: existingProgress
+        const data: LessonProgress = {
+          id: progressId,
+          userId,
+          courseId: selectedCourseId,
+          lessonId,
+          watchedSeconds: finalWatchedSeconds,
+          totalSeconds: Math.floor(totalSeconds),
+          viewedSeconds,
+          watchedRanges,
+          completed,
+          lastWatchedAt: new Date()
+        };
+        if (existingProgress?.completed === completed &&
+            existingProgress?.watchedSeconds === finalWatchedSeconds &&
+            existingProgress?.viewedSeconds === viewedSeconds) {
+          return data;
+        }
+        transaction.set(progressRef, data);
+        return data;
       });
-
-      await setDoc(doc(db, 'progress', progressId), progressData);
 
       setProgress(prev => ({
         ...prev,
-        [selectedLesson.id]: progressData
+        [lessonId]: progressData
       }));
     } catch (error) {
       console.error('Error saving progress:', error);
@@ -498,7 +502,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const formatDuration = (seconds?: number) => {
     if (!seconds) return '0:00';
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -523,7 +527,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#003380] via-[#0047AB] to-[#003380]">
+    <div className="min-h-screen bg-gradient-to-br from-[#0b1424] via-[#111d30] to-[#0b1424]">
       {/* Banner Section - Wider */}
       <div className="w-full relative overflow-hidden min-h-[500px]">
         {course.banner && course.banner.trim() !== '' && !bannerError ? (
@@ -599,8 +603,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 }}
               />
               {/* Multi-layer Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#003380]"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#003380]/80 via-transparent to-[#003380]/60"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#0b1424]"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0b1424]/80 via-transparent to-[#0b1424]/60"></div>
             </div>
 
             {/* Content Overlay - Compact top left */}
@@ -647,7 +651,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           </>
         ) : (
           // Fallback gradient background if no banner or banner error
-          <div className="bg-gradient-to-br from-[#003380] via-[#0047AB] to-[#003380] text-white shadow-2xl min-h-[500px]">
+          <div className="bg-gradient-to-br from-[#0b1424] via-[#111d30] to-[#0b1424] text-white shadow-2xl min-h-[500px]">
             <div className="max-w-7xl mx-auto px-4 py-3">
               <div className="flex items-center gap-3">
                 <button
@@ -690,7 +694,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       {/* Demo Video */}
       {course.demoVideoId && !selectedLesson && (
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-6 mb-6 border border-[#0056D2] shadow-2xl">
+          <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-6 mb-6 border border-[#223852] shadow-2xl">
             <h2 className="text-xl font-bold text-white mb-4">{t("student.introVideo")}</h2>
             <div className="aspect-video bg-black rounded-lg overflow-hidden border border-white/10">
               <BunnyVideoPlayer videoId={course.demoVideoId} cdnHostname={CDN_HOSTNAME} className="w-full h-full" />
@@ -718,7 +722,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         setShowQuizSection(!showQuizSection);
                       }
                     }}
-                    className="px-3 py-1.5 bg-gradient-to-br from-[#0047AB] to-[#003380] hover:from-[#0056D2] hover:to-[#003380] rounded-lg border border-[#0056D2] text-white transition-colors text-xs font-medium shadow-lg flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-gradient-to-br from-[#111d30] to-[#0b1424] hover:from-[#223852] hover:to-[#0b1424] rounded-lg border border-[#223852] text-white transition-colors text-xs font-medium shadow-lg flex items-center gap-1.5"
                     title={t("student.quiz")}
                   >
                     <HelpCircle size={14} />
@@ -731,7 +735,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     e.stopPropagation();
                     setShowSidebar(!showSidebar);
                   }}
-                  className="p-2 bg-gradient-to-br from-[#0047AB] to-[#003380] hover:from-[#0056D2] hover:to-[#0047AB] rounded-lg border border-[#0056D2] text-white transition-colors z-50 relative shadow-lg"
+                  className="p-2 bg-gradient-to-br from-[#111d30] to-[#0b1424] hover:from-[#223852] hover:to-[#111d30] rounded-lg border border-[#223852] text-white transition-colors z-50 relative shadow-lg"
                   title={showSidebar ? t("student.hideLessonList") : t("student.showLessonList")}
                 >
                   {showSidebar ? <X size={20} /> : <Menu size={20} />}
@@ -749,8 +753,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             >
               {/* Quiz Section - Floating above video */}
               {selectedLesson.hasQuiz && takingQuiz && (
-                <div className="absolute top-4 left-4 z-50 bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-lg border border-[#0056D2] shadow-2xl max-w-md w-full">
-                  <div className="flex items-center justify-between p-3 border-b border-[#0056D2]/50">
+                <div className="absolute top-4 left-4 z-50 bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-lg border border-[#223852] shadow-2xl max-w-md w-full">
+                  <div className="flex items-center justify-between p-3 border-b border-[#223852]/50">
                     <div className="flex items-center gap-2">
                       <HelpCircle className="w-4 h-4 text-[#53cafd]" />
                       <h3 className="text-sm font-bold text-white">{t("student.quizSection")}</h3>
@@ -769,7 +773,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     <div className="p-3">
                       <QuizTaker
                         lessonId={selectedLesson.id}
-                        courseId={course.id}
+                        courseId={selectedCourseId}
                         quizDuration={selectedLesson.quizDuration}
                         quizDocumentUrl={selectedLesson.quizDocumentUrl}
                         quizDocumentName={selectedLesson.quizDocumentName}
@@ -791,6 +795,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   controls={!isStaff}
                   controlsList="nodownload"
                   onTimeUpdate={handleTimeUpdate}
+                  onPause={handleVideoPause}
+                  onEnded={handleVideoEnded}
                   playsInline
                   onContextMenu={(e) => isStaff && e.preventDefault()}
                   onDoubleClick={handleFullscreen}
@@ -873,12 +879,12 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
                   {/* Sidebar - Slide in/out from right - Same height as video */}
                   <div
-                    className={`absolute top-0 right-0 h-full w-80 bg-[#0047AB] backdrop-blur-md border-l border-[#0056D2] shadow-2xl z-40 transition-transform duration-300 ease-in-out overflow-y-auto custom-scrollbar ${
+                    className={`absolute top-0 right-0 h-full w-80 bg-[#111d30] backdrop-blur-md border-l border-[#223852] shadow-2xl z-40 transition-transform duration-300 ease-in-out overflow-y-auto custom-scrollbar ${
                       showSidebar ? 'translate-x-0' : 'translate-x-full'
                     }`}
                     style={{ willChange: 'transform' }}
                   >
-                  <div className="p-3 border-b border-[#0056D2]/50 sticky top-0 bg-[#0047AB] z-10">
+                  <div className="p-3 border-b border-[#223852]/50 sticky top-0 bg-[#111d30] z-10">
                     <h3 className="font-bold text-white text-sm">{t("student.courseContent")}</h3>
                     <p className="text-xs text-white mt-1 line-clamp-1">{currentCourse.title}</p>
                     <p className="text-xs text-white mt-1">
@@ -894,7 +900,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         </p>
                       </div>
                     ) : (
-                      <div className="divide-y divide-[#0056D2]/30">
+                      <div className="divide-y divide-[#223852]/30">
                         {filteredLessons.map((lesson, index) => {
                           const hasContent = lesson.videoId || lesson.documentUrl || lesson.hasQuiz;
                           const locked = isLessonLocked(lesson, index);
@@ -916,15 +922,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                 }
                               }}
                               disabled={!hasContent || locked}
-                              className={`w-full p-2.5 text-left transition-colors ${selectedLesson?.id === lesson.id ? 'bg-[#0056D2]/50 border-l-4 border-[#53cafd]' : ''
-                                } ${locked ? 'opacity-50 cursor-not-allowed bg-white/5' : 'hover:bg-[#0056D2]/40'} ${!hasContent && !locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`w-full p-2.5 text-left transition-colors ${selectedLesson?.id === lesson.id ? 'bg-[#223852]/50 border-l-4 border-[#53cafd]' : ''
+                                } ${locked ? 'opacity-50 cursor-not-allowed bg-white/5' : 'hover:bg-[#223852]/40'} ${!hasContent && !locked ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <div className="flex items-start gap-2">
                                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold relative ${locked ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white'
                                   }`}>
                                   {locked ? <Lock size={14} /> : lesson.order}
                                   {!locked && progress[lesson.id]?.completed && (
-                                    <CheckCircle size={10} className="absolute -top-1 -right-1 text-green-400 bg-[#0047AB] rounded-full" />
+                                    <CheckCircle size={10} className="absolute -top-1 -right-1 text-green-400 bg-[#111d30] rounded-full" />
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -942,7 +948,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                         <div
                                           className="h-full bg-[#53cafd]"
                                           style={{
-                                            width: `${Math.min(100, (progress[lesson.id].watchedSeconds / progress[lesson.id].totalSeconds) * 100)}%`
+                                            width: `${getLessonCompletionPercent(progress[lesson.id])}%`
                                           }}
                                         />
                                       </div>
@@ -986,7 +992,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
                 {/* Lesson info below video */}
                 {selectedLesson && (
-                  <div className="bg-gradient-to-br from-[#0047AB]/40 to-[#003380]/40 backdrop-blur-md rounded-lg p-3 mt-4 border border-[#0056D2]/50 shadow-lg">
+                  <div className="bg-gradient-to-br from-[#111d30]/40 to-[#0b1424]/40 backdrop-blur-md rounded-lg p-3 mt-4 border border-[#223852]/50 shadow-lg">
                     <h2 className="text-base font-bold text-white mb-1">{selectedLesson.title}</h2>
                     <p className="text-xs text-white/90 mb-2">{selectedLesson.description}</p>
                     <div className="flex items-center gap-3 text-xs">
@@ -1001,7 +1007,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <div className="flex-1">
                             <div className="flex items-center gap-1.5 mb-0.5">
                               <span className="text-[10px] text-white">
-                                {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].watchedSeconds)}
+                                {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
                               </span>
                               {progress[selectedLesson.id].completed && (
                                 <CheckCircle size={12} className="text-green-400" />
@@ -1011,12 +1017,17 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                               <div
                                 className="h-full bg-[#53cafd] transition-all"
                                 style={{
-                                  width: `${Math.min(100, (progress[selectedLesson.id].watchedSeconds / progress[selectedLesson.id].totalSeconds) * 100)}%`
+                                  width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%`
                                 }}
                               />
                             </div>
                           </div>
                         </div>
+                      )}
+                      {selectedLesson.videoId && progress[selectedLesson.id]?.completed && (
+                        <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-medium text-emerald-300">
+                          {t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -1032,7 +1043,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             {/* Content Area */}
             <div className="lg:col-span-2">
               {selectedLesson && (
-                <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-4 mb-4 border border-[#0056D2] shadow-2xl">
+                <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-4 mb-4 border border-[#223852] shadow-2xl">
                   <div className="flex items-center gap-2">
                     {selectedLesson.videoId && (
                       <button
@@ -1075,7 +1086,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
               )}
 
               {viewMode === 'video' && !selectedLesson?.videoId ? (
-                <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl relative border border-[#0056D2] shadow-2xl" style={{ paddingTop: '56.25%' }}>
+                <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl relative border border-[#223852] shadow-2xl" style={{ paddingTop: '56.25%' }}>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
                       <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -1087,7 +1098,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
               {/* Document View */}
             {viewMode === 'document' && selectedLesson && selectedLesson.documentUrl ? (
-              <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-8 border border-[#0056D2] shadow-2xl">
+              <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-8 border border-[#223852] shadow-2xl">
                 <div className="text-center">
                   <FileText className="w-16 h-16 text-[#53cafd] mx-auto mb-4" />
                   <h3 className="text-xl font-bold text-white mb-2">{t("student.lessonDocuments")}</h3>
@@ -1103,7 +1114,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 </div>
               </div>
             ) : viewMode === 'document' ? (
-              <div className="bg-gradient-to-br from-[#0047AB] to-[#003380] backdrop-blur-md rounded-xl p-8 text-center border border-[#0056D2] shadow-2xl">
+              <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-8 text-center border border-[#223852] shadow-2xl">
                 <FileText className="w-16 h-16 text-white mx-auto mb-4" />
                 <p className="text-white">{t("student.noDocumentYet")}</p>
               </div>
@@ -1112,7 +1123,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             {/* Quiz View - Removed, now shown in bottom bar of lesson info */}
 
             {selectedLesson && (
-              <div className="bg-gradient-to-br from-[#0047AB]/40 to-[#003380]/40 backdrop-blur-md rounded-lg p-3 mt-4 border border-[#0056D2]/50 shadow-lg">
+              <div className="bg-gradient-to-br from-[#111d30]/40 to-[#0b1424]/40 backdrop-blur-md rounded-lg p-3 mt-4 border border-[#223852]/50 shadow-lg">
                 <h2 className="text-base font-bold text-white mb-1">{selectedLesson.title}</h2>
                 <p className="text-xs text-white/90 mb-2">{selectedLesson.description}</p>
                 <div className="flex items-center gap-3 text-xs">
@@ -1127,7 +1138,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <span className="text-[10px] text-white">
-                            {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].watchedSeconds)}
+                            {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
                           </span>
                           {progress[selectedLesson.id].completed && (
                             <CheckCircle size={12} className="text-green-400" />
@@ -1137,12 +1148,17 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <div
                             className="h-full bg-[#53cafd] transition-all"
                             style={{
-                              width: `${Math.min(100, (progress[selectedLesson.id].watchedSeconds / progress[selectedLesson.id].totalSeconds) * 100)}%`
+                              width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%`
                             }}
                           />
                         </div>
                       </div>
                     </div>
+                  )}
+                  {selectedLesson.videoId && progress[selectedLesson.id]?.completed && (
+                    <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-medium text-emerald-300">
+                      {t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}
+                    </span>
                   )}
                 </div>
 
@@ -1204,8 +1220,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
               ? 'hidden lg:hidden' 
               : 'block'
           }`}>
-            <div className="bg-[#0047AB] backdrop-blur-md rounded-xl border border-[#0056D2] overflow-hidden sticky top-24 shadow-lg">
-              <div className="p-3 border-b border-[#0056D2]/50">
+            <div className="bg-[#111d30] backdrop-blur-md rounded-xl border border-[#223852] overflow-hidden sticky top-24 shadow-lg">
+              <div className="p-3 border-b border-[#223852]/50">
                 <h3 className="font-bold text-white text-sm">{t("student.categories")}</h3>
                 <p className="text-xs text-white mt-1">
                   {t("student.topicsCount", { count: allTags.length })}
@@ -1219,7 +1235,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       onClick={() => setSelectedTag('all')}
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedTag === 'all'
                           ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                          : 'text-white hover:bg-[#0056D2]/40'
+                          : 'text-white hover:bg-[#223852]/40'
                         }`}
                     >
                       {t("student.allWithCount", { count: lessons.length })}
@@ -1232,7 +1248,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           onClick={() => setSelectedTag(tag)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedTag === tag
                               ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                              : 'text-white hover:bg-[#0056D2]/40'
+                              : 'text-white hover:bg-[#223852]/40'
                             }`}
                         >
                           {tag} ({count})
@@ -1253,8 +1269,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
               ? 'hidden lg:hidden' 
               : 'block'
           }`}>
-            <div className="bg-[#0047AB] backdrop-blur-md rounded-xl border border-[#0056D2] overflow-hidden sticky top-24 shadow-lg">
-              <div className="p-3 border-b border-[#0056D2]/50">
+            <div className="bg-[#111d30] backdrop-blur-md rounded-xl border border-[#223852] overflow-hidden sticky top-24 shadow-lg">
+              <div className="p-3 border-b border-[#223852]/50">
                 <h3 className="font-bold text-white text-sm">{t("student.courseContent")}</h3>
                 <p className="text-xs text-white mt-1 line-clamp-1">{currentCourse.title}</p>
                 <p className="text-xs text-white mt-1">
@@ -1270,7 +1286,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-[#0056D2]/30">
+                  <div className="divide-y divide-[#223852]/30">
                     {filteredLessons.map((lesson, index) => {
                       const hasContent = lesson.videoId || lesson.documentUrl || lesson.hasQuiz;
                       const locked = isLessonLocked(lesson, index);
@@ -1293,15 +1309,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                             }
                           }}
                           disabled={!hasContent || locked}
-                          className={`w-full p-2.5 text-left transition-colors ${selectedLesson?.id === lesson.id ? 'bg-[#0056D2]/50 border-l-3 border-[#53cafd]' : ''
-                            } ${locked ? 'opacity-50 cursor-not-allowed bg-[#003380]/30' : 'hover:bg-[#0056D2]/40'} ${!hasContent && !locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-full p-2.5 text-left transition-colors ${selectedLesson?.id === lesson.id ? 'bg-[#223852]/50 border-l-3 border-[#53cafd]' : ''
+                            } ${locked ? 'opacity-50 cursor-not-allowed bg-[#0b1424]/30' : 'hover:bg-[#223852]/40'} ${!hasContent && !locked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <div className="flex items-start gap-2">
                             <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs font-bold relative ${locked ? 'bg-red-500/30 text-red-300' : 'bg-white/15 text-white'
                               }`}>
                               {locked ? <Lock size={12} /> : lesson.order}
                               {!locked && progress[lesson.id]?.completed && (
-                                <CheckCircle size={10} className="absolute -top-0.5 -right-0.5 text-green-400 bg-[#0047AB] rounded-full" />
+                                <CheckCircle size={10} className="absolute -top-0.5 -right-0.5 text-green-400 bg-[#111d30] rounded-full" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1319,7 +1335,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                                     <div
                                       className="h-full bg-[#53cafd]"
                                       style={{
-                                        width: `${Math.min(100, (progress[lesson.id].watchedSeconds / progress[lesson.id].totalSeconds) * 100)}%`
+                                        width: `${getLessonCompletionPercent(progress[lesson.id])}%`
                                       }}
                                     />
                                   </div>
@@ -1369,7 +1385,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 ? 'hidden lg:hidden' 
                 : 'block'
             }`}>
-              <div className="bg-[#0047AB] backdrop-blur-md rounded-xl border border-[#0056D2] p-3 sticky top-24 shadow-lg">
+              <div className="bg-[#111d30] backdrop-blur-md rounded-xl border border-[#223852] p-3 sticky top-24 shadow-lg">
                 <h3 className="font-bold text-white text-sm mb-3">{t("student.otherCourses")}</h3>
                 <div className="space-y-1">
                   {allCourses.map((c) => (
@@ -1381,8 +1397,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         setSelectedLesson(null);
                       }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${selectedCourseId === c.id
-                          ? 'bg-[#0056D2]/50 text-[#53cafd] font-medium border border-[#53cafd]/30'
-                          : 'text-white hover:bg-[#0056D2]/40'
+                          ? 'bg-[#223852]/50 text-[#53cafd] font-medium border border-[#53cafd]/30'
+                          : 'text-white hover:bg-[#223852]/40'
                         }`}
                     >
                       <div className="line-clamp-2">{c.title}</div>
