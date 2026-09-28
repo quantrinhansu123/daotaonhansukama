@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Roboto } from "next/font/google";
+import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -11,10 +11,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const roboto = Roboto({
-  variable: "--font-roboto",
+const beVietnam = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam",
   subsets: ["latin", "vietnamese"],
-  weight: ["300", "400", "500", "700", "900"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -65,17 +65,14 @@ export default function RootLayout({
                     if (document.documentElement) removeFromElement(document.documentElement);
                   }
                   
-                  // Run immediately
                   if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', cleanup);
                   } else {
                     cleanup();
                   }
                   
-                  // Run periodically
                   setInterval(cleanup, 200);
                   
-                  // Watch for changes
                   if (window.MutationObserver) {
                     var observer = new MutationObserver(function(mutations) {
                       mutations.forEach(function(mutation) {
@@ -118,7 +115,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${roboto.variable} ${geistMono.variable} antialiased`}
+        className={`${beVietnam.variable} ${beVietnam.className} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <CleanupAttributes />

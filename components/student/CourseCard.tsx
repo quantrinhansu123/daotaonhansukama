@@ -39,13 +39,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   return (
-    <article className="group overflow-hidden bg-white shadow-[0_4px_16px_rgba(24,48,93,0.045)] transition-transform duration-200 hover:-translate-y-0.5">
+    <article className="group overflow-hidden rounded-2xl border border-[#e7edf5] bg-white shadow-[0_8px_24px_rgba(24,48,93,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_32px_rgba(24,48,93,0.1)]">
       <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-[#113e30]">
         <div className="absolute inset-0">
           {course.thumbnail ? (
-            <img src={proxyBunnyUrl(course.thumbnail)} alt={course.title} className="w-full h-full object-cover" />
+            <img src={proxyBunnyUrl(course.thumbnail)} alt={course.title} className="h-full w-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="flex h-full w-full items-center justify-center">
               <BookOpen className="h-12 w-12 text-white/40" />
             </div>
           )}
@@ -61,8 +61,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       </div>
 
       <div className="p-5">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="line-clamp-2 flex-1 text-[15px] font-bold text-[#111b38]">{course.title}</h3>
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <h3 className="line-clamp-2 flex-1 text-[16px] font-bold tracking-tight text-[#111b38]">{course.title}</h3>
           {getLevelBadge(course.level)}
         </div>
 
@@ -81,7 +81,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {onView && (
-          <Button onClick={() => onView(course.id)} className="flex w-full items-center justify-center gap-2 border border-[#18701C] bg-[#18701C] text-white hover:bg-[#1B7A1E]">
+          <Button
+            onClick={() => onView(course.id)}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-[#18701C] bg-[#18701C] text-white shadow-[0_8px_18px_rgba(24,112,28,0.28)] hover:bg-[#145616]"
+          >
             {t('student.startLearning')} <ArrowUpRight size={16} />
           </Button>
         )}

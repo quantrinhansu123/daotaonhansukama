@@ -3,22 +3,80 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Question, QuizResult, Lesson } from '@/types/lesson';
+import { Question, QuizResult } from '@/types/lesson';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, XCircle, Award, Save, Clock, FileText, Download, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/Button';
+import {
+  CheckCircle2,
+  Award,
+  Save,
+  Clock,
+  FileText,
+  Download,
+  AlertCircle,
+  RotateCcw,
+  ArrowLeft,
+  Trophy,
+  Target,
+  CircleHelp,
+} from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QuizTakerProps {
   lessonId: string;
   courseId: string;
-  quizDuration?: number; // minutes
+  quizDuration?: number;
   quizDocumentUrl?: string;
   quizDocumentName?: string;
   onComplete: () => void;
 }
 
-export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDuration, quizDocumentUrl, quizDocumentName, onComplete }) => {
+const PASS_SCORE = 70;
+
+function scoreTone(score: number) {
+  if (score >= 80) {
+    return {
+      ring: 'from-[#18701C] to-[#1B7A1E]',
+      badge: 'bg-[#edfbf4] text-[#14661a] border-[#c6ebd4]',
+      score: 'text-[#18701C]',
+      iconBg: 'bg-[#edfbf4] text-[#18701C]',
+      bar: 'bg-[#18701C]',
+    };
+  }
+  if (score >= PASS_SCORE) {
+    return {
+      ring: 'from-[#1B7A1E] to-[#2f9e45]',
+      badge: 'bg-[#eff8f0] text-[#18701C] border-[#cfe8d4]',
+      score: 'text-[#1B7A1E]',
+      iconBg: 'bg-[#eff8f0] text-[#1B7A1E]',
+      bar: 'bg-[#1B7A1E]',
+    };
+  }
+  if (score >= 50) {
+    return {
+      ring: 'from-[#c99212] to-[#e0a820]',
+      badge: 'bg-[#fff8e8] text-[#9a6b08] border-[#f0dfb0]',
+      score: 'text-[#b8850d]',
+      iconBg: 'bg-[#fff8e8] text-[#c99212]',
+      bar: 'bg-[#c99212]',
+    };
+  }
+  return {
+    ring: 'from-[#9a3b3b] to-[#c45a5a]',
+    badge: 'bg-[#fff5f4] text-[#8f2f2f] border-[#f0cfcb]',
+    score: 'text-[#b42318]',
+    iconBg: 'bg-[#fff5f4] text-[#b42318]',
+    bar: 'bg-[#b42318]',
+  };
+}
+
+export const QuizTaker: React.FC<QuizTakerProps> = ({
+  lessonId,
+  courseId,
+  quizDuration,
+  quizDocumentUrl,
+  quizDocumentName,
+  onComplete,
+}) => {
   const { t, dateLocale } = useLanguage();
   const { userProfile } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -27,13 +85,14 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
   const [showResult, setShowResult] = useState(false);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [existingResult, setExistingResult] = useState<QuizResult | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(0); // seconds
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isTimeUp, setIsTimeUp] = useState(false);
-  const [startTime, setStartTime] = useState<number>(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
+  const [retaking, setRetaking] = useState(false);
 
   useEffect(() => {
-    loadQuestions();
-    checkExistingResult();
+    void loadQuestions();
+    void checkExistingResult();
   }, [lessonId]);
 
   useEffect(() => {
@@ -42,20 +101,18 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
         setTimeLeft(prev => {
           if (prev <= 1) {
             setIsTimeUp(true);
-            handleSubmit();
+            void handleSubmit();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-
       return () => clearInterval(timer);
     }
   }, [timeLeft, showResult]);
 
   const checkExistingResult = async () => {
     if (!userProfile) return;
-
     try {
       const resultsRef = collection(db, 'quizResults');
       const q = query(
@@ -64,14 +121,12 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
         where('lessonId', '==', lessonId)
       );
       const snapshot = await getDocs(q);
-      
       if (!snapshot.empty) {
-        // User has already completed this quiz
         const resultData = snapshot.docs[0].data() as QuizResult;
         const completedAt = resultData.completedAt as any;
         setExistingResult({
           ...resultData,
-          completedAt: completedAt?.toDate ? completedAt.toDate() : new Date(completedAt)
+          completedAt: completedAt?.toDate ? completedAt.toDate() : new Date(completedAt),
         });
       }
     } catch (error) {
@@ -85,21 +140,15 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
       const questionsRef = collection(db, 'questions');
       const q = query(questionsRef, where('lessonId', '==', lessonId));
       const snapshot = await getDocs(q);
-      const questionsData = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
+      const questionsData = snapshot.docs.map(docSnap => ({
+        ...docSnap.data(),
+        createdAt: docSnap.data().createdAt?.toDate(),
       })) as Question[];
-      
+
       questionsData.sort((a, b) => a.order - b.order);
       setQuestions(questionsData);
       setAnswers(new Array(questionsData.length).fill(-1));
-      
-      // Set timer if duration is provided
-      if (quizDuration) {
-        setTimeLeft(quizDuration * 60); // Convert minutes to seconds
-      }
-      
-      // Record start time
+      if (quizDuration) setTimeLeft(quizDuration * 60);
       setStartTime(Date.now());
     } catch (error) {
       console.error('Error loading questions:', error);
@@ -114,54 +163,68 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const resetQuizState = () => {
+    setExistingResult(null);
+    setShowResult(false);
+    setResult(null);
+    setAnswers(new Array(questions.length).fill(-1));
+    setStartTime(Date.now());
+    setIsTimeUp(false);
+    if (quizDuration) setTimeLeft(quizDuration * 60);
+  };
+
+  const handleRetake = async (quizResult: QuizResult, confirmKey: string) => {
+    if (!confirm(t(confirmKey))) return;
+    try {
+      setRetaking(true);
+      if (userProfile) {
+        await deleteDoc(doc(db, 'quizResults', quizResult.id));
+      }
+      resetQuizState();
+    } catch (error) {
+      console.error('Error deleting result:', error);
+      alert(t('student.deleteResultError'));
+    } finally {
+      setRetaking(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!userProfile) {
       alert(t('student.needLoginToSubmit'));
       return;
     }
-
-    // Check if all questions are answered
     if (answers.some(a => a === -1)) {
-      if (!confirm(t('student.confirmSubmitIncomplete'))) {
-        return;
-      }
+      if (!confirm(t('student.confirmSubmitIncomplete'))) return;
     }
 
     try {
-      // Calculate score
       let correctCount = 0;
       questions.forEach((question, index) => {
-        if (answers[index] === question.correctAnswer) {
-          correctCount++;
-        }
+        if (answers[index] === question.correctAnswer) correctCount++;
       });
 
-      const score = Math.round((correctCount / questions.length) * 100);
-      
-      // Calculate time spent
-      const timeSpent = Math.floor((Date.now() - startTime) / 1000); // in seconds
+      const score = questions.length
+        ? Math.round((correctCount / questions.length) * 100)
+        : 0;
+      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
       const quizResult: QuizResult = {
         id: `${userProfile.uid}_${lessonId}_${Date.now()}`,
         userId: userProfile.uid,
         userName: userProfile.displayName || userProfile.email || t('student.teacherFallback'),
         userEmail: userProfile.email || '',
-        lessonId: lessonId,
-        courseId: courseId,
-        answers: answers,
-        correctCount: correctCount,
+        lessonId,
+        courseId,
+        answers,
+        correctCount,
         totalQuestions: questions.length,
-        score: score,
-        timeSpent: timeSpent,
-        completedAt: new Date()
+        score,
+        timeSpent,
+        completedAt: new Date(),
       };
 
-      console.log('Saving quiz result:', quizResult);
-      
       await setDoc(doc(db, 'quizResults', quizResult.id), quizResult);
-      
-      console.log('Quiz result saved successfully!');
-      
       setResult(quizResult);
       setShowResult(true);
     } catch (error) {
@@ -170,355 +233,340 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({ lessonId, courseId, quizDu
     }
   };
 
+  const renderResultCard = (
+    quizResult: QuizResult,
+    options: {
+      primaryLabel: string;
+      onPrimary: () => void;
+      retakeConfirmKey: string;
+      showCompletedAt?: boolean;
+      failHintKey: string;
+    }
+  ) => {
+    const passed = quizResult.score >= PASS_SCORE;
+    const tone = scoreTone(quizResult.score);
+    const accuracy = quizResult.totalQuestions
+      ? Math.round((quizResult.correctCount / quizResult.totalQuestions) * 100)
+      : 0;
+
+    return (
+      <div className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white shadow-[0_8px_28px_rgba(24,48,93,0.06)]">
+        <div className={`bg-gradient-to-br ${tone.ring} px-6 pb-10 pt-8 text-center text-white`}>
+          <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-white/15 backdrop-blur-sm">
+            {passed ? <Trophy size={30} strokeWidth={1.75} /> : <Award size={30} strokeWidth={1.75} />}
+          </div>
+          <p className="mb-1 text-[12px] font-medium uppercase tracking-[0.14em] text-white/80">
+            {t('student.quizResult')}
+          </p>
+          <h2 className="m-0 text-[22px] font-bold tracking-tight">{t('student.quizResultTitle')}</h2>
+        </div>
+
+        <div className="relative px-5 pb-6 pt-0 sm:px-8">
+          <div className="-mt-8 mx-auto max-w-sm rounded-2xl border border-[#e7edf5] bg-white p-5 text-center shadow-[0_10px_30px_rgba(24,48,93,0.08)]">
+            <div className={`text-[42px] font-bold leading-none tracking-tight ${tone.score}`}>
+              {quizResult.score}
+              <span className="ml-1 text-[16px] font-semibold text-[#63708a]">{t('student.scorePoints', { score: '' }).replace(/\d+/g, '').trim() || 'điểm'}</span>
+            </div>
+            <p className="mt-2 text-[13px] font-semibold text-[#243552]">
+              {t('student.answeredCorrectly', {
+                correct: quizResult.correctCount,
+                total: quizResult.totalQuestions,
+              })}
+            </p>
+            {options.showCompletedAt && quizResult.completedAt && (
+              <p className="mt-1 text-[11px] text-[#7a869c]">
+                {t('student.completedAt', {
+                  time: new Date(quizResult.completedAt).toLocaleString(dateLocale),
+                })}
+              </p>
+            )}
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-[#f5f8fc] px-3 py-2.5 text-left">
+                <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#7a869c]">
+                  <Target size={12} className="text-[#1B7A1E]" />
+                  Accuracy
+                </div>
+                <b className="text-[15px] text-[#111b38]">{accuracy}%</b>
+              </div>
+              <div className="rounded-xl bg-[#f5f8fc] px-3 py-2.5 text-left">
+                <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#7a869c]">
+                  <CircleHelp size={12} className="text-[#1B7A1E]" />
+                  Pass
+                </div>
+                <b className="text-[15px] text-[#111b38]">{PASS_SCORE}+</b>
+              </div>
+            </div>
+
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#e9edf3]">
+              <div
+                className={`h-full rounded-full transition-all ${tone.bar}`}
+                style={{ width: `${Math.min(100, quizResult.score)}%` }}
+              />
+            </div>
+          </div>
+
+          <div
+            className={`mt-5 flex gap-3 rounded-xl border px-4 py-3.5 ${
+              passed
+                ? 'border-[#c6ebd4] bg-[#edfbf4]'
+                : 'border-[#f0dfb0] bg-[#fff9ec]'
+            }`}
+          >
+            <span
+              className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
+                passed ? 'bg-[#18701C] text-white' : 'bg-[#c99212] text-white'
+              }`}
+            >
+              {passed ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            </span>
+            <div className="min-w-0 text-left">
+              <p className={`m-0 text-[13px] font-bold ${passed ? 'text-[#14661a]' : 'text-[#8a6508]'}`}>
+                {passed ? t('student.excellentTitle') : t('student.notPassedTitle')}
+              </p>
+              <p className={`m-0 mt-1 text-[12px] leading-relaxed ${passed ? 'text-[#2f6b3d]' : 'text-[#7a6840]'}`}>
+                {passed ? t('student.excellentHint') : t(options.failHintKey)}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+            <button
+              type="button"
+              onClick={options.onPrimary}
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#18701C] px-4 text-[13px] font-bold text-white transition hover:bg-[#145616]"
+            >
+              <ArrowLeft size={16} />
+              {options.primaryLabel}
+            </button>
+            <button
+              type="button"
+              disabled={retaking}
+              onClick={() => void handleRetake(quizResult, options.retakeConfirmKey)}
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#d7e0eb] bg-white px-4 text-[13px] font-bold text-[#293957] transition hover:border-[#1B7A1E] hover:bg-[#f6faf7] hover:text-[#18701C] disabled:opacity-60"
+            >
+              <RotateCcw size={16} />
+              {retaking ? '...' : t('student.retakeQuiz')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
-    return <div className="text-center py-8">{t("student.loadingQuestions")}</div>;
+    return (
+      <div className="grid min-h-[220px] place-items-center rounded-2xl border border-[#e7edf5] bg-white text-[13px] text-[#63708a]">
+        <div className="text-center">
+          <div className="mx-auto mb-3 h-9 w-9 animate-spin rounded-full border-2 border-[#18701C] border-t-transparent" />
+          {t('student.loadingQuestions')}
+        </div>
+      </div>
+    );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-8 text-center">
-        <p className="text-slate-600 mb-4">{t("student.quizNoQuestions")}</p>
-        <Button onClick={onComplete}>{t("common.back")}</Button>
+      <div className="rounded-2xl border border-[#e7edf5] bg-white p-8 text-center shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+        <CircleHelp className="mx-auto mb-3 text-[#9aa7b8]" size={36} />
+        <p className="mb-4 text-[13px] text-[#52617c]">{t('student.quizNoQuestions')}</p>
+        <button
+          type="button"
+          onClick={onComplete}
+          className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-[#18701C] px-5 text-[13px] font-bold text-white hover:bg-[#145616]"
+        >
+          {t('common.back')}
+        </button>
       </div>
     );
   }
 
-  // Show existing result if user has already completed the quiz
   if (existingResult && !showResult) {
-    return (
-      <div className="bg-white rounded-xl p-8">
-        <div className="text-center mb-8">
-          <Award className={`w-20 h-20 mx-auto mb-4 ${
-            existingResult.score >= 80 ? 'text-green-500' : existingResult.score >= 50 ? 'text-yellow-500' : 'text-red-500'
-          }`} />
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t("student.quizResultTitle")}</h2>
-          <div className="text-5xl font-bold mb-2" style={{
-            color: existingResult.score >= 80 ? '#10b981' : existingResult.score >= 50 ? '#f59e0b' : '#ef4444'
-          }}>
-            {t("student.scorePoints", { score: existingResult.score })}
-          </div>
-          <p className="text-slate-600 mb-2">
-            {t("student.answeredCorrectly", { correct: existingResult.correctCount, total: existingResult.totalQuestions })}
-          </p>
-          <p className="text-sm text-slate-500">
-            {t("student.completedAt", { time: existingResult.completedAt.toLocaleString(dateLocale) })}
-          </p>
-        </div>
-
-        {existingResult.score < 70 ? (
-          <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-6">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-orange-900 mb-1">{t("student.notPassedTitle")}</p>
-                <p className="text-xs text-orange-800">
-                  {t("student.notPassedHint")}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-green-900 mb-1">{t("student.excellentTitle")}</p>
-                <p className="text-xs text-green-800">
-                  {t("student.excellentHint")}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <Button onClick={onComplete} className="flex-1">
-            {t("student.backToLesson")}
-          </Button>
-          <Button 
-            onClick={async () => {
-              if (!confirm(t('student.confirmRetake'))) return;
-              
-              try {
-                // Delete old result from Firestore
-                if (existingResult && userProfile) {
-                  const resultRef = doc(db, 'quizResults', existingResult.id);
-                  await deleteDoc(resultRef);
-                  console.log('Deleted old quiz result:', existingResult.id);
-                }
-                
-                // Reset state
-                setExistingResult(null);
-                setAnswers(new Array(questions.length).fill(-1));
-                setShowResult(false);
-                setResult(null);
-                setStartTime(Date.now());
-                if (quizDuration) {
-                  setTimeLeft(quizDuration * 60);
-                }
-              } catch (error) {
-                console.error('Error deleting old result:', error);
-                alert(t('student.deleteResultError'));
-              }
-            }} 
-            className="flex-1 bg-orange-500 hover:bg-orange-600"
-          >
-            {t("student.retakeQuiz")}
-          </Button>
-        </div>
-      </div>
-    );
+    return renderResultCard(existingResult, {
+      primaryLabel: t('student.backToLesson'),
+      onPrimary: onComplete,
+      retakeConfirmKey: 'student.confirmRetake',
+      showCompletedAt: true,
+      failHintKey: 'student.notPassedHint',
+    });
   }
 
   if (showResult && result) {
-    return (
-      <div className="bg-white rounded-xl p-8">
-        <div className="text-center mb-8">
-          <Award className={`w-20 h-20 mx-auto mb-4 ${
-            result.score >= 80 ? 'text-green-500' : result.score >= 50 ? 'text-yellow-500' : 'text-red-500'
-          }`} />
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t("student.quizResultTitle")}</h2>
-          <div className="text-5xl font-bold mb-2" style={{
-            color: result.score >= 80 ? '#10b981' : result.score >= 50 ? '#f59e0b' : '#ef4444'
-          }}>
-            {t("student.scorePoints", { score: result.score })}
-          </div>
-          <p className="text-slate-600">
-            {t("student.answeredCorrectlyShort", { correct: result.correctCount, total: result.totalQuestions })}
-          </p>
-        </div>
-
-        {result.score < 70 ? (
-          <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-6">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-orange-900 mb-1">{t("student.notPassedTitle")}</p>
-                <p className="text-xs text-orange-800">
-                  {t("student.notPassedHintRetake")}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-green-900 mb-1">{t("student.excellentTitle")}</p>
-                <p className="text-xs text-green-800">
-                  {t("student.excellentHint")}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <Button onClick={onComplete} className="flex-1">
-            {result.score >= 70 ? t('student.continueLearningBtn') : t('common.back')}
-          </Button>
-          <Button 
-            onClick={async () => {
-              if (!confirm(t('student.confirmRetakeCurrent'))) return;
-              
-              try {
-                // Delete the result we just saved
-                if (result && userProfile) {
-                  const resultRef = doc(db, 'quizResults', result.id);
-                  await deleteDoc(resultRef);
-                  console.log('Deleted quiz result:', result.id);
-                }
-                
-                // Reset state
-                setShowResult(false);
-                setResult(null);
-                setAnswers(new Array(questions.length).fill(-1));
-                setStartTime(Date.now());
-                if (quizDuration) {
-                  setTimeLeft(quizDuration * 60);
-                }
-              } catch (error) {
-                console.error('Error deleting result:', error);
-                alert(t('student.deleteResultErrorShort'));
-              }
-            }} 
-            className="flex-1 bg-orange-500 hover:bg-orange-600"
-          >
-            {t("student.retake")}
-          </Button>
-        </div>
-      </div>
-    );
+    return renderResultCard(result, {
+      primaryLabel: result.score >= PASS_SCORE ? t('student.continueLearningBtn') : t('common.back'),
+      onPrimary: onComplete,
+      retakeConfirmKey: 'student.confirmRetakeCurrent',
+      failHintKey: 'student.notPassedHintRetake',
+    });
   }
 
   const hasContent = questions.some(q => q.question || q.options.some(opt => opt));
+  const answeredCount = answers.filter(a => a !== -1).length;
+  const progressPct = questions.length ? (answeredCount / questions.length) * 100 : 0;
 
   return (
-    <div className="bg-white rounded-xl p-8">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-slate-900">{t("student.quiz")}</h2>
-          <div className="flex items-center gap-4">
+    <div className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+      <div className="border-b border-[#eef2f7] bg-[#f8fafc] px-4 py-4 sm:px-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7a869c]">
+              BioKama Quiz
+            </p>
+            <h2 className="m-0 mt-0.5 text-[18px] font-bold text-[#111b38]">{t('student.quiz')}</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             {quizDuration && timeLeft > 0 && (
-              <div className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 ${
-                timeLeft < 60 ? 'bg-red-100 text-red-700' : 
-                timeLeft < 300 ? 'bg-orange-100 text-orange-700' : 
-                'bg-blue-100 text-blue-700'
-              }`}>
-                <Clock size={18} />
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-bold ${
+                  timeLeft < 60
+                    ? 'bg-[#fff5f4] text-[#b42318]'
+                    : timeLeft < 300
+                      ? 'bg-[#fff8e8] text-[#9a6b08]'
+                      : 'bg-[#eff8f0] text-[#18701C]'
+                }`}
+              >
+                <Clock size={14} />
                 {formatTime(timeLeft)}
-              </div>
+              </span>
             )}
-            <span className="text-sm font-medium text-slate-600">
-              {t("student.answeredCount", { answered: answers.filter(a => a !== -1).length, total: questions.length })}
+            <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52617c] ring-1 ring-[#e7edf5]">
+              {t('student.answeredCount', { answered: answeredCount, total: questions.length })}
             </span>
           </div>
         </div>
-        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-2 overflow-hidden rounded-full bg-[#e4ebf3]">
           <div
-            className="h-full bg-purple-500 transition-all duration-300"
-            style={{ width: `${(answers.filter(a => a !== -1).length / questions.length) * 100}%` }}
+            className="h-full rounded-full bg-[#18701C] transition-all duration-300"
+            style={{ width: `${progressPct}%` }}
           />
         </div>
       </div>
 
-      {/* Document Attachment */}
-      {quizDocumentUrl && quizDocumentName && (
-        <div className="mb-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <FileText className="w-6 h-6 text-white" />
+      <div className="px-4 py-5 sm:px-5">
+        {quizDocumentUrl && quizDocumentName && (
+          <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-[#dceee2] bg-[#f4faf6] p-3.5">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#18701C] text-white">
+              <FileText size={20} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="m-0 text-[12px] font-bold text-[#14661a]">{t('student.referenceDoc')}</p>
+              <p className="m-0 truncate text-[12px] text-[#3d6b4a]">{quizDocumentName}</p>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-blue-900 mb-1">{t("student.referenceDoc")}</p>
-              <p className="text-xs text-blue-700 mb-2">{quizDocumentName}</p>
-              <a
-                href={quizDocumentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Download size={14} />
-                {t("student.downloadDocument")}
-              </a>
-            </div>
+            <a
+              href={quizDocumentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#18701C] px-3 py-2 text-[12px] font-bold text-white hover:bg-[#145616]"
+            >
+              <Download size={14} />
+              {t('student.downloadDocument')}
+            </a>
           </div>
-        </div>
-      )}
-
-      {/* Questions */}
-      <div className="space-y-4 mb-8">
-        {hasContent ? (
-          // Full content display
-          questions.map((question, index) => (
-            <div 
-              key={question.id} 
-              className="border-2 border-slate-200 rounded-xl p-6 hover:border-purple-300 transition-all bg-slate-50"
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">
-                  {index + 1}
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 flex-1">
-                  {question.question || t("student.questionFallback", { n: index + 1 })}
-                </h3>
-                {answers[index] !== -1 && (
-                  <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-14">
-                {question.options.map((option, optIndex) => (
-                  <button
-                    key={optIndex}
-                    onClick={() => {
-                      const newAnswers = [...answers];
-                      newAnswers[index] = optIndex;
-                      setAnswers(newAnswers);
-                    }}
-                    className={`px-4 py-3 rounded-lg text-left transition-all border-2 ${
-                      answers[index] === optIndex
-                        ? 'bg-purple-500 text-white border-purple-600 shadow-lg'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-purple-300 hover:bg-purple-50'
-                    }`}
-                  >
-                    <span className="font-bold mr-2">{String.fromCharCode(65 + optIndex)}.</span>
-                    {option || t("student.optionFallback", { letter: String.fromCharCode(65 + optIndex) })}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          // Compact table display for empty questions
-          questions.map((question, index) => (
-            <div 
-              key={question.id} 
-              className="border-2 border-slate-200 rounded-xl p-4 hover:border-purple-300 transition-all bg-slate-50"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-lg">
-                  {index + 1}
-                </div>
-
-                <div className="flex-1 flex items-center gap-3">
-                  {[0, 1, 2, 3].map((optIndex) => (
-                    <button
-                      key={optIndex}
-                      onClick={() => {
-                        const newAnswers = [...answers];
-                        newAnswers[index] = optIndex;
-                        setAnswers(newAnswers);
-                      }}
-                      className={`flex-1 h-12 rounded-lg font-bold text-lg transition-all ${
-                        answers[index] === optIndex
-                          ? 'bg-purple-500 text-white shadow-lg scale-105'
-                          : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50'
-                      }`}
-                    >
-                      {String.fromCharCode(65 + optIndex)}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="w-8 flex-shrink-0">
-                  {answers[index] !== -1 && (
-                    <CheckCircle className="w-6 h-6 text-green-500" />
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
         )}
-      </div>
 
-      {/* Submit Button */}
-      <div className="flex gap-3">
-        <button
-          onClick={onComplete}
-          className="px-6 py-3 border-2 border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors"
-        >
-          {t("common.cancel")}
-        </button>
-        <div className="flex-1" />
-        <button
-          onClick={handleSubmit}
-          disabled={isTimeUp}
-          className="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-bold shadow-lg flex items-center gap-2 disabled:opacity-50"
-        >
-          <Save size={18} />
-          {t("student.submitWithCount", { answered: answers.filter(a => a !== -1).length, total: questions.length })}
-        </button>
+        <div className="space-y-3.5">
+          {hasContent
+            ? questions.map((question, index) => (
+                <div
+                  key={question.id}
+                  className="rounded-xl border border-[#e7edf5] bg-[#fbfcfe] p-4 transition hover:border-[#cfe0d4]"
+                >
+                  <div className="mb-3 flex items-start gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#18701C] text-[13px] font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <h3 className="m-0 flex-1 pt-1.5 text-[14px] font-bold leading-snug text-[#111b38]">
+                      {question.question || t('student.questionFallback', { n: index + 1 })}
+                    </h3>
+                    {answers[index] !== -1 && (
+                      <CheckCircle2 className="mt-1.5 shrink-0 text-[#18701C]" size={18} />
+                    )}
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 sm:pl-12">
+                    {question.options.map((option, optIndex) => {
+                      const selected = answers[index] === optIndex;
+                      return (
+                        <button
+                          key={optIndex}
+                          type="button"
+                          onClick={() => {
+                            const next = [...answers];
+                            next[index] = optIndex;
+                            setAnswers(next);
+                          }}
+                          className={`rounded-xl border px-3.5 py-3 text-left text-[13px] transition ${
+                            selected
+                              ? 'border-[#18701C] bg-[#18701C] font-semibold text-white shadow-[0_4px_12px_rgba(24,112,28,0.25)]'
+                              : 'border-[#e3eaf2] bg-white text-[#2f3c57] hover:border-[#1B7A1E] hover:bg-[#f6faf7]'
+                          }`}
+                        >
+                          <span className={`mr-2 font-bold ${selected ? 'text-white/90' : 'text-[#1B7A1E]'}`}>
+                            {String.fromCharCode(65 + optIndex)}.
+                          </span>
+                          {option || t('student.optionFallback', { letter: String.fromCharCode(65 + optIndex) })}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            : questions.map((question, index) => (
+                <div
+                  key={question.id}
+                  className="flex items-center gap-3 rounded-xl border border-[#e7edf5] bg-[#fbfcfe] p-3.5"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#18701C] text-[14px] font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <div className="flex flex-1 gap-2">
+                    {[0, 1, 2, 3].map(optIndex => {
+                      const selected = answers[index] === optIndex;
+                      return (
+                        <button
+                          key={optIndex}
+                          type="button"
+                          onClick={() => {
+                            const next = [...answers];
+                            next[index] = optIndex;
+                            setAnswers(next);
+                          }}
+                          className={`h-11 flex-1 rounded-lg text-[15px] font-bold transition ${
+                            selected
+                              ? 'bg-[#18701C] text-white shadow'
+                              : 'border border-[#e3eaf2] bg-white text-[#314057] hover:border-[#1B7A1E]'
+                          }`}
+                        >
+                          {String.fromCharCode(65 + optIndex)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="w-6 shrink-0">
+                    {answers[index] !== -1 && <CheckCircle2 className="text-[#18701C]" size={18} />}
+                  </div>
+                </div>
+              ))}
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-2.5 border-t border-[#eef2f7] pt-5 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={onComplete}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#d7e0eb] px-5 text-[13px] font-semibold text-[#52617c] hover:bg-[#f5f8fc]"
+          >
+            {t('common.cancel')}
+          </button>
+          <div className="hidden flex-1 sm:block" />
+          <button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={isTimeUp}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#18701C] px-6 text-[13px] font-bold text-white shadow-[0_6px_16px_rgba(24,112,28,0.22)] transition hover:bg-[#145616] disabled:opacity-50"
+          >
+            <Save size={16} />
+            {t('student.submitWithCount', { answered: answeredCount, total: questions.length })}
+          </button>
+        </div>
       </div>
     </div>
   );

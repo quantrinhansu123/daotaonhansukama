@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-be-vietnam), "Be Vietnam Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 
   /* Brand colors — BioKama green and wheat gold */
@@ -39,7 +39,7 @@ body {
     radial-gradient(at 55% 0%, hsla(120, 28%, 10%, 1) 0, transparent 50%),
     radial-gradient(at 100% 100%, hsla(90, 40%, 10%, 1) 0, transparent 45%);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-be-vietnam), "Be Vietnam Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;

@@ -9,7 +9,7 @@ import { Lesson, QuizResult } from '@/types/lesson';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings } from 'lucide-react';
+import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings, Layers, Signal, UserRound, CheckCircle2, CirclePlay, Square, CheckSquare } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
 import { DemoVideoView } from '@/components/shared/DemoVideoView';
 import { resolveDemoVideo } from '@/lib/demo-video';
@@ -668,7 +668,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#f5f8fc] text-[#111b38] [font-family:Arial,Helvetica,sans-serif]">
+    <div className="flex min-h-screen bg-[#f5f8fc] font-sans text-[#111b38]">
       {mobileNav && (
         <button
           className="fixed inset-0 z-30 bg-[#031323]/55 lg:hidden"
@@ -677,50 +677,74 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         />
       )}
 
-      <aside className={`fixed top-0 z-40 flex h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#061b2b] to-[#0b2035] text-[#eef5ff] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed top-0 z-40 flex h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex h-[72px] items-center justify-center bg-white px-2">
           <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
         </div>
         <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2" aria-label={t('student.academy.courses')}>
-          <Link href="/student" className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+          <Link href="/student" className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
             <Home size={18} />
             {t('student.academy.overview')}
           </Link>
-          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#145616] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#EDB409]">
+          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#18701C] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#EDB409]">
             <BookOpen size={18} />
             {t('student.academy.courses')}
           </div>
+          <Link
+            href="/student#course-list"
+            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <GraduationCap size={18} />
+            {t('student.academy.navPrograms')}
+          </Link>
+          <Link
+            href="/student#library"
+            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Folder size={18} />
+            {t('student.academy.navLibrary')}
+          </Link>
           {[
-            { icon: GraduationCap, label: t('student.academy.navPrograms') },
             { icon: Users, label: t('student.academy.navStudents') },
             { icon: FolderKanban, label: t('student.academy.navProjects') },
             { icon: Building2, label: t('student.academy.navDepartments') },
             { icon: Award, label: t('student.academy.navPositions') },
             { icon: ClipboardCheck, label: t('student.academy.navAssessment') },
-            { icon: Folder, label: t('student.academy.navLibrary') },
             { icon: BarChart3, label: t('student.academy.navReports') },
-            { icon: BadgeCheck, label: t('student.academy.navCertificates') },
           ].map(item => (
-            <button key={item.label} onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+            <button key={item.label} onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
               <item.icon size={18} />
               {item.label}
             </button>
           ))}
-          <p className="mx-2 mb-1 mt-3 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.navSystem')}</p>
+          <Link
+            href="/student#certificates"
+            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <BadgeCheck size={18} />
+            {t('student.academy.navCertificates')}
+          </Link>
+          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[11px] text-[#b7dfc0]">{t('student.academy.navSystem')}</p>
           {[
             { icon: Users, label: t('student.academy.navUsers') },
             { icon: Shield, label: t('student.academy.navPermissions') },
             { icon: List, label: t('student.academy.navActivity') },
-            { icon: Settings, label: t('student.academy.navSettings') },
           ].map(item => (
-            <button key={item.label} onClick={() => item.label === t('student.academy.navSettings') ? setShowProfile(true) : showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+            <button key={item.label} onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
               <item.icon size={18} />
               {item.label}
             </button>
           ))}
-          {allCourses.length > 1 && (
+          <Link
+            href="/student#settings"
+            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Settings size={18} />
+            {t('student.academy.navSettings')}
+          </Link>
+          {allCourses.length > 0 && (
             <div className="pt-3">
-              <p className="mx-2 mb-2 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.myCourses')}</p>
+              <p className="mx-2 mb-2 border-t border-white/15 pt-3 text-[11px] text-[#b7dfc0]">{t('student.academy.navPrograms')}</p>
               {allCourses.map(item => (
                 <button
                   key={item.id}
@@ -731,26 +755,27 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     setPlayerOpen(false);
                     setMobileNav(false);
                   }}
-                  className={`mb-1 w-full truncate rounded px-2.5 py-2 text-left text-[12px] ${selectedCourseId === item.id ? 'bg-[#163753] text-white' : 'text-[#e1eaf4] hover:bg-[#163753]'}`}
+                  className={`mb-1 flex w-full items-center gap-2 truncate rounded px-2.5 py-2 text-left text-[12px] ${selectedCourseId === item.id ? 'bg-[#18701C] text-white shadow-[inset_3px_0_#EDB409]' : 'text-[#e4f5e8] hover:bg-[#18701C]/45'}`}
                 >
-                  {item.title}
+                  <GraduationCap size={14} className="shrink-0 opacity-80" />
+                  <span className="truncate">{item.title}</span>
                 </button>
               ))}
             </div>
           )}
         </nav>
-        <div className="border-t border-white/10 px-3 py-4">
-          <div className="rounded-md bg-[#152e47] p-3">
+        <div className="border-t border-white/15 px-3 py-4">
+          <div className="rounded-md bg-[#0c3a16]/80 p-3 ring-1 ring-white/10">
             <div className="flex items-center gap-2.5">
               <Headphones size={18} />
               <span>
                 <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
-                <small className="block text-[10px] text-[#bdcada]">{t('student.academy.supportHint')}</small>
+                <small className="block text-[10px] text-[#c5e6cc]">{t('student.academy.supportHint')}</small>
               </span>
             </div>
             <button
               onClick={() => showToast(t('student.academy.supportSent'))}
-              className="mt-3 w-full rounded bg-[#f7faff] px-2 py-1.5 text-[11px] font-bold text-[#1B7A1E]"
+              className="mt-3 w-full rounded bg-[#f7faff] px-2 py-1.5 text-[11px] font-bold text-[#18701C]"
             >
               {t('student.academy.sendRequest')}
             </button>
@@ -810,7 +835,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             <span className="truncate">{currentCourse.title}</span>
           </div>
 
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2.03fr)_minmax(310px,1fr)]">
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
             <div className="min-w-0">
               <div ref={heroRef} className="relative aspect-[636/355] overflow-hidden rounded bg-[#113e30] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
                 {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId) ? (
@@ -1014,37 +1039,60 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     <p className="m-0 text-[12px] leading-relaxed text-[#52617c]">{currentCourse.description}</p>
                   </section>
 
-                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                    <h2 className="m-0 text-[16px]">{t('student.academy.whatYouLearn')}</h2>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {(lessons.length ? lessons.slice(0, 8) : []).map(lesson => (
-                        <div key={lesson.id} className="flex items-start gap-2 text-[11px] text-[#4f5e78]">
-                          <span className="grid h-[17px] w-[17px] shrink-0 place-items-center rounded-full bg-[#16ab70] text-[11px] text-white">✓</span>
-                          <span>{lesson.title}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                    <h2 className="m-0 text-[16px]">{t('student.academy.suitableFor')}</h2>
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-3">
-                      {[currentCourse.category || t('student.general'), levelLabel, currentCourse.teacherName].filter(Boolean).map(item => (
-                        <div key={item} className="text-[11px] text-[#4e5c78]">
-                          <span className="mx-auto mb-1 grid h-7 w-8 place-items-center rounded bg-[#f4f7fc] text-[#1b3256]">
-                            <Users size={14} />
+                  <section className="mt-2.5 rounded-2xl border border-[#e7edf5] bg-white px-4 py-5 shadow-[0_8px_24px_rgba(24,48,93,0.06)]">
+                    <h2 className="m-0 text-[20px] font-bold text-[#18701C]">{t('student.academy.whatYouLearn')}</h2>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {(lessons.length ? lessons.slice(0, 8) : []).map((lesson, index) => (
+                        <div
+                          key={lesson.id}
+                          className="group flex items-start gap-3 rounded-xl border border-[#e8f0e9] bg-[#f7fbf8] px-3.5 py-3.5 transition hover:-translate-y-0.5 hover:border-[#18701C]/35 hover:bg-white hover:shadow-[0_10px_22px_rgba(24,112,28,0.12)]"
+                        >
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#18701C] text-[16px] font-bold leading-none text-white shadow-[0_4px_12px_rgba(24,112,28,0.28)] transition group-hover:scale-105">
+                            {index + 1}
                           </span>
-                          {item}
+                          <span className="pt-1.5 text-[15px] font-semibold leading-snug text-[#145616]">
+                            {lesson.title}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </section>
 
                   <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                    <h2 className="m-0 mb-2 text-[16px]">{t('student.academy.requirements')}</h2>
+                    <h2 className="m-0 text-[16px] font-bold">{t('student.academy.suitableFor')}</h2>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-center sm:grid-cols-3">
+                      {[
+                        {
+                          label: currentCourse.category || t('student.general'),
+                          icon: Layers,
+                          tone: 'bg-[#eff8f0] text-[#18701C]',
+                        },
+                        {
+                          label: levelLabel,
+                          icon: Signal,
+                          tone: 'bg-[#eff6ff] text-[#1B7A1E]',
+                        },
+                        {
+                          label: currentCourse.teacherName,
+                          icon: UserRound,
+                          tone: 'bg-[#fff6e9] text-[#df8b00]',
+                        },
+                      ].filter(item => Boolean(item.label)).map(item => (
+                        <div key={String(item.label)} className="flex flex-col items-center gap-1.5">
+                          <span className={`grid h-10 w-10 place-items-center rounded-xl ${item.tone}`}>
+                            <item.icon size={20} strokeWidth={2.1} />
+                          </span>
+                          <b className="text-[12px] font-bold leading-snug text-[#111b38]">{item.label}</b>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                    <h2 className="m-0 mb-2 text-[16px] font-bold">{t('student.academy.requirements')}</h2>
                     {[t('student.academy.requirementWatch'), t('student.academy.requirementQuiz')].map(line => (
-                      <div key={line} className="mt-1.5 flex items-start gap-2 text-[11px] text-[#4f5e78]">
-                        <span className="grid h-[17px] w-[17px] shrink-0 place-items-center rounded-full bg-[#16ab70] text-[11px] text-white">✓</span>
+                      <div key={line} className="mt-1.5 flex items-start gap-2 text-[12px] font-semibold text-[#243552]">
+                        <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#16ab70]" strokeWidth={2.25} />
                         <span>{line}</span>
                       </div>
                     ))}
@@ -1127,38 +1175,44 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
               )}
             </div>
 
-            <aside className="min-w-0">
-              <section className="rounded bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                <div className="flex items-center justify-between">
-                  <b className="text-[13px]">{t('student.academy.learningProgress')}</b>
-                  <strong className="text-[21px]">{percent}%</strong>
+            <aside className="min-w-0 space-y-3.5">
+              <section className="rounded-2xl border border-[#e7edf5] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(24,48,93,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(24,48,93,0.1)]">
+                <div className="flex items-center justify-between gap-2">
+                  <b className="text-[15px] font-bold text-[#111b38]">{t('student.academy.learningProgress')}</b>
+                  <strong className="text-[28px] font-bold tabular-nums leading-none text-[#18701C]">{percent}%</strong>
                 </div>
-                <div className="my-1.5 h-[9px] overflow-hidden rounded-full bg-[#e9edf3]">
-                  <span className="block h-full rounded-full bg-[#1B7A1E]" style={{ width: `${percent}%` }} />
+                <div className="my-3 h-3 overflow-hidden rounded-full bg-[#e9edf3] shadow-inner">
+                  <span className="block h-full rounded-full bg-gradient-to-r from-[#145616] to-[#1B7A1E] transition-all" style={{ width: `${percent}%` }} />
                 </div>
-                <small className="text-[11px] text-[#6a7690]">
+                <p className="m-0 text-[13px] font-semibold text-[#52617c]">
                   {t('student.academy.completedOf', { done: completedCount, total: lessons.length })}
-                </small>
-                <button onClick={handleContinue} className="mt-3 flex min-h-[37px] w-full items-center justify-center gap-2 rounded border border-[#18701C] bg-[#18701C] text-[11px] text-white">
-                  <Play size={14} fill="currentColor" />
+                </p>
+                <button
+                  onClick={handleContinue}
+                  className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-[#18701C] bg-[#18701C] text-[14px] font-bold text-white shadow-[0_8px_18px_rgba(24,112,28,0.28)] transition hover:-translate-y-0.5 hover:bg-[#145616] hover:shadow-[0_12px_22px_rgba(24,112,28,0.34)]"
+                >
+                  <Play size={16} fill="currentColor" />
                   {t('student.continueLearningBtn')}
                 </button>
-                <button onClick={handleMarkComplete} className="mt-2 flex min-h-[37px] w-full items-center justify-center gap-2 rounded border border-[#bbc6d4] bg-white text-[11px] text-[#293957]">
-                  <Bookmark size={14} />
+                <button
+                  onClick={handleMarkComplete}
+                  className="mt-2.5 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-[#d5deea] bg-white text-[14px] font-bold text-[#293957] shadow-[0_2px_8px_rgba(24,48,93,0.04)] transition hover:-translate-y-0.5 hover:border-[#1B7A1E] hover:bg-[#f6faf7] hover:text-[#18701C] hover:shadow-[0_8px_18px_rgba(24,48,93,0.08)]"
+                >
+                  <Bookmark size={16} />
                   {t('student.markComplete')}
                 </button>
-                <p className="mt-3 text-[10px] text-[#6a758d]">
+                <p className="mt-3.5 text-[12px] font-medium text-[#6a758d]">
                   {lastStamp
                     ? t('student.academy.lastLearned', { time: new Date(lastStamp).toLocaleString(dateLocale) })
                     : t('student.academy.notStartedYet')}
                 </p>
               </section>
 
-              <section className="mt-3 rounded bg-white px-2.5 py-3 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                  <b className="text-[13px]">{t('student.courseContent')} ({lessons.length})</b>
+              <section className="rounded-2xl border border-[#e7edf5] bg-white px-3.5 py-4 shadow-[0_8px_24px_rgba(24,48,93,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(24,48,93,0.1)]">
+                <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                  <b className="text-[15px] font-bold text-[#111b38]">{t('student.courseContent')} ({lessons.length})</b>
                   <button
-                    className="text-[11px] text-[#1B7A1E]"
+                    className="text-[12px] font-bold text-[#1B7A1E] hover:underline"
                     onClick={() => {
                       if (allCollapsed) {
                         setCollapsed({});
@@ -1173,22 +1227,32 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   </button>
                 </div>
                 {chapters.length === 0 && (
-                  <p className="px-2 py-4 text-center text-[12px] text-[#63708a]">{t('student.noLessonsYet')}</p>
+                  <p className="px-2 py-4 text-center text-[13px] text-[#63708a]">{t('student.noLessonsYet')}</p>
                 )}
                 {chapters.map((chapter, chapterIndex) => {
                   const doneInChapter = chapter.items.filter(lesson => progress[lesson.id]?.completed).length;
                   const isCollapsed = Boolean(collapsed[chapter.name]);
                   return (
-                    <div key={chapter.name} className="mb-2 overflow-hidden rounded">
+                    <div
+                      key={chapter.name}
+                      className="mb-2.5 overflow-hidden rounded-xl border border-[#e8eef5] bg-white shadow-[0_2px_10px_rgba(24,48,93,0.04)]"
+                    >
                       <button
-                        className="flex min-h-[43px] w-full items-center gap-2 bg-[#f8fafc] px-2 py-2 text-left text-[11px] font-bold hover:bg-[#eef5ff]"
+                        className="flex min-h-[48px] w-full items-center gap-2.5 bg-[#f7fafc] px-3 py-2.5 text-left transition hover:bg-[#eef6ff]"
                         aria-expanded={!isCollapsed}
                         onClick={() => setCollapsed(prev => ({ ...prev, [chapter.name]: !prev[chapter.name] }))}
                       >
-                        <span className="w-4">{chapterIndex + 1}.</span>
-                        <span className="flex-1">{chapter.name}</span>
-                        <span className="font-normal text-[#2f3c57]">{doneInChapter}/{chapter.items.length}</span>
-                        <ChevronDown size={14} className={`transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#e8f5ea] text-[12px] font-bold text-[#18701C] shadow-sm">
+                          {chapterIndex + 1}
+                        </span>
+                        <span className="flex-1 text-[13px] font-bold text-[#111b38]">{chapter.name}</span>
+                        <span className="flex items-center gap-1 text-[12px] font-bold text-[#2f3c57]">
+                          {doneInChapter === chapter.items.length && chapter.items.length > 0 ? (
+                            <CheckCircle2 size={15} className="text-[#11a76a]" />
+                          ) : null}
+                          {doneInChapter}/{chapter.items.length}
+                        </span>
+                        <ChevronDown size={16} className={`text-[#5e6880] transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
                       </button>
                       {!isCollapsed && chapter.items.map(lesson => {
                         const index = lessonIndex(lesson);
@@ -1199,15 +1263,31 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <button
                             key={lesson.id}
                             onClick={() => openLesson(lesson, index)}
-                            className={`relative grid min-h-[35px] w-full grid-cols-[16px_28px_minmax(0,1fr)_42px_18px] items-center gap-1 px-1 py-1 text-left text-[10px] ${selected ? 'bg-[#e9f2ff] text-[#1B7A1E]' : 'bg-white text-[#313e58] hover:bg-[#f4f8ff]'} ${locked ? 'opacity-60' : ''}`}
+                            className={`relative grid min-h-[48px] w-full grid-cols-[24px_30px_minmax(0,1fr)_auto_20px] items-center gap-1.5 border-t border-[#eef2f7] px-3 py-2.5 text-left transition ${
+                              selected
+                                ? 'bg-[#eff8f0] shadow-[inset_0_0_0_1px_rgba(24,112,28,0.14)]'
+                                : 'bg-white hover:bg-[#f5faf6]'
+                            } ${locked ? 'opacity-60' : ''}`}
                           >
-                            {selected && <span className="absolute bottom-0 left-0 top-0 w-[3px] bg-[#1B7A1E]" />}
-                            <span className={`text-center text-[13px] ${done ? 'text-[#11a76a]' : 'text-[#a4b1c2]'}`}>{done ? '▣' : '▫'}</span>
-                            <span className="text-[#5e6880]">{lesson.order || index + 1}</span>
-                            <span className="truncate">{lesson.title}</span>
-                            <span className="text-right text-[#53617a]">{lesson.duration ? formatDuration(lesson.duration) : ''}</span>
-                            <span className={`grid h-4 w-4 place-items-center justify-self-center rounded-full border ${done ? 'border-[#13ab71] bg-[#13ab71] text-[10px] text-white' : 'border-[#a4b1c2]'}`}>
-                              {locked ? <Lock size={9} /> : done ? '✓' : ''}
+                            {selected && <span className="absolute bottom-1 left-0 top-1 w-[3px] rounded-r bg-[#1B7A1E]" />}
+                            <span className="grid place-items-center">
+                              {selected ? (
+                                <CirclePlay size={18} className="text-[#1B7A1E]" fill="currentColor" strokeWidth={1.5} />
+                              ) : done ? (
+                                <CheckSquare size={16} className="text-[#11a76a]" strokeWidth={2.2} />
+                              ) : locked ? (
+                                <Lock size={14} className="text-[#9aa7b8]" strokeWidth={2.2} />
+                              ) : (
+                                <Square size={16} className="text-[#a4b1c2]" strokeWidth={2} />
+                              )}
+                            </span>
+                            <span className="text-[12px] font-semibold text-[#5e6880]">{lesson.order || index + 1}</span>
+                            <span className={`truncate text-[14px] leading-snug ${selected || done ? 'font-semibold text-[#18701C]' : 'font-medium text-[#243552]'}`}>{lesson.title}</span>
+                            <span className="whitespace-nowrap text-right text-[11px] font-semibold text-[#53617a]">
+                              {lesson.duration ? formatDuration(lesson.duration) : ''}
+                            </span>
+                            <span className={`grid h-5 w-5 place-items-center justify-self-center rounded-full border ${done ? 'border-[#13ab71] bg-[#13ab71] text-white shadow-sm' : 'border-[#a4b1c2] text-[#a4b1c2]'}`}>
+                              {locked ? <Lock size={10} /> : done ? <CheckCircle2 size={12} strokeWidth={3} /> : null}
                             </span>
                           </button>
                         );
@@ -1217,29 +1297,32 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 })}
               </section>
 
-              <section className="mt-3 flex gap-2.5 rounded bg-[#fff9ec] p-3 text-[11px] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                <span className="grid h-11 w-10 shrink-0 place-items-center rounded bg-[#fff1d0] text-[#e2a020]">
-                  <Lightbulb size={18} />
+              <section className="flex gap-3 rounded-2xl border border-[#f0dfb0] bg-[#fff9ec] p-4 text-[13px] shadow-[0_8px_24px_rgba(24,48,93,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(24,48,93,0.09)]">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#fff1d0] text-[#e2a020] shadow-sm">
+                  <Lightbulb size={22} />
                 </span>
                 <div>
-                  <b className="text-[12px]">{t('student.academy.noteTitle')}</b>
-                  <p className="m-0 mt-1 leading-relaxed text-[#56627a]">{t('student.academy.noteBody')}</p>
+                  <b className="text-[14px] font-bold text-[#111b38]">{t('student.academy.noteTitle')}</b>
+                  <p className="m-0 mt-1.5 text-[13px] font-medium leading-relaxed text-[#56627a]">{t('student.academy.noteBody')}</p>
                 </div>
               </section>
 
-              <section className="mt-3 flex flex-wrap gap-2.5 rounded bg-[#edfbf8] p-3 text-[11px] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                <span className="grid h-11 w-10 shrink-0 place-items-center rounded bg-[#d5f7e9] text-[#07965f]">
-                  <Award size={18} />
+              <section className="flex flex-wrap gap-3 rounded-2xl border border-[#c6ebd4] bg-[#edfbf8] p-4 text-[13px] shadow-[0_8px_24px_rgba(24,48,93,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(24,48,93,0.09)]">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#d5f7e9] text-[#07965f] shadow-sm">
+                  <Award size={22} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <b className="text-[12px]">{t('student.academy.certificate')}</b>
-                  <p className="m-0 mt-1 leading-relaxed text-[#56627a]">{t('student.academy.certificateHint')}</p>
+                  <b className="text-[14px] font-bold text-[#111b38]">{t('student.academy.certificate')}</b>
+                  <p className="m-0 mt-1.5 text-[13px] font-medium leading-relaxed text-[#56627a]">{t('student.academy.certificateHint')}</p>
                 </div>
                 <button
                   onClick={() => setCertOpen(true)}
-                  className="ml-[50px] w-[calc(100%-50px)] rounded border border-[#d9e6f1] bg-white px-2 py-1.5 text-[10px] text-[#1B7A1E]"
+                  className="w-full rounded-xl border border-[#c6ebd4] bg-white px-3 py-2.5 text-[13px] font-bold text-[#18701C] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f4faf6] hover:shadow-md"
                 >
-                  ▧ &nbsp; {t('student.academy.viewCertificate')} ↗
+                  <span className="inline-flex items-center gap-2">
+                    <BadgeCheck size={16} />
+                    {t('student.academy.viewCertificate')}
+                  </span>
                 </button>
               </section>
             </aside>

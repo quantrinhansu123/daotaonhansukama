@@ -6,6 +6,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, GraduationCap, Headphones, Home, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
 import { CourseEnrollment } from '@/components/student/CourseEnrollment';
+import { StudentCertificates } from '@/components/student/StudentCertificates';
+import { StudentSettings } from '@/components/student/StudentSettings';
+import { StudentLibrary } from '@/components/student/StudentLibrary';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -25,6 +28,14 @@ const emptyStats: LearningStats = {
   passedQuizzes: 0,
 };
 
+type Section =
+  | 'overview'
+  | 'courses'
+  | 'programs'
+  | 'certificates'
+  | 'library'
+  | 'settings';
+
 export default function StudentPage() {
   const { userProfile, loading, signOut } = useAuth();
   const { t } = useLanguage();
@@ -33,6 +44,7 @@ export default function StudentPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [toastMsg, setToastMsg] = useState('');
   const [accountOpen, setAccountOpen] = useState(false);
+  const [section, setSection] = useState<Section>('overview');
   const accountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,7 +63,6 @@ export default function StudentPage() {
           getDocs(query(collection(db, 'quizResults'), where('userId', '==', userProfile.uid))),
         ]);
 
-        // A lesson may have old duplicate records; count each video only once.
         const videos = new Map<string, { lessonId: string; completed: boolean }>();
         progressSnapshot.docs.forEach(snapshot => {
           const record = snapshot.data();
@@ -97,6 +108,15 @@ export default function StudentPage() {
     return () => document.removeEventListener('mousedown', close);
   }, [accountOpen]);
 
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'course-list') setSection('courses');
+    if (hash === 'certificates') setSection('certificates');
+    if (hash === 'library') setSection('library');
+    if (hash === 'settings') setSection('settings');
+    if (hash === 'programs') setSection('programs');
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f8fc] text-[#63708a]">
@@ -112,6 +132,16 @@ export default function StudentPage() {
     router.push('/');
   };
 
+  const showSoon = () => {
+    setToastMsg(t('student.academy.navSoon'));
+    window.setTimeout(() => setToastMsg(''), 2200);
+  };
+
+  const navBtn = (active: boolean) =>
+    active
+      ? 'bg-[#18701C] text-white shadow-[inset_3px_0_#EDB409]'
+      : 'text-[#e4f5e8] hover:bg-[#18701C]/45';
+
   const initials = (userProfile.displayName || 'U')
     .split(/\s+/)
     .filter(Boolean)
@@ -125,60 +155,80 @@ export default function StudentPage() {
     { label: t('student.passedQuizzes'), value: stats.passedQuizzes, icon: ClipboardCheck, iconBg: 'bg-[#fff6e9] text-[#df8b00]' },
   ];
 
+  const headerTitle =
+    section === 'certificates' ? t('student.academy.navCertificates')
+      : section === 'library' ? t('student.academy.navLibrary')
+        : section === 'settings' ? t('student.academy.navSettings')
+          : section === 'programs' ? t('student.academy.navPrograms')
+            : section === 'courses' ? t('student.academy.courses')
+              : t('student.dashboardTitle');
+
   return (
-    <div className="flex min-h-screen bg-[#f5f8fc] text-[#111b38] [font-family:Arial,Helvetica,sans-serif]">
-      <aside className="sticky top-0 hidden h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#061b2b] to-[#0b2035] text-[#eef5ff] lg:flex">
+    <div className="flex min-h-screen bg-[#f5f8fc] font-sans text-[#111b38]">
+      <aside className="sticky top-0 hidden h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] lg:flex">
         <div className="flex h-[72px] items-center justify-center bg-white px-2">
           <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
         </div>
         <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2">
-          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#145616] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#EDB409]">
+          <button type="button" onClick={() => setSection('overview')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'overview')}`}>
             <Home size={18} />
             {t('student.academy.overview')}
-          </div>
-          <button
-            onClick={() => document.getElementById('course-list')?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]"
-          >
+          </button>
+          <button type="button" onClick={() => setSection('courses')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'courses')}`}>
             <BookOpen size={18} />
             {t('student.academy.courses')}
           </button>
+          <button type="button" onClick={() => setSection('programs')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'programs')}`}>
+            <GraduationCap size={18} />
+            {t('student.academy.navPrograms')}
+          </button>
           {[
-            { icon: GraduationCap, label: t('student.academy.navPrograms') },
             { icon: Users, label: t('student.academy.navStudents') },
             { icon: FolderKanban, label: t('student.academy.navProjects') },
             { icon: Building2, label: t('student.academy.navDepartments') },
             { icon: Award, label: t('student.academy.navPositions') },
             { icon: ClipboardCheck, label: t('student.academy.navAssessment') },
-            { icon: Folder, label: t('student.academy.navLibrary') },
-            { icon: BarChart3, label: t('student.academy.navReports') },
-            { icon: BadgeCheck, label: t('student.academy.navCertificates') },
           ].map(item => (
-            <button key={item.label} onClick={() => { setToastMsg(t('student.academy.navSoon')); window.setTimeout(() => setToastMsg(''), 2200); }} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+            <button key={item.label} type="button" onClick={showSoon} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
               <item.icon size={18} />
               {item.label}
             </button>
           ))}
-          <p className="mx-2 mb-1 mt-3 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.navSystem')}</p>
+          <button type="button" onClick={() => setSection('library')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'library')}`}>
+            <Folder size={18} />
+            {t('student.academy.navLibrary')}
+          </button>
+          <button type="button" onClick={showSoon} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
+            <BarChart3 size={18} />
+            {t('student.academy.navReports')}
+          </button>
+          <button type="button" onClick={() => setSection('certificates')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'certificates')}`}>
+            <BadgeCheck size={18} />
+            {t('student.academy.navCertificates')}
+          </button>
+          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[11px] text-[#b7dfc0]">{t('student.academy.navSystem')}</p>
           {[
-            { icon: Users, label: t('student.academy.navUsers'), id: 'users' },
-            { icon: Shield, label: t('student.academy.navPermissions'), id: 'permissions' },
-            { icon: List, label: t('student.academy.navActivity'), id: 'activity' },
-            { icon: Settings, label: t('student.academy.navSettings'), id: 'settings' },
+            { icon: Users, label: t('student.academy.navUsers') },
+            { icon: Shield, label: t('student.academy.navPermissions') },
+            { icon: List, label: t('student.academy.navActivity') },
           ].map(item => (
-            <button key={item.id} onClick={() => { setToastMsg(t('student.academy.navSoon')); window.setTimeout(() => setToastMsg(''), 2200); }} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+            <button key={item.label} type="button" onClick={showSoon} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
               <item.icon size={18} />
               {item.label}
             </button>
           ))}
+          <button type="button" onClick={() => setSection('settings')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'settings')}`}>
+            <Settings size={18} />
+            {t('student.academy.navSettings')}
+          </button>
         </nav>
-        <div className="border-t border-white/10 px-3 py-4">
-          <div className="rounded-md bg-[#152e47] p-3">
+        <div className="border-t border-white/15 px-3 py-4">
+          <div className="rounded-md bg-[#0c3a16]/80 p-3 ring-1 ring-white/10">
             <div className="flex items-center gap-2.5">
               <Headphones size={18} />
               <span>
                 <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
-                <small className="block text-[10px] text-[#bdcada]">{t('student.academy.supportHint')}</small>
+                <small className="block text-[10px] text-[#c5e6cc]">{t('student.academy.supportHint')}</small>
               </span>
             </div>
           </div>
@@ -188,7 +238,7 @@ export default function StudentPage() {
       <div className="min-w-0 flex-1">
         <header className="flex h-[54px] shrink-0 items-center gap-3 border-b border-[#ecf0f6] bg-white px-4">
           <div className="min-w-0">
-            <b className="block truncate text-[13px]">{t('student.dashboardTitle')}</b>
+            <b className="block truncate text-[13px]">{headerTitle}</b>
             <small className="block text-[10px] text-[#66718b]">{t('student.myLearning')}</small>
           </div>
           <div className="flex-1" />
@@ -233,30 +283,52 @@ export default function StudentPage() {
         </header>
 
         <main className="mx-auto max-w-[1500px] space-y-4 px-4 py-4">
-          <section className="bg-white px-4 py-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-            <h2 className="mb-1 text-[21px] font-bold tracking-tight">
-              {t('student.welcomeShort', { name: userProfile.displayName || userProfile.email || '' })}
-            </h2>
-            <p className="text-[12px] text-[#53617b]">{t('student.welcomeSub')}</p>
-            <p className="mt-2 text-[12px] text-[#1B7A1E]">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
-          </section>
+          {section === 'overview' && (
+            <>
+              <section className="bg-white px-4 py-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                <h2 className="mb-1 text-[21px] font-bold tracking-tight">
+                  {t('student.welcomeShort', { name: userProfile.displayName || userProfile.email || '' })}
+                </h2>
+                <p className="text-[12px] text-[#53617b]">{t('student.welcomeSub')}</p>
+                <p className="mt-2 text-[12px] text-[#1B7A1E]">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
+              </section>
 
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t('student.learningStats')}>
-            {statCards.map(card => {
-              const Icon = card.icon;
-              return (
-                <div key={card.label} className="bg-white p-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                  <div className={`mb-3 inline-flex rounded p-2 ${card.iconBg}`}><Icon className="h-4 w-4" /></div>
-                  <p className="text-[22px] font-bold tabular-nums">{loadingStats ? '—' : card.value}</p>
-                  <p className="mt-1 text-[11px] text-[#63708a]">{card.label}</p>
-                </div>
-              );
-            })}
-          </section>
+              <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t('student.learningStats')}>
+                {statCards.map(card => {
+                  const Icon = card.icon;
+                  return (
+                    <div key={card.label} className="bg-white p-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                      <div className={`mb-3 inline-flex rounded p-2 ${card.iconBg}`}><Icon className="h-4 w-4" /></div>
+                      <p className="text-[22px] font-bold tabular-nums">{loadingStats ? '—' : card.value}</p>
+                      <p className="mt-1 text-[11px] text-[#63708a]">{card.label}</p>
+                    </div>
+                  );
+                })}
+              </section>
 
-          <div id="course-list">
-            <CourseEnrollment />
-          </div>
+              <div id="course-list">
+                <CourseEnrollment />
+              </div>
+            </>
+          )}
+
+          {(section === 'courses' || section === 'programs') && (
+            <div id="course-list">
+              <div className="mb-4">
+                <h1 className="m-0 text-[24px] font-bold text-[#111b38]">
+                  {section === 'programs' ? t('student.academy.navPrograms') : t('student.academy.courses')}
+                </h1>
+                <p className="mt-1 text-[13px] text-[#63708a]">
+                  {section === 'programs' ? t('student.deptCoursesHint') : t('student.yourCourses')}
+                </p>
+              </div>
+              <CourseEnrollment />
+            </div>
+          )}
+
+          {section === 'certificates' && <StudentCertificates />}
+          {section === 'library' && <StudentLibrary />}
+          {section === 'settings' && <StudentSettings />}
         </main>
       </div>
       {toastMsg && (
