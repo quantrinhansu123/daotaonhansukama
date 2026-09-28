@@ -9,6 +9,14 @@ import { CourseEnrollment } from '@/components/student/CourseEnrollment';
 import { StudentCertificates } from '@/components/student/StudentCertificates';
 import { StudentSettings } from '@/components/student/StudentSettings';
 import { StudentLibrary } from '@/components/student/StudentLibrary';
+import { StudentLearners } from '@/components/student/StudentLearners';
+import { StudentProjects } from '@/components/student/StudentProjects';
+import { StudentDepartments } from '@/components/student/StudentDepartments';
+import { StudentPositions } from '@/components/student/StudentPositions';
+import { StudentAssessment } from '@/components/student/StudentAssessment';
+import { StudentAccountUser } from '@/components/student/StudentAccountUser';
+import { StudentPermissions } from '@/components/student/StudentPermissions';
+import { StudentActivityLog } from '@/components/student/StudentActivityLog';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { collection, query, where, getDocs } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
@@ -32,6 +40,14 @@ type Section =
   | 'overview'
   | 'courses'
   | 'programs'
+  | 'learners'
+  | 'projects'
+  | 'departments'
+  | 'positions'
+  | 'assessment'
+  | 'account'
+  | 'permissions'
+  | 'activity'
   | 'certificates'
   | 'library'
   | 'settings';
@@ -111,6 +127,14 @@ export default function StudentPage() {
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
     if (hash === 'course-list') setSection('courses');
+    if (hash === 'learners' || hash === 'students') setSection('learners');
+    if (hash === 'projects') setSection('projects');
+    if (hash === 'departments') setSection('departments');
+    if (hash === 'positions') setSection('positions');
+    if (hash === 'assessment') setSection('assessment');
+    if (hash === 'account' || hash === 'users') setSection('account');
+    if (hash === 'permissions') setSection('permissions');
+    if (hash === 'activity') setSection('activity');
     if (hash === 'certificates') setSection('certificates');
     if (hash === 'library') setSection('library');
     if (hash === 'settings') setSection('settings');
@@ -160,75 +184,93 @@ export default function StudentPage() {
       : section === 'library' ? t('student.academy.navLibrary')
         : section === 'settings' ? t('student.academy.navSettings')
           : section === 'programs' ? t('student.academy.navPrograms')
-            : section === 'courses' ? t('student.academy.courses')
-              : t('student.dashboardTitle');
+            : section === 'learners' ? t('student.academy.navStudents')
+              : section === 'projects' ? t('student.academy.navProjects')
+                : section === 'departments' ? t('student.academy.navDepartments')
+                  : section === 'positions' ? t('student.academy.navPositions')
+                    : section === 'assessment' ? t('student.academy.navAssessment')
+                      : section === 'account' ? t('student.academy.navUsers')
+                        : section === 'permissions' ? t('student.academy.navPermissions')
+                          : section === 'activity' ? t('student.academy.navActivity')
+                            : section === 'courses' ? t('student.academy.courses')
+                              : t('student.dashboardTitle');
 
   return (
     <div className="flex min-h-screen bg-[#f5f8fc] font-sans text-[#111b38]">
-      <aside className="sticky top-0 hidden h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] lg:flex">
         <div className="flex h-[72px] items-center justify-center bg-white px-2">
           <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
         </div>
         <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2">
-          <button type="button" onClick={() => setSection('overview')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'overview')}`}>
-            <Home size={18} />
+          <button type="button" onClick={() => setSection('overview')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'overview')}`}>
+            <Home size={22} />
             {t('student.academy.overview')}
           </button>
-          <button type="button" onClick={() => setSection('courses')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'courses')}`}>
-            <BookOpen size={18} />
+          <button type="button" onClick={() => setSection('courses')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'courses')}`}>
+            <BookOpen size={22} />
             {t('student.academy.courses')}
           </button>
-          <button type="button" onClick={() => setSection('programs')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'programs')}`}>
-            <GraduationCap size={18} />
+          <button type="button" onClick={() => setSection('programs')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'programs')}`}>
+            <GraduationCap size={22} />
             {t('student.academy.navPrograms')}
           </button>
-          {[
-            { icon: Users, label: t('student.academy.navStudents') },
-            { icon: FolderKanban, label: t('student.academy.navProjects') },
-            { icon: Building2, label: t('student.academy.navDepartments') },
-            { icon: Award, label: t('student.academy.navPositions') },
-            { icon: ClipboardCheck, label: t('student.academy.navAssessment') },
-          ].map(item => (
-            <button key={item.label} type="button" onClick={showSoon} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
-              <item.icon size={18} />
-              {item.label}
-            </button>
-          ))}
-          <button type="button" onClick={() => setSection('library')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'library')}`}>
-            <Folder size={18} />
+          <button type="button" onClick={() => setSection('learners')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'learners')}`}>
+            <Users size={22} />
+            {t('student.academy.navStudents')}
+          </button>
+          <button type="button" onClick={() => setSection('projects')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'projects')}`}>
+            <FolderKanban size={22} />
+            {t('student.academy.navProjects')}
+          </button>
+          <button type="button" onClick={() => setSection('departments')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'departments')}`}>
+            <Building2 size={22} />
+            {t('student.academy.navDepartments')}
+          </button>
+          <button type="button" onClick={() => setSection('positions')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'positions')}`}>
+            <Award size={22} />
+            {t('student.academy.navPositions')}
+          </button>
+          <button type="button" onClick={() => setSection('assessment')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'assessment')}`}>
+            <ClipboardCheck size={22} />
+            {t('student.academy.navAssessment')}
+          </button>
+          <button type="button" onClick={() => setSection('library')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'library')}`}>
+            <Folder size={22} />
             {t('student.academy.navLibrary')}
           </button>
-          <button type="button" onClick={showSoon} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
-            <BarChart3 size={18} />
+          <button type="button" onClick={showSoon} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
+            <BarChart3 size={22} />
             {t('student.academy.navReports')}
           </button>
-          <button type="button" onClick={() => setSection('certificates')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'certificates')}`}>
-            <BadgeCheck size={18} />
+          <button type="button" onClick={() => setSection('certificates')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'certificates')}`}>
+            <BadgeCheck size={22} />
             {t('student.academy.navCertificates')}
           </button>
-          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[11px] text-[#b7dfc0]">{t('student.academy.navSystem')}</p>
-          {[
-            { icon: Users, label: t('student.academy.navUsers') },
-            { icon: Shield, label: t('student.academy.navPermissions') },
-            { icon: List, label: t('student.academy.navActivity') },
-          ].map(item => (
-            <button key={item.label} type="button" onClick={showSoon} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
-              <item.icon size={18} />
-              {item.label}
-            </button>
-          ))}
-          <button type="button" onClick={() => setSection('settings')} className={`flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${navBtn(section === 'settings')}`}>
-            <Settings size={18} />
+          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
+          <button type="button" onClick={() => setSection('account')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'account')}`}>
+            <Users size={22} />
+            {t('student.academy.navUsers')}
+          </button>
+          <button type="button" onClick={() => setSection('permissions')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'permissions')}`}>
+            <Shield size={22} />
+            {t('student.academy.navPermissions')}
+          </button>
+          <button type="button" onClick={() => setSection('activity')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'activity')}`}>
+            <List size={22} />
+            {t('student.academy.navActivity')}
+          </button>
+          <button type="button" onClick={() => setSection('settings')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'settings')}`}>
+            <Settings size={22} />
             {t('student.academy.navSettings')}
           </button>
         </nav>
         <div className="border-t border-white/15 px-3 py-4">
           <div className="rounded-md bg-[#0c3a16]/80 p-3 ring-1 ring-white/10">
             <div className="flex items-center gap-2.5">
-              <Headphones size={18} />
+              <Headphones size={22} />
               <span>
-                <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
-                <small className="block text-[10px] text-[#c5e6cc]">{t('student.academy.supportHint')}</small>
+                <b className="block text-[15px] font-bold">{t('student.academy.supportTitle')}</b>
+                <small className="block text-[12px] font-semibold text-[#c5e6cc]">{t('student.academy.supportHint')}</small>
               </span>
             </div>
           </div>
@@ -293,14 +335,14 @@ export default function StudentPage() {
                 <p className="mt-2 text-[12px] text-[#1B7A1E]">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
               </section>
 
-              <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t('student.learningStats')}>
+              <section className="grid grid-cols-2 gap-2 lg:grid-cols-4" aria-label={t('student.learningStats')}>
                 {statCards.map(card => {
                   const Icon = card.icon;
                   return (
-                    <div key={card.label} className="bg-white p-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                      <div className={`mb-3 inline-flex rounded p-2 ${card.iconBg}`}><Icon className="h-4 w-4" /></div>
-                      <p className="text-[22px] font-bold tabular-nums">{loadingStats ? '—' : card.value}</p>
-                      <p className="mt-1 text-[11px] text-[#63708a]">{card.label}</p>
+                    <div key={card.label} className="bg-white px-3 py-2.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                      <div className={`mb-1.5 inline-flex rounded p-1.5 ${card.iconBg}`}><Icon className="h-5 w-5" strokeWidth={2.5} /></div>
+                      <p className="text-[28px] font-extrabold leading-none tabular-nums tracking-tight">{loadingStats ? '—' : card.value}</p>
+                      <p className="mt-1.5 text-[13px] font-bold text-[#53617b]">{card.label}</p>
                     </div>
                   );
                 })}
@@ -325,6 +367,14 @@ export default function StudentPage() {
             </div>
           )}
 
+          {section === 'learners' && <StudentLearners />}
+          {section === 'projects' && <StudentProjects />}
+          {section === 'departments' && <StudentDepartments />}
+          {section === 'positions' && <StudentPositions />}
+          {section === 'assessment' && <StudentAssessment />}
+          {section === 'account' && <StudentAccountUser />}
+          {section === 'permissions' && <StudentPermissions />}
+          {section === 'activity' && <StudentActivityLog />}
           {section === 'certificates' && <StudentCertificates />}
           {section === 'library' && <StudentLibrary />}
           {section === 'settings' && <StudentSettings />}

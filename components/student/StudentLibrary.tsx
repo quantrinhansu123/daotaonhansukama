@@ -143,17 +143,17 @@ export function StudentLibrary() {
             ))}
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
             {FOLDERS.map(folder => (
               <button
                 key={folder.name}
                 type="button"
-                className="min-w-[150px] rounded-2xl border border-[#e7edf5] bg-white p-3.5 text-left shadow-[0_4px_14px_rgba(24,48,93,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(24,48,93,0.08)]"
+                className="w-full rounded-2xl border border-[#e7edf5] bg-white p-4 text-left shadow-[0_4px_14px_rgba(24,48,93,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(24,48,93,0.08)]"
               >
-                <span className={`mb-2 inline-flex rounded-xl p-2 ${folder.tone}`}>
-                  <Folder size={18} />
+                <span className={`mb-2 inline-flex rounded-xl p-2.5 ${folder.tone}`}>
+                  <Folder size={20} />
                 </span>
-                <b className="block text-[13px] text-[#111b38]">{folder.name}</b>
+                <b className="block truncate text-[14px] text-[#111b38]">{folder.name}</b>
                 <small className="text-[#7a869c]">{folder.count} {t('student.library.files')}</small>
               </button>
             ))}
@@ -161,8 +161,8 @@ export function StudentLibrary() {
 
           <section className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white shadow-[0_8px_24px_rgba(24,48,93,0.06)]">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-[13px]">
-                <thead className="bg-[#f7faf8] text-[11px] uppercase tracking-wide text-[#63708a]">
+              <table className="min-w-full text-left text-[24px] font-semibold">
+                <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
                   <tr>
                     <th className="px-3 py-3 font-bold">#</th>
                     <th className="px-3 py-3 font-bold">{t('student.library.colName')}</th>
@@ -193,11 +193,11 @@ export function StudentLibrary() {
                           </div>
                         </td>
                         <td className="px-3 py-3">
-                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${doc.projectTone}`}>{doc.project}</span>
+                          <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${doc.projectTone}`}>{doc.project}</span>
                         </td>
                         <td className="px-3 py-3 text-[#52617c]">{doc.dept}</td>
                         <td className="px-3 py-3">
-                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${typeTone[doc.type]}`}>{doc.type}</span>
+                          <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${typeTone[doc.type]}`}>{doc.type}</span>
                         </td>
                         <td className="px-3 py-3 text-[#52617c]">{doc.size}</td>
                         <td className="px-3 py-3 text-[#52617c]">{doc.updated}</td>

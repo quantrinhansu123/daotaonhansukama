@@ -677,74 +677,111 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         />
       )}
 
-      <aside className={`fixed top-0 z-40 flex h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed top-0 z-40 flex h-screen w-[248px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex h-[72px] items-center justify-center bg-white px-2">
           <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
         </div>
         <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2" aria-label={t('student.academy.courses')}>
-          <Link href="/student" className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
-            <Home size={18} />
+          <Link href="/student" className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
+            <Home size={22} />
             {t('student.academy.overview')}
           </Link>
-          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#18701C] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#EDB409]">
-            <BookOpen size={18} />
+          <div className="flex min-h-[48px] items-center gap-3 rounded-md bg-[#18701C] px-3 text-[18px] font-extrabold leading-snug text-white shadow-[inset_3px_0_#EDB409]">
+            <BookOpen size={22} />
             {t('student.academy.courses')}
           </div>
           <Link
             href="/student#course-list"
-            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
           >
-            <GraduationCap size={18} />
+            <GraduationCap size={22} />
             {t('student.academy.navPrograms')}
           </Link>
           <Link
-            href="/student#library"
-            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+            href="/student#learners"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
           >
-            <Folder size={18} />
+            <Users size={22} />
+            {t('student.academy.navStudents')}
+          </Link>
+          <Link
+            href="/student#projects"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <FolderKanban size={22} />
+            {t('student.academy.navProjects')}
+          </Link>
+          <Link
+            href="/student#departments"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Building2 size={22} />
+            {t('student.academy.navDepartments')}
+          </Link>
+          <Link
+            href="/student#positions"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Award size={22} />
+            {t('student.academy.navPositions')}
+          </Link>
+          <Link
+            href="/student#assessment"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <ClipboardCheck size={22} />
+            {t('student.academy.navAssessment')}
+          </Link>
+          <Link
+            href="/student#library"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Folder size={22} />
             {t('student.academy.navLibrary')}
           </Link>
-          {[
-            { icon: Users, label: t('student.academy.navStudents') },
-            { icon: FolderKanban, label: t('student.academy.navProjects') },
-            { icon: Building2, label: t('student.academy.navDepartments') },
-            { icon: Award, label: t('student.academy.navPositions') },
-            { icon: ClipboardCheck, label: t('student.academy.navAssessment') },
-            { icon: BarChart3, label: t('student.academy.navReports') },
-          ].map(item => (
-            <button key={item.label} onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
-              <item.icon size={18} />
-              {item.label}
-            </button>
-          ))}
+          <button onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
+            <BarChart3 size={22} />
+            {t('student.academy.navReports')}
+          </button>
           <Link
             href="/student#certificates"
-            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
           >
-            <BadgeCheck size={18} />
+            <BadgeCheck size={22} />
             {t('student.academy.navCertificates')}
           </Link>
-          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[11px] text-[#b7dfc0]">{t('student.academy.navSystem')}</p>
-          {[
-            { icon: Users, label: t('student.academy.navUsers') },
-            { icon: Shield, label: t('student.academy.navPermissions') },
-            { icon: List, label: t('student.academy.navActivity') },
-          ].map(item => (
-            <button key={item.label} onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45">
-              <item.icon size={18} />
-              {item.label}
-            </button>
-          ))}
+          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
+          <Link
+            href="/student#account"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Users size={22} />
+            {t('student.academy.navUsers')}
+          </Link>
+          <Link
+            href="/student#permissions"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <Shield size={22} />
+            {t('student.academy.navPermissions')}
+          </Link>
+          <Link
+            href="/student#activity"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+          >
+            <List size={22} />
+            {t('student.academy.navActivity')}
+          </Link>
           <Link
             href="/student#settings"
-            className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e4f5e8] hover:bg-[#18701C]/45"
+            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
           >
-            <Settings size={18} />
+            <Settings size={22} />
             {t('student.academy.navSettings')}
           </Link>
           {allCourses.length > 0 && (
             <div className="pt-3">
-              <p className="mx-2 mb-2 border-t border-white/15 pt-3 text-[11px] text-[#b7dfc0]">{t('student.academy.navPrograms')}</p>
+              <p className="mx-2 mb-2 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navPrograms')}</p>
               {allCourses.map(item => (
                 <button
                   key={item.id}
@@ -755,7 +792,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     setPlayerOpen(false);
                     setMobileNav(false);
                   }}
-                  className={`mb-1 flex w-full items-center gap-2 truncate rounded px-2.5 py-2 text-left text-[12px] ${selectedCourseId === item.id ? 'bg-[#18701C] text-white shadow-[inset_3px_0_#EDB409]' : 'text-[#e4f5e8] hover:bg-[#18701C]/45'}`}
+                  className={`mb-1 flex w-full items-center gap-2 truncate rounded-md px-3 py-2.5 text-left text-[15px] font-bold ${selectedCourseId === item.id ? 'bg-[#18701C] text-white shadow-[inset_3px_0_#EDB409]' : 'text-[#e4f5e8] hover:bg-[#18701C]/45'}`}
                 >
                   <GraduationCap size={14} className="shrink-0 opacity-80" />
                   <span className="truncate">{item.title}</span>
@@ -767,10 +804,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         <div className="border-t border-white/15 px-3 py-4">
           <div className="rounded-md bg-[#0c3a16]/80 p-3 ring-1 ring-white/10">
             <div className="flex items-center gap-2.5">
-              <Headphones size={18} />
+              <Headphones size={22} />
               <span>
-                <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
-                <small className="block text-[10px] text-[#c5e6cc]">{t('student.academy.supportHint')}</small>
+                <b className="block text-[15px] font-bold">{t('student.academy.supportTitle')}</b>
+                <small className="block text-[12px] font-semibold text-[#c5e6cc]">{t('student.academy.supportHint')}</small>
               </span>
             </div>
             <button
