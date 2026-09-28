@@ -117,7 +117,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/50"></div>
       </div>
       <div className="w-full max-w-5xl flex rounded-3xl overflow-hidden shadow-2xl bg-[#5e3ed0]/30 backdrop-blur-xl border border-white/10 relative z-10">
-        <div className="hidden lg:flex lg:w-1/2 relative bg-[#311898]/50 text-white overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[#0E3A16]/50 text-white overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
             <img
               src="https://www.appsheet.com/template/gettablefileurl?appName=Appsheet-325045268&tableName=Kho%20%E1%BA%A3nh&fileName=Kho%20%E1%BA%A3nh_Images%2Fb8a05340.%E1%BA%A2nh.014538.jpg"
@@ -129,7 +129,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                 target.src = '/soldier-background.jpg';
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#311898] via-[#311898]/60 to-transparent backdrop-blur-sm"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0E3A16] via-[#0E3A16]/60 to-transparent backdrop-blur-sm"></div>
           </div>
 
           <div className="relative z-10 flex flex-col justify-between p-12 w-full">
@@ -207,7 +207,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                       placeholder={t('auth.fullNamePlaceholder')}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
                       required
                     />
                   </div>
@@ -219,7 +219,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                         type="date"
                         value={dateOfBirth}
                         onChange={(e) => setDateOfBirth(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white transition-all [color-scheme:dark]"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white transition-all [color-scheme:dark]"
                       />
                     </div>
 
@@ -230,7 +230,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                         placeholder="0912345678"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
                       />
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                       placeholder={t('auth.addressPlaceholder')}
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
                     />
                   </div>
 
@@ -252,7 +252,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                       <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white transition-all [&>option]:bg-[#311898]"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white transition-all [&>option]:bg-[#0E3A16]"
                       >
                         <option value="Việt Nam">{t('auth.countries.vietnam')}</option>
                         <option value="Hoa Kỳ">{t('auth.countries.usa')}</option>
@@ -270,7 +270,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                         placeholder={t('auth.workLocationPlaceholder')}
                         value={workLocation}
                         onChange={(e) => setWorkLocation(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
                       />
                     </div>
                   </div>
@@ -284,7 +284,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white placeholder-slate-500 transition-all"
                   required
                 />
               </div>
@@ -293,7 +293,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                 <div className="flex justify-between">
                   <label className="text-sm font-medium text-slate-300">{t('auth.password')}</label>
                   {mode === 'login' && (
-                    <a href="#" className="text-sm font-medium text-[#53cafd] hover:text-[#3db9f5]">
+                    <a href="#" className="text-sm font-medium text-[#1B7A1E] hover:text-[#156318]">
                       {t('auth.forgotPassword')}
                     </a>
                   )}
@@ -304,7 +304,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:bg-white/10 text-white placeholder-slate-500 transition-all pr-10"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:bg-white/10 text-white placeholder-slate-500 transition-all pr-10"
                     required
                     minLength={6}
                   />
@@ -318,7 +318,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                 </div>
               </div>
 
-              <Button type="submit" className="w-full py-3.5 text-lg shadow-[#53cafd]/25" disabled={loading}>
+              <Button type="submit" className="w-full py-3.5 text-lg shadow-[#1B7A1E]/25" disabled={loading}>
                 {loading
                   ? t('common.processing')
                   : mode === 'login'
@@ -329,7 +329,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
 
             <p className="text-center text-sm text-slate-400">
               {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
-              <button onClick={toggleMode} className="font-bold text-[#53cafd] hover:text-[#3db9f5] hover:underline">
+              <button onClick={toggleMode} className="font-bold text-[#1B7A1E] hover:text-[#156318] hover:underline">
                 {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
               </button>
             </p>

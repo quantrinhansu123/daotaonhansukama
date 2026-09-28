@@ -320,7 +320,7 @@ export const DashboardSimple: React.FC = () => {
       {/* Learning Trend Chart */}
       <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 p-6 backdrop-blur-md">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="text-[#53cafd]" size={20} />
+          <TrendingUp className="text-[#1B7A1E]" size={20} />
           {t('admin.dashboard.learningTrend')}
         </h3>
         <ResponsiveContainer width="100%" height={350}>
@@ -329,7 +329,7 @@ export const DashboardSimple: React.FC = () => {
             <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" />
             <YAxis yAxisId="left" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.learningHours'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
             <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.lessonsCompleted'), angle: 90, position: 'insideRight', fill: 'rgba(255,255,255,0.5)' }} />
-            <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
+            <Tooltip contentStyle={{ backgroundColor: '#0E3A16', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             <Legend />
             <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#3b82f6" strokeWidth={3} name={t('admin.dashboard.learningHours')} />
             <Line yAxisId="right" type="monotone" dataKey="lessons" stroke="#10b981" strokeWidth={3} name={t('admin.dashboard.lessonsCompleted')} />
@@ -346,7 +346,7 @@ export const DashboardSimple: React.FC = () => {
             <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
             <YAxis yAxisId="left" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.hoursAndLessons'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
             <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.scoreAndPeople'), angle: 90, position: 'insideRight', fill: 'rgba(255,255,255,0.5)' }} />
-            <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
+            <Tooltip contentStyle={{ backgroundColor: '#0E3A16', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             <Legend />
             <Bar yAxisId="left" dataKey="learningHours" name={t('admin.dashboard.learningHours')} fill="#3b82f6" />
             <Bar yAxisId="left" dataKey="lessonsCompleted" name={t('admin.dashboard.lessonsCompleted')} fill="#10b981" />
@@ -378,7 +378,7 @@ export const DashboardSimple: React.FC = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" />
               <YAxis stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.learningHours'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
-              <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0E3A16', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
               <Legend />
               <Line
                 type="monotone"
@@ -434,7 +434,7 @@ export const DashboardSimple: React.FC = () => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0E3A16', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -448,7 +448,7 @@ export const DashboardSimple: React.FC = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
             <YAxis stroke="rgba(255,255,255,0.5)" label={{ value: t('admin.dashboard.learningHours'), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.5)' }} />
-            <Tooltip contentStyle={{ backgroundColor: '#311898', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
+            <Tooltip contentStyle={{ backgroundColor: '#0E3A16', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
             <Legend />
             <Bar dataKey="hours" fill="#3b82f6" name={t('admin.dashboard.learningHours')} />
           </BarChart>
@@ -476,7 +476,7 @@ export const DashboardSimple: React.FC = () => {
                     <p className="text-xs text-slate-400">{user.department}</p>
                   </div>
                 </div>
-                <span className="font-bold text-[#53cafd]">{user.hours}h</span>
+                <span className="font-bold text-[#1B7A1E]">{user.hours}h</span>
               </div>
             ))}
           </div>

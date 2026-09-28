@@ -86,7 +86,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         <div className="p-6">
           <button
             onClick={onBack}
-            className="text-[#53cafd] hover:text-[#3db9f5] flex items-center gap-2 font-medium mb-4"
+            className="text-[#1B7A1E] hover:text-[#156318] flex items-center gap-2 font-medium mb-4"
           >
             <ArrowLeft size={20} />
             {t('admin.courseDetail.backToList')}
@@ -128,7 +128,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
           <button
             onClick={() => setActiveTab('lessons')}
             className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'lessons'
-                ? 'text-[#53cafd] border-b-2 border-[#53cafd] bg-[#53cafd]/10'
+                ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#1B7A1E]/10'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
           >
@@ -138,7 +138,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
           <button
             onClick={() => setActiveTab('students')}
             className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'students'
-                ? 'text-[#53cafd] border-b-2 border-[#53cafd] bg-[#53cafd]/10'
+                ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#1B7A1E]/10'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
           >

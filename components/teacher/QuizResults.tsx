@@ -89,11 +89,11 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#311898] py-6">
+    <div className="min-h-screen bg-[#0E3A16] py-6">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 mb-6 backdrop-blur-md">
-          <button onClick={onBack} className="text-[#53cafd] hover:text-[#3db9f5] mb-3 flex items-center gap-2 transition-colors">
+          <button onClick={onBack} className="text-[#1B7A1E] hover:text-[#156318] mb-3 flex items-center gap-2 transition-colors">
             <ArrowLeft size={18} />
             {t("teacher.backToQuizManagement")}
           </button>
@@ -239,7 +239,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ lesson, onBack }) => {
                   <p className="text-slate-300 mt-1">{selectedResult.userName || t('teacher.teacherFallback')}</p>
                   <div className="flex items-center gap-4 mt-2 text-sm">
                     <span className="text-slate-300">
-                      {t("teacher.scoreLabel")}: <span className="font-bold text-[#53cafd]">{selectedResult.score}</span>
+                      {t("teacher.scoreLabel")}: <span className="font-bold text-[#1B7A1E]">{selectedResult.score}</span>
                     </span>
                     <span className="text-slate-500">|</span>
                     <span className="text-slate-300">

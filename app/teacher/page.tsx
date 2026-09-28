@@ -26,9 +26,9 @@ export default function TeacherPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#311898]">
+      <div className="min-h-screen flex items-center justify-center bg-[#0E3A16]">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white">{t('common.loading')}</p>
         </div>
       </div>
@@ -51,8 +51,8 @@ export default function TeacherPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="bg-[#53cafd]/20 p-2 rounded-lg">
-                <GraduationCap className="w-6 h-6 text-[#53cafd]" />
+              <div className="bg-[#1B7A1E]/20 p-2 rounded-lg">
+                <GraduationCap className="w-6 h-6 text-[#1B7A1E]" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">{t('teacher.dashboard')}</h1>
@@ -77,7 +77,7 @@ export default function TeacherPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-[#5e3ed0]/40 to-[#53cafd]/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-white mb-8">
+        <div className="bg-gradient-to-r from-[#5e3ed0]/40 to-[#1B7A1E]/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-white mb-8">
           <h2 className="text-3xl font-bold mb-2">{t('teacher.welcome', { name: userProfile.displayName })}</h2>
           <p className="text-slate-200">{t('teacher.welcomeSub')}</p>
         </div>

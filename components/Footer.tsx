@@ -8,16 +8,15 @@ export const Footer: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-[#311898]/80 backdrop-blur-md text-slate-300 py-16 border-t border-white/10">
+    <footer className="bg-[#0E3A16]/80 backdrop-blur-md text-slate-300 py-16 border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-white">
               <div className="h-9 px-2.5 py-1 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <img src="/logo.png" alt="Fabico" className="h-6 w-auto object-contain" />
+                <img src="/logo.png" alt="BioKama" className="h-8 w-auto object-contain" />
               </div>
-              <span className="text-xl font-bold">Fabico</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               {t('landing.footer.description')}

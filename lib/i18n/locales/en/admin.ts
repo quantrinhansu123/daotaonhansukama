@@ -9,7 +9,7 @@ export const admin = {
     projects: 'Project management',
     attendance: 'Attendance management',
   },
-  systemName: 'Fabico System',
+  systemName: 'BioKama',
   tagline: 'Management & Training',
   logout: 'Log out',
   dashboard: {

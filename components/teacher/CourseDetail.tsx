@@ -279,7 +279,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                   return (
                     <div
                       key={student.uid}
-                      className={`w-full p-4 hover:bg-white/5 transition-colors ${isSelected ? 'bg-[#53cafd]/10 border-l-4 border-[#53cafd]' : ''
+                      className={`w-full p-4 hover:bg-white/5 transition-colors ${isSelected ? 'bg-[#1B7A1E]/10 border-l-4 border-[#1B7A1E]' : ''
                         }`}
                     >
                       <button
@@ -296,7 +296,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                           </div>
                         </div>
                         <div className="flex items-center gap-4 text-xs">
-                          <span className="flex items-center gap-1 text-[#53cafd]">
+                          <span className="flex items-center gap-1 text-[#1B7A1E]">
                             <Clock size={12} />
                             {formatDuration(stats.totalWatched)}
                           </span>
@@ -339,7 +339,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
           <div className="lg:col-span-2">
             {selectedStudent ? (
               <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
-                <div className="p-6 border-b border-white/10 bg-gradient-to-r from-[#53cafd]/10 to-purple-500/10">
+                <div className="p-6 border-b border-white/10 bg-gradient-to-r from-[#1B7A1E]/10 to-purple-500/10">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-green-500/30">
                       {selectedStudent.displayName.charAt(0).toUpperCase()}
@@ -355,7 +355,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                     return (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-[#53cafd]">{formatDuration(stats.totalWatched)}</div>
+                          <div className="text-2xl font-bold text-[#1B7A1E]">{formatDuration(stats.totalWatched)}</div>
                           <div className="text-xs text-slate-300">{t("teacher.totalTime")}</div>
                         </div>
                         <div className="text-center">
@@ -386,7 +386,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                         : 0;
 
                       return (
-                        <div key={lesson.id} className="p-4 border border-white/10 rounded-lg hover:border-[#53cafd]/50 transition-colors bg-white/5">
+                        <div key={lesson.id} className="p-4 border border-white/10 rounded-lg hover:border-[#1B7A1E]/50 transition-colors bg-white/5">
                           <div className="flex items-start gap-3">
                             <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
                               {lesson.order}
@@ -403,7 +403,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ course, onBack, onSt
                                   <div className="flex items-center gap-2 mb-2">
                                     <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                                       <div
-                                        className="h-full bg-gradient-to-r from-[#53cafd] to-purple-500"
+                                        className="h-full bg-gradient-to-r from-[#1B7A1E] to-purple-500"
                                         style={{ width: `${Math.min(100, watchedPercent)}%` }}
                                       />
                                     </div>

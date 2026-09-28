@@ -376,13 +376,13 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#311898] border border-white/10 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#0E3A16] border border-white/10 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-2xl font-bold text-white">{currentCourse.title}</h3>
             <p className="text-slate-300">{t('admin.courseStudents.manageStaff')}</p>
             {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
-              <p className="text-sm text-[#53cafd] mt-1">
+              <p className="text-sm text-[#1B7A1E] mt-1">
                 🏢 {t('admin.courseStudents.managerScope')}
               </p>
             )}
@@ -477,7 +477,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
         {/* Available Students */}
         <div>
           <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-            <span className="bg-[#53cafd]/20 text-[#53cafd] px-2 py-1 rounded-full text-sm border border-[#53cafd]/30">
+            <span className="bg-[#1B7A1E]/20 text-[#1B7A1E] px-2 py-1 rounded-full text-sm border border-[#1B7A1E]/30">
               {availableStudents.length}
             </span>
             {t('admin.courseStudents.addStaff')}
@@ -500,7 +500,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
                   <button
                     onClick={() => handleAddStudent(student.uid)}
                     disabled={processing === student.uid}
-                    className="px-3 py-1.5 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] disabled:opacity-50 flex items-center gap-1 text-sm shadow-[#53cafd]/25"
+                    className="px-3 py-1.5 bg-[#1B7A1E] text-white rounded-lg hover:bg-[#156318] disabled:opacity-50 flex items-center gap-1 text-sm shadow-[#1B7A1E]/25"
                   >
                     <UserPlus size={14} />
                     {t('common.add')}
@@ -512,7 +512,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
         </div>
 
         <div className="mt-6 pt-6 border-t border-white/10">
-          <Button onClick={onClose} className="w-full bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+          <Button onClick={onClose} className="w-full bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
             {t('common.close')}
           </Button>
         </div>

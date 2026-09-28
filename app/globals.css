@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0918;
+  --background: #07140c;
   --foreground: #ffffff;
 }
 
@@ -11,33 +11,33 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 
-  /* Brand colors */
-  --color-primary: #53cafd;
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
+  /* Brand colors — BioKama green and wheat gold */
+  --color-primary: #1B7A1E;
+  --color-brand-50: #f3faf3;
+  --color-brand-100: #e3f4e4;
+  --color-brand-200: #c3e6c5;
+  --color-brand-300: #8fd093;
+  --color-brand-400: #4eae55;
+  --color-brand-500: #1B7A1E;
+  --color-brand-600: #166318;
+  --color-brand-700: #125214;
+  --color-brand-800: #0e4110;
+  --color-brand-900: #0a310c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0918;
+    --background: #07140c;
     --foreground: #ffffff;
   }
 }
 
 body {
-  background-color: #0b0918;
+  background-color: #07140c;
   background-image:
-    radial-gradient(at 0% 0%, hsla(253, 28%, 8%, 1) 0, transparent 55%),
-    radial-gradient(at 55% 0%, hsla(230, 35%, 12%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(265, 30%, 10%, 1) 0, transparent 45%);
+    radial-gradient(at 0% 0%, hsla(130, 35%, 8%, 1) 0, transparent 55%),
+    radial-gradient(at 55% 0%, hsla(120, 28%, 10%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(90, 40%, 10%, 1) 0, transparent 45%);
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
@@ -53,9 +53,9 @@ body::before {
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(circle at 50% 40%, rgba(83, 202, 253, 0.05), transparent 55%),
-    radial-gradient(circle at 85% 15%, rgba(88, 40, 160, 0.08), transparent 45%),
-    radial-gradient(circle at 15% 85%, rgba(40, 20, 80, 0.1), transparent 50%);
+    radial-gradient(circle at 50% 40%, rgba(27, 122, 30, 0.08), transparent 55%),
+    radial-gradient(circle at 85% 15%, rgba(237, 180, 9, 0.06), transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(14, 58, 22, 0.12), transparent 50%);
   filter: blur(70px);
   z-index: -1;
   animation: backgroundPulse 18s ease-in-out infinite alternate;

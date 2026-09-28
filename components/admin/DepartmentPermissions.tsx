@@ -63,7 +63,7 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#311898] border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#0E3A16] border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#5e3ed0]/20">
           <div className="flex items-center gap-3">
@@ -145,7 +145,7 @@ export const DepartmentPermissions: React.FC<DepartmentPermissionsProps> = ({
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25"
           >
             <Save size={18} />
             {saving ? t('admin.permissions.saving') : t('admin.permissions.savePermissions')}

@@ -267,7 +267,7 @@ export const ProjectManagement: React.FC = () => {
           <h1 className="text-3xl font-bold text-white mb-2">{t('admin.projects.titleAlt')}</h1>
           <p className="text-slate-300">{t('admin.projects.subtitleAlt')}</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+        <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
           <Plus size={20} />
           {t('admin.projects.addProjectAlt')}
         </Button>
@@ -282,7 +282,7 @@ export const ProjectManagement: React.FC = () => {
             placeholder={t('admin.projects.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
           />
         </div>
       </div>
@@ -294,7 +294,7 @@ export const ProjectManagement: React.FC = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | 'all')}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
           >
             <option value="all">{t('admin.projects.allStatuses')}</option>
             <option value="planning">{t('admin.projects.statusPlanning')}</option>
@@ -309,7 +309,7 @@ export const ProjectManagement: React.FC = () => {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value as ProjectPriority | 'all')}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
           >
             <option value="all">{t('admin.projects.allPriorities')}</option>
             <option value="low">{t('admin.projects.priorityLow')}</option>
@@ -388,7 +388,7 @@ export const ProjectManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {project.managerName ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#53cafd]/20 text-[#53cafd] rounded-full text-sm font-medium">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-full text-sm font-medium">
                           {project.managerName}
                         </span>
                       ) : (
@@ -424,7 +424,7 @@ export const ProjectManagement: React.FC = () => {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(project)}
-                          className="p-2 text-[#53cafd] hover:bg-white/10 rounded-lg transition-colors"
+                          className="p-2 text-[#1B7A1E] hover:bg-white/10 rounded-lg transition-colors"
                           title={t('common.edit')}
                         >
                           <Edit2 size={18} />
@@ -449,7 +449,7 @@ export const ProjectManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#0E3A16]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-xl font-bold text-white">
                 {editingProject ? t('admin.projects.editProject') : t('admin.projects.addProjectNew')}
@@ -466,7 +466,7 @@ export const ProjectManagement: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   placeholder={t('admin.projects.namePlaceholder')}
                 />
               </div>
@@ -477,7 +477,7 @@ export const ProjectManagement: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   placeholder={t('admin.projects.descriptionPlaceholder')}
                 />
               </div>
@@ -488,7 +488,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
                   >
                     <option value="planning">{t('admin.projects.statusPlanning')}</option>
                     <option value="in_progress">{t('admin.projects.statusInProgress')}</option>
@@ -503,7 +503,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as ProjectPriority })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
                   >
                     <option value="low">{t('admin.projects.priorityLow')}</option>
                     <option value="medium">{t('admin.projects.priorityMedium')}</option>
@@ -520,7 +520,7 @@ export const ProjectManagement: React.FC = () => {
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   />
                 </div>
 
@@ -530,7 +530,7 @@ export const ProjectManagement: React.FC = () => {
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   />
                 </div>
               </div>
@@ -541,7 +541,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.managerId}
                     onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
                   >
                     <option value="">{t('admin.projects.selectManager')}</option>
                     {users.map(user => (
@@ -555,7 +555,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
                   >
                     <option value="">{t('admin.users.selectDepartment')}</option>
                     {departments.map(dept => (
@@ -572,7 +572,7 @@ export const ProjectManagement: React.FC = () => {
                   min="0"
                   value={formData.budget}
                   onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   placeholder="0"
                 />
               </div>
@@ -581,7 +581,7 @@ export const ProjectManagement: React.FC = () => {
                 <Button onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
                   {t('common.cancel')}
                 </Button>
-                <Button type="submit" className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+                <Button type="submit" className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                   <Save size={18} />
                   {t('common.save')}
                 </Button>

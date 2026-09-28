@@ -140,7 +140,7 @@ export const DashboardNew: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:bg-[#5e3ed0]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#53cafd]/10"
+      className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:bg-[#5e3ed0]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#1B7A1E]/10"
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -165,7 +165,7 @@ export const DashboardNew: React.FC = () => {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-300">{t('admin.dashboard.loadingData')}</p>
         </div>
       </div>
@@ -221,7 +221,7 @@ export const DashboardNew: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-[#53cafd]/30 transition-colors"
+          className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-[#1B7A1E]/30 transition-colors"
         >
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-blue-500/20 rounded-xl">
@@ -244,7 +244,7 @@ export const DashboardNew: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-[#53cafd]/30 transition-colors"
+          className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-[#1B7A1E]/30 transition-colors"
         >
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-red-500/20 rounded-xl">
@@ -272,7 +272,7 @@ export const DashboardNew: React.FC = () => {
           className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-6 border border-white/10"
         >
           <div className="flex items-center gap-3 mb-6">
-            <Activity className="w-5 h-5 text-[#53cafd]" />
+            <Activity className="w-5 h-5 text-[#1B7A1E]" />
             <h3 className="text-lg font-bold text-white">{t('admin.dashboard.monthlyGrowth')}</h3>
           </div>
           <ResponsiveContainer width="100%" height={300}>

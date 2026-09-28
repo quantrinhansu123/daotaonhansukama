@@ -120,13 +120,13 @@ export const CourseEnrollment: React.FC = () => {
               placeholder={t("student.searchCourses")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-[#e7edf5] bg-white py-2.5 pl-10 pr-4 text-[13px] text-[#111b38] outline-none placeholder:text-[#99a4b5] focus:border-[#0759e8]"
+              className="w-full rounded-md border border-[#e7edf5] bg-white py-2.5 pl-10 pr-4 text-[13px] text-[#111b38] outline-none placeholder:text-[#99a4b5] focus:border-[#1B7A1E]"
             />
           </div>
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value as typeof filterLevel)}
-            className="rounded-md border border-[#e7edf5] bg-white px-4 py-2.5 text-[13px] text-[#111b38] outline-none focus:border-[#0759e8]"
+            className="rounded-md border border-[#e7edf5] bg-white px-4 py-2.5 text-[13px] text-[#111b38] outline-none focus:border-[#1B7A1E]"
           >
             <option value="all">{t("student.allLevels")}</option>
             <option value="beginner">{t("student.levelBeginner")}</option>

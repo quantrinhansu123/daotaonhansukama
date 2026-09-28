@@ -164,7 +164,7 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
       <div>
         <button
           onClick={onBack}
-          className="text-[#53cafd] hover:text-[#3db9f5] flex items-center gap-2 font-medium mb-4"
+          className="text-[#1B7A1E] hover:text-[#156318] flex items-center gap-2 font-medium mb-4"
         >
           <ArrowLeft size={20} />
           {t('common.back')}
@@ -190,7 +190,7 @@ export const StudentApprovalPage: React.FC<StudentApprovalPageProps> = ({ onBack
           placeholder={t('admin.approvals.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
         />
       </div>
 

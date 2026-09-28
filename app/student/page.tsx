@@ -119,9 +119,9 @@ export default function StudentPage() {
     .map(part => part[0]?.toUpperCase() || '')
     .join('');
   const statCards = [
-    { label: t('student.videoPoints'), value: stats.points, icon: Sparkles, iconBg: 'bg-[#eff6ff] text-[#0b67d6]' },
+    { label: t('student.videoPoints'), value: stats.points, icon: Sparkles, iconBg: 'bg-[#eff6ff] text-[#1B7A1E]' },
     { label: t('student.completedVideos'), value: stats.completedVideos, icon: CheckCircle2, iconBg: 'bg-[#edfbf8] text-[#07965f]' },
-    { label: t('student.inProgressVideos'), value: stats.inProgressVideos, icon: PlayCircle, iconBg: 'bg-[#eff6ff] text-[#0759e8]' },
+    { label: t('student.inProgressVideos'), value: stats.inProgressVideos, icon: PlayCircle, iconBg: 'bg-[#eff6ff] text-[#1B7A1E]' },
     { label: t('student.passedQuizzes'), value: stats.passedQuizzes, icon: ClipboardCheck, iconBg: 'bg-[#fff6e9] text-[#df8b00]' },
   ];
 
@@ -132,7 +132,7 @@ export default function StudentPage() {
           <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
         </div>
         <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2">
-          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#06488e] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#2885f5]">
+          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#145616] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#EDB409]">
             <Home size={18} />
             {t('student.academy.overview')}
           </div>
@@ -238,7 +238,7 @@ export default function StudentPage() {
               {t('student.welcomeShort', { name: userProfile.displayName || userProfile.email || '' })}
             </h2>
             <p className="text-[12px] text-[#53617b]">{t('student.welcomeSub')}</p>
-            <p className="mt-2 text-[12px] text-[#0759e8]">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
+            <p className="mt-2 text-[12px] text-[#1B7A1E]">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
           </section>
 
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t('student.learningStats')}>

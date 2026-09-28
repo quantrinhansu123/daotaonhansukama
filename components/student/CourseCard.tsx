@@ -6,6 +6,7 @@ import { ArrowUpRight, BookOpen, Clock, Play } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
+import { resolveDemoVideo } from '@/lib/demo-video';
 
 interface CourseCardProps {
   course: Course;
@@ -50,9 +51,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
         </div>
 
-        {course.demoVideoKey && (
+        {resolveDemoVideo(course.demoVideoKey, course.demoVideoId) && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <div className="rounded-full bg-white p-3 text-[#0759e8]">
+            <div className="rounded-full bg-white p-3 text-[#1B7A1E]">
               <Play className="h-6 w-6" fill="currentColor" />
             </div>
           </div>
@@ -80,7 +81,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {onView && (
-          <Button onClick={() => onView(course.id)} className="flex w-full items-center justify-center gap-2 border border-[#0d5ce4] bg-[#0b5ce7] text-white hover:bg-[#0759e8]">
+          <Button onClick={() => onView(course.id)} className="flex w-full items-center justify-center gap-2 border border-[#18701C] bg-[#18701C] text-white hover:bg-[#1B7A1E]">
             {t('student.startLearning')} <ArrowUpRight size={16} />
           </Button>
         )}

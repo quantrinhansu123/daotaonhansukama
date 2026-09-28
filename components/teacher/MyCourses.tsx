@@ -139,7 +139,7 @@ export const MyCourses: React.FC = () => {
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => setSelectedCourse(course)}
-                      className="px-5 py-2.5 bg-gradient-to-r from-[#53cafd] to-blue-600 text-white rounded-lg hover:from-[#3db9f5] hover:to-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium ml-auto"
+                      className="px-5 py-2.5 bg-gradient-to-r from-[#1B7A1E] to-blue-600 text-white rounded-lg hover:from-[#156318] hover:to-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium ml-auto"
                     >
                       <BookOpen size={16} />
                       {t('teacher.manageClass')}

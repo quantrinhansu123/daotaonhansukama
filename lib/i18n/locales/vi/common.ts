@@ -1,5 +1,5 @@
 export const common = {
-  appName: 'Fabico',
+  appName: 'BioKama',
   appTagline: 'Quản lý & Đào tạo',
   loading: 'Đang tải...',
   redirecting: 'Đang chuyển hướng...',

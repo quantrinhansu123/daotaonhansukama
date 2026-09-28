@@ -840,7 +840,7 @@ export const UserManagement: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-white">{t('admin.users.title')}</h2>
           {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' ? (
-            <p className="text-sm text-[#53cafd] mt-1">
+            <p className="text-sm text-[#1B7A1E] mt-1">
               🏢 {t('admin.users.viewingDepartmentStaff', { department: departments.find(d => d.id === currentUser.departmentId)?.name ?? '' })}
             </p>
           ) : (
@@ -861,7 +861,7 @@ export const UserManagement: React.FC = () => {
               >
                 {syncingEmployment ? t('admin.users.syncing') : t('admin.users.syncEmployment')}
               </Button>
-              <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] text-white border-none shadow-lg shadow-[#53cafd]/20">
+              <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] text-white border-none shadow-lg shadow-[#1B7A1E]/20">
                 <Plus size={18} />
                 {t('admin.users.addUser')}
               </Button>
@@ -879,13 +879,13 @@ export const UserManagement: React.FC = () => {
             placeholder={t('admin.users.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
           />
         </div>
         <select
           value={filterPosition}
           onChange={(e) => setFilterPosition(e.target.value as Position | 'all' | 'none')}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
         >
           <option value="all">{t('admin.users.allPositions')}</option>
           <option value="none">{t('admin.users.noPosition')}</option>
@@ -896,7 +896,7 @@ export const UserManagement: React.FC = () => {
         <select
           value={filterDepartment}
           onChange={(e) => setFilterDepartment(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
         >
           <option value="all">{t('admin.users.allDepartments')}</option>
           <option value="none">{t('admin.users.noDepartment')}</option>
@@ -907,7 +907,7 @@ export const UserManagement: React.FC = () => {
         <select
           value={filterBranch}
           onChange={(e) => setFilterBranch(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
         >
           <option value="all">{t('admin.users.allBranches')}</option>
           {Array.from(
@@ -923,7 +923,7 @@ export const UserManagement: React.FC = () => {
         <select
           value={filterProjectId}
           onChange={(e) => setFilterProjectId(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
         >
           <option value="">{t('admin.users.allProjects')}</option>
           {projects.map(project => (
@@ -1113,7 +1113,7 @@ export const UserManagement: React.FC = () => {
             <table className="w-full">
               <thead className="bg-[#5e3ed0]/40 border-b border-white/10 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase sticky left-0 bg-[#311898]">{t('admin.users.name')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase sticky left-0 bg-[#0E3A16]">{t('admin.users.name')}</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Email</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.role')}</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.position')}</th>
@@ -1122,7 +1122,7 @@ export const UserManagement: React.FC = () => {
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase">{t('admin.users.learningHours')}</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase">{t('admin.users.salary')}</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.createdDate')}</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase sticky right-0 bg-[#311898]">{t('admin.users.actions')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase sticky right-0 bg-[#0E3A16]">{t('admin.users.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -1138,8 +1138,8 @@ export const UserManagement: React.FC = () => {
                       }}
                       className="hover:bg-white/5 cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-[#311898]">
-                        <div className="font-medium text-[#53cafd]">{user.displayName}</div>
+                      <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-[#0E3A16]">
+                        <div className="font-medium text-[#1B7A1E]">{user.displayName}</div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">{user.email}</td>
                       <td className="px-4 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
@@ -1190,7 +1190,7 @@ export const UserManagement: React.FC = () => {
                       <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">
                         {user.createdAt?.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right sticky right-0 bg-[#311898]" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-4 whitespace-nowrap text-right sticky right-0 bg-[#0E3A16]" onClick={(e) => e.stopPropagation()}>
                         {currentUser?.role === 'admin' ? (
                           // Admin có thể sửa/xóa
                           user.role === 'admin' ? (
@@ -1300,7 +1300,7 @@ export const UserManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-[#311898]/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
+          <div className="bg-[#0E3A16]/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
             <div className="flex justify-between items-center p-6 border-b border-white/10 bg-[#5e3ed0]/20">
               <h3 className="text-xl font-bold text-white">
                 {editingUser ? t('admin.users.editUser') : t('admin.users.addUserNew')}
@@ -1322,7 +1322,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                     />
                   </div>
 
@@ -1332,7 +1332,7 @@ export const UserManagement: React.FC = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                     />
                   </div>
 
@@ -1342,7 +1342,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                     />
                   </div>
 
@@ -1351,7 +1351,7 @@ export const UserManagement: React.FC = () => {
                     <select
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16]"
                     >
                       <option value="staff">{t('admin.users.roles.staff')}</option>
                       <option value="teacher">{t('admin.users.roles.teacherAlt')}</option>
@@ -1364,7 +1364,7 @@ export const UserManagement: React.FC = () => {
                     <select
                       value={formData.position}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value as Position | '' })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16]"
                     >
                       <option value="">{t('admin.users.selectPosition')}</option>
                       {POSITIONS.map(pos => (
@@ -1380,7 +1380,7 @@ export const UserManagement: React.FC = () => {
                         <select
                           value={formData.departmentId}
                           onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898]"
+                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16]"
                         >
                           <option value="">{t('admin.users.selectDepartment')}</option>
                           {departments.map(dept => (
@@ -1395,7 +1395,7 @@ export const UserManagement: React.FC = () => {
                           type="number"
                           value={formData.monthlySalary}
                           onChange={(e) => setFormData({ ...formData, monthlySalary: Number(e.target.value) })}
-                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                           placeholder={t('admin.users.salaryPlaceholder')}
                         />
                       </div>
@@ -1427,7 +1427,7 @@ export const UserManagement: React.FC = () => {
                         type="text"
                         value={formData.photoURL}
                         onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white text-xs"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white text-xs"
                         placeholder="https://..."
                       />
                     </div>
@@ -1439,7 +1439,7 @@ export const UserManagement: React.FC = () => {
                       type="date"
                       value={formData.dateOfBirth}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                     />
                   </div>
 
@@ -1449,7 +1449,7 @@ export const UserManagement: React.FC = () => {
                       type="tel"
                       value={formData.phoneNumber}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder="0123456789"
                     />
                   </div>
@@ -1460,7 +1460,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.addressPlaceholder')}
                     />
                   </div>
@@ -1471,7 +1471,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.country}
                       onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.countryPlaceholder')}
                     />
                   </div>
@@ -1482,7 +1482,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.workLocation}
                       onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.workLocationPlaceholder')}
                     />
                   </div>
@@ -1498,7 +1498,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.employmentStatus}
                       onChange={(e) => setFormData({ ...formData, employmentStatus: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.employmentStatusPlaceholder')}
                     />
                   </div>
@@ -1509,7 +1509,7 @@ export const UserManagement: React.FC = () => {
                       type="date"
                       value={formData.employmentStartDate}
                       onChange={(e) => setFormData({ ...formData, employmentStartDate: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                     />
                   </div>
 
@@ -1519,7 +1519,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.employmentMaritalStatus}
                       onChange={(e) => setFormData({ ...formData, employmentMaritalStatus: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.maritalStatusPlaceholder')}
                     />
                   </div>
@@ -1530,7 +1530,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.employmentBranch}
                       onChange={(e) => setFormData({ ...formData, employmentBranch: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.branchPlaceholder')}
                     />
                   </div>
@@ -1541,7 +1541,7 @@ export const UserManagement: React.FC = () => {
                       type="text"
                       value={formData.employmentTeam}
                       onChange={(e) => setFormData({ ...formData, employmentTeam: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                       placeholder={t('admin.users.teamPlaceholder')}
                     />
                   </div>
@@ -1553,7 +1553,7 @@ export const UserManagement: React.FC = () => {
                         type="number"
                         value={formData.employmentSalaryPercentage}
                         onChange={(e) => setFormData({ ...formData, employmentSalaryPercentage: Number(e.target.value) })}
-                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                         placeholder={t('admin.users.salaryPercentExample')}
                       />
                     </div>
@@ -1578,7 +1578,7 @@ export const UserManagement: React.FC = () => {
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         {t('admin.users.selectProjects')}
                         {formData.projects.length > 0 && (
-                          <span className="ml-2 text-xs text-[#53cafd]">
+                          <span className="ml-2 text-xs text-[#1B7A1E]">
                             ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
                           </span>
                         )}
@@ -1594,7 +1594,7 @@ export const UserManagement: React.FC = () => {
                                 key={project.id}
                                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
                                   isChecked 
-                                    ? 'bg-[#53cafd]/20 border border-[#53cafd]/30' 
+                                    ? 'bg-[#1B7A1E]/20 border border-[#1B7A1E]/30' 
                                     : 'hover:bg-white/10 border border-transparent'
                                 }`}
                               >
@@ -1614,13 +1614,13 @@ export const UserManagement: React.FC = () => {
                                       });
                                     }
                                   }}
-                                  className="w-4 h-4 text-[#53cafd] bg-white/5 border-white/20 rounded focus:ring-[#53cafd] focus:ring-2"
+                                  className="w-4 h-4 text-[#1B7A1E] bg-white/5 border-white/20 rounded focus:ring-[#1B7A1E] focus:ring-2"
                                 />
                                 <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
                                   {project.name}
                                 </span>
                                 {isChecked && (
-                                  <span className="text-xs text-[#53cafd]">✓</span>
+                                  <span className="text-xs text-[#1B7A1E]">✓</span>
                                 )}
                               </label>
                             );
@@ -1634,7 +1634,7 @@ export const UserManagement: React.FC = () => {
                             return project ? (
                               <span
                                 key={projectId}
-                                className="inline-flex items-center px-2 py-1 bg-[#53cafd]/20 text-[#53cafd] rounded-md text-xs font-medium"
+                                className="inline-flex items-center px-2 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-md text-xs font-medium"
                               >
                                 {project.name}
                               </span>
@@ -1649,7 +1649,7 @@ export const UserManagement: React.FC = () => {
             </div>
 
             <div className="flex gap-3 p-6 border-t border-white/10 bg-[#5e3ed0]/20">
-              <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] text-white border-none shadow-lg shadow-[#53cafd]/20">
+              <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] text-white border-none shadow-lg shadow-[#1B7A1E]/20">
                 <Save size={18} />
                 {editingUser ? t('common.update') : t('common.create')}
               </Button>
@@ -1667,7 +1667,7 @@ export const UserManagement: React.FC = () => {
       {/* User Detail Modal */}
       {showDetailModal && viewingUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#311898]/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
+          <div className="bg-[#0E3A16]/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
             {/* Header */}
             <div className="p-6 border-b border-white/10 bg-[#5e3ed0]/20">
               <div className="flex items-center justify-between">
@@ -1702,7 +1702,7 @@ export const UserManagement: React.FC = () => {
               {/* Basic Info */}
               <div>
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#53cafd]" />
+                  <Shield className="w-5 h-5 text-[#1B7A1E]" />
                   {t('admin.users.basicInfo')}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -1754,12 +1754,12 @@ export const UserManagement: React.FC = () => {
               {/* Learning Stats */}
               <div>
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-[#53cafd]" />
+                  <BookOpen className="w-5 h-5 text-[#1B7A1E]" />
                   {t('admin.users.learningStats')}
                 </h4>
                 {loadingStats ? (
                   <div className="text-center py-8">
-                    <div className="w-12 h-12 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <div className="w-12 h-12 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto"></div>
                     <p className="text-slate-300 mt-2">{t('common.loading')}</p>
                   </div>
                 ) : userLearningStats ? (
@@ -1836,11 +1836,11 @@ export const UserManagement: React.FC = () => {
                             <div key={course.courseId || `course-${index}`} className="bg-white/5 p-3 rounded-lg border border-white/10">
                               <div className="flex items-center justify-between mb-2">
                                 <p className="text-sm font-medium text-white line-clamp-1">{course.title}</p>
-                                <span className="text-sm font-bold text-[#53cafd]">{course.progress.toFixed(0)}%</span>
+                                <span className="text-sm font-bold text-[#1B7A1E]">{course.progress.toFixed(0)}%</span>
                               </div>
                               <div className="w-full bg-white/10 rounded-full h-2">
                                 <div
-                                  className="bg-[#53cafd] h-2 rounded-full transition-all"
+                                  className="bg-[#1B7A1E] h-2 rounded-full transition-all"
                                   style={{ width: `${course.progress}%` }}
                                 ></div>
                               </div>
@@ -1903,7 +1903,7 @@ export const UserManagement: React.FC = () => {
                     setShowDetailModal(false);
                     handleEdit(viewingUser);
                   }}
-                  className="flex-1 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white"
+                  className="flex-1 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white"
                 >
                   {t('admin.users.editAction')}
                 </Button>

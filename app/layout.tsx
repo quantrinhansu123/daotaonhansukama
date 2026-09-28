@@ -19,7 +19,7 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Fabico - Online Learning Platform | Nền tảng học tập trực tuyến",
+  title: "BioKama - Online Learning Platform | Nền tảng học tập trực tuyến",
   description: "Online learning platform with AI | Nền tảng học tập trực tuyến với AI",
 };
 

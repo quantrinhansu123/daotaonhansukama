@@ -193,13 +193,13 @@ export const SalaryManagementNew: React.FC = () => {
             placeholder={t('admin.salary.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
           />
         </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as any)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
         >
           <option value="all">{t('common.all')}</option>
           <option value="calculated">{t('admin.salary.calculated')}</option>
@@ -211,7 +211,7 @@ export const SalaryManagementNew: React.FC = () => {
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
           />
         </div>
       </div>
@@ -228,7 +228,7 @@ export const SalaryManagementNew: React.FC = () => {
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
           <p className="text-sm text-slate-300">{t('admin.salary.totalBase')}</p>
-          <p className="text-2xl font-bold text-[#53cafd]">
+          <p className="text-2xl font-bold text-[#1B7A1E]">
             {users.reduce((sum, u) => sum + (u.monthlySalary || 0), 0).toLocaleString(dateLocale)}đ
           </p>
         </div>
@@ -289,7 +289,7 @@ export const SalaryManagementNew: React.FC = () => {
                   <td className="px-6 py-4 text-right">
                     <Button
                       onClick={() => handleEdit(user)}
-                      className="px-4 py-2 text-sm bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25"
+                      className="px-4 py-2 text-sm bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25"
                     >
                       {record ? t('common.edit') : t('admin.salary.enter')}
                     </Button>
@@ -304,7 +304,7 @@ export const SalaryManagementNew: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#311898] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-[#0E3A16] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">{t('admin.salary.enterPayroll')}</h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
@@ -342,7 +342,7 @@ export const SalaryManagementNew: React.FC = () => {
                     max="26"
                     value={formData.absentDays}
                     onChange={(e) => setFormData({ ...formData, absentDays: Number(e.target.value) })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   />
                 </div>
 
@@ -354,7 +354,7 @@ export const SalaryManagementNew: React.FC = () => {
                     max="26"
                     value={formData.lateDays}
                     onChange={(e) => setFormData({ ...formData, lateDays: Number(e.target.value) })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                   />
                 </div>
               </div>
@@ -365,7 +365,7 @@ export const SalaryManagementNew: React.FC = () => {
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
                   placeholder={t('admin.salary.notePlaceholder')}
                 />
               </div>
@@ -401,7 +401,7 @@ export const SalaryManagementNew: React.FC = () => {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+              <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                 <Save size={18} />
                 {t('common.save')}
               </Button>

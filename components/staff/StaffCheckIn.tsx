@@ -250,13 +250,13 @@ export const StaffCheckIn: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#311898] flex items-center justify-center">
-      <div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#53cafd] mx-auto mb-4"></div><p className="text-white/80">{t("common.loading")}</p></div>
+    <div className="min-h-screen bg-[#0E3A16] flex items-center justify-center">
+      <div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B7A1E] mx-auto mb-4"></div><p className="text-white/80">{t("common.loading")}</p></div>
     </div>
   );
 
   if (!companySettings) return (
-    <div className="min-h-screen bg-[#311898] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0E3A16] flex items-center justify-center p-4">
       <div className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-2xl p-8 text-center max-w-md border border-white/10">
         <AlertCircle className="text-yellow-400 mx-auto mb-4" size={64} />
         <h2 className="text-xl font-bold text-white mb-2">{t("staff.notConfigured")}</h2>
@@ -289,10 +289,10 @@ export const StaffCheckIn: React.FC = () => {
 
             {/* Overlay frame */}
             <div className="absolute inset-0 border-4 border-white/30 rounded-2xl pointer-events-none">
-              <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-[#53cafd] rounded-tl-lg"></div>
-              <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-[#53cafd] rounded-tr-lg"></div>
-              <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-[#53cafd] rounded-bl-lg"></div>
-              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-[#53cafd] rounded-br-lg"></div>
+              <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-[#1B7A1E] rounded-tl-lg"></div>
+              <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-[#1B7A1E] rounded-tr-lg"></div>
+              <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-[#1B7A1E] rounded-bl-lg"></div>
+              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-[#1B7A1E] rounded-br-lg"></div>
             </div>
           </div>
 
@@ -304,7 +304,7 @@ export const StaffCheckIn: React.FC = () => {
             {!capturedPhoto ? (
               <button
                 onClick={capturePhoto}
-                className="flex-1 bg-[#53cafd] hover:bg-[#3db9f5] text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-[#53cafd]/25 transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-[#1B7A1E] hover:bg-[#156318] text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-[#1B7A1E]/25 transition-all flex items-center justify-center gap-2"
               >
                 <Camera size={24} />
                 {t("staff.capturePhoto")}
@@ -368,11 +368,11 @@ export const StaffCheckIn: React.FC = () => {
                       className="w-32 h-32 rounded-full object-cover border-4 border-white/30 shadow-xl"
                     />
                   ) : (
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#53cafd] to-blue-600 flex items-center justify-center text-white text-5xl font-bold border-4 border-white/30 shadow-xl">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#1B7A1E] to-blue-600 flex items-center justify-center text-white text-5xl font-bold border-4 border-white/30 shadow-xl">
                       {user?.displayName?.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-[#311898] ${ipAllowed ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-[#0E3A16] ${ipAllowed ? 'bg-green-400' : 'bg-red-400'}`}></div>
                 </div>
                 <h2 className="text-xl font-bold text-white text-center mb-1">{user?.displayName}</h2>
                 <p className="text-white/60 text-xs text-center mb-3">{user?.email}</p>
@@ -389,7 +389,7 @@ export const StaffCheckIn: React.FC = () => {
 
                 {user?.phoneNumber && (
                   <div className="flex items-start gap-3">
-                    <Phone className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
+                    <Phone className="text-[#1B7A1E] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white/50 text-xs">{t("common.phone")}</p>
                       <p className="text-white text-sm break-all">{user.phoneNumber}</p>
@@ -399,7 +399,7 @@ export const StaffCheckIn: React.FC = () => {
 
                 {user?.dateOfBirth && (
                   <div className="flex items-start gap-3">
-                    <Calendar className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
+                    <Calendar className="text-[#1B7A1E] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white/50 text-xs">{t("profile.dateOfBirth")}</p>
                       <p className="text-white text-sm">{new Date(user.dateOfBirth).toLocaleDateString(dateLocale)}</p>
@@ -409,7 +409,7 @@ export const StaffCheckIn: React.FC = () => {
 
                 {user?.address && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
+                    <MapPin className="text-[#1B7A1E] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white/50 text-xs">{t("common.address")}</p>
                       <p className="text-white text-sm break-words">{user.address}</p>
@@ -419,7 +419,7 @@ export const StaffCheckIn: React.FC = () => {
 
                 {user?.workLocation && (
                   <div className="flex items-start gap-3">
-                    <Briefcase className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
+                    <Briefcase className="text-[#1B7A1E] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white/50 text-xs">{t("profile.workLocation")}</p>
                       <p className="text-white text-sm break-words">{user.workLocation}</p>
@@ -429,7 +429,7 @@ export const StaffCheckIn: React.FC = () => {
 
                 {user?.country && (
                   <div className="flex items-start gap-3">
-                    <Globe className="text-[#53cafd] flex-shrink-0 mt-0.5" size={16} />
+                    <Globe className="text-[#1B7A1E] flex-shrink-0 mt-0.5" size={16} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white/50 text-xs">{t("common.country")}</p>
                       <p className="text-white text-sm">{user.country}</p>

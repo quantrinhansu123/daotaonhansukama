@@ -11,7 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
-import { VideoPlayer } from '@/components/shared/VideoPlayer';
+import { DemoVideoView } from '@/components/shared/DemoVideoView';
+import { resolveDemoVideo } from '@/lib/demo-video';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
@@ -535,7 +536,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   };
 
   const handleIntro = () => {
-    if (currentCourse.demoVideoKey) {
+    if (resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)) {
       setPlayerOpen(false);
       setIntroOpen(true);
       return;
@@ -661,7 +662,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             <Home size={18} />
             {t('student.academy.overview')}
           </Link>
-          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#06488e] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#2885f5]">
+          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#145616] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#EDB409]">
             <BookOpen size={18} />
             {t('student.academy.courses')}
           </div>
@@ -725,7 +726,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             </div>
             <button
               onClick={() => showToast(t('student.academy.supportSent'))}
-              className="mt-3 w-full rounded bg-[#f7faff] px-2 py-1.5 text-[11px] font-bold text-[#0755b5]"
+              className="mt-3 w-full rounded bg-[#f7faff] px-2 py-1.5 text-[11px] font-bold text-[#1B7A1E]"
             >
               {t('student.academy.sendRequest')}
             </button>
@@ -803,7 +804,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   className="absolute inset-0 flex items-center justify-center bg-black/15 text-white"
                   aria-label={t('student.academy.watchIntro')}
                 >
-                  <span className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-bold text-[#0759e8] shadow">
+                  <span className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-bold text-[#1B7A1E] shadow">
                     <Play size={16} fill="currentColor" />
                     {t('student.academy.watchIntro')}
                   </span>
@@ -817,7 +818,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     role="tab"
                     aria-selected={activeTab === tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`shrink-0 border-b-2 text-[11px] ${activeTab === tab.id ? 'border-[#0870d8] font-bold text-[#0260bd]' : 'border-transparent text-[#313d57]'}`}
+                    className={`shrink-0 border-b-2 text-[11px] ${activeTab === tab.id ? 'border-[#1B7A1E] font-bold text-[#1B7A1E]' : 'border-transparent text-[#313d57]'}`}
                   >
                     {tab.label}
                   </button>
@@ -832,7 +833,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <button
                         onClick={toggleSaved}
                         aria-label={t('student.academy.savedCourse')}
-                        className={`grid h-[33px] w-[33px] place-items-center rounded border ${saved ? 'border-[#0a60c8] bg-[#eaf4ff] text-[#0a60c8]' : 'border-[#dbe5f0] bg-white text-[#0a60c8]'}`}
+                        className={`grid h-[33px] w-[33px] place-items-center rounded border ${saved ? 'border-[#1B7A1E] bg-[#eaf4ff] text-[#1B7A1E]' : 'border-[#dbe5f0] bg-white text-[#1B7A1E]'}`}
                       >
                         <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
                       </button>
@@ -849,9 +850,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         </span>
                       </div>
                       {[
-                        { icon: Clock, label: t('student.academy.duration'), value: durationText, tone: 'bg-[#eff6ff] text-[#0b67d6]' },
-                        { icon: Clapperboard, label: t('student.academy.lessonCount'), value: t('student.academy.lessonsUnit', { count: lessons.length }), tone: 'bg-[#eff6ff] text-[#0b67d6]' },
-                        { icon: Users, label: t('student.academy.learners'), value: learnerLabel, tone: 'bg-[#eff6ff] text-[#0b67d6]' },
+                        { icon: Clock, label: t('student.academy.duration'), value: durationText, tone: 'bg-[#eff6ff] text-[#1B7A1E]' },
+                        { icon: Clapperboard, label: t('student.academy.lessonCount'), value: t('student.academy.lessonsUnit', { count: lessons.length }), tone: 'bg-[#eff6ff] text-[#1B7A1E]' },
+                        { icon: Users, label: t('student.academy.learners'), value: learnerLabel, tone: 'bg-[#eff6ff] text-[#1B7A1E]' },
                         { icon: Calendar, label: t('student.academy.updated'), value: currentCourse.updatedAt ? new Date(currentCourse.updatedAt).toLocaleDateString(dateLocale) : '—', tone: 'bg-[#fff6e9] text-[#df8b00]' },
                       ].map(fact => (
                         <div key={fact.label} className="flex min-w-0 items-center gap-2">
@@ -923,8 +924,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       rel="noopener noreferrer"
                       className="mt-2 flex items-center justify-between gap-3 rounded border border-[#e7edf5] px-3 py-3 text-[13px] hover:bg-[#f6faff]"
                     >
-                      <span className="flex items-center gap-2"><FileText size={16} className="text-[#0759e8]" />{index + 1}. {item.title}</span>
-                      <span className="text-[#0759e8]">{t('student.downloadDocument')}</span>
+                      <span className="flex items-center gap-2"><FileText size={16} className="text-[#1B7A1E]" />{index + 1}. {item.title}</span>
+                      <span className="text-[#1B7A1E]">{t('student.downloadDocument')}</span>
                     </a>
                   ))}
                 </section>
@@ -944,10 +945,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                             setSelectedLesson(lesson);
                             setTakingQuiz(true);
                           }}
-                          className={`flex w-full items-center justify-between rounded border px-3 py-3 text-left text-[13px] ${selectedLesson?.id === lesson.id ? 'border-[#0759e8] bg-[#f6faff]' : 'border-[#e7edf5] hover:bg-[#f6faff]'}`}
+                          className={`flex w-full items-center justify-between rounded border px-3 py-3 text-left text-[13px] ${selectedLesson?.id === lesson.id ? 'border-[#1B7A1E] bg-[#f6faff]' : 'border-[#e7edf5] hover:bg-[#f6faff]'}`}
                         >
-                          <span className="flex items-center gap-2"><HelpCircle size={16} className="text-[#0759e8]" />{lesson.title}</span>
-                          <span className="text-[#0759e8]">{quizResults[lesson.id] ? `${quizResults[lesson.id].score}%` : t('student.startQuiz')}</span>
+                          <span className="flex items-center gap-2"><HelpCircle size={16} className="text-[#1B7A1E]" />{lesson.title}</span>
+                          <span className="text-[#1B7A1E]">{quizResults[lesson.id] ? `${quizResults[lesson.id].score}%` : t('student.startQuiz')}</span>
                         </button>
                       ))}
                       {selectedLesson?.hasQuiz && takingQuiz && (
@@ -992,12 +993,12 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   <strong className="text-[21px]">{percent}%</strong>
                 </div>
                 <div className="my-1.5 h-[9px] overflow-hidden rounded-full bg-[#e9edf3]">
-                  <span className="block h-full rounded-full bg-[#075dec]" style={{ width: `${percent}%` }} />
+                  <span className="block h-full rounded-full bg-[#1B7A1E]" style={{ width: `${percent}%` }} />
                 </div>
                 <small className="text-[11px] text-[#6a7690]">
                   {t('student.academy.completedOf', { done: completedCount, total: lessons.length })}
                 </small>
-                <button onClick={handleContinue} className="mt-3 flex min-h-[37px] w-full items-center justify-center gap-2 rounded border border-[#0d5ce4] bg-[#0b5ce7] text-[11px] text-white">
+                <button onClick={handleContinue} className="mt-3 flex min-h-[37px] w-full items-center justify-center gap-2 rounded border border-[#18701C] bg-[#18701C] text-[11px] text-white">
                   <Play size={14} fill="currentColor" />
                   {t('student.continueLearningBtn')}
                 </button>
@@ -1016,7 +1017,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 <div className="mb-2 flex items-center justify-between gap-2 px-1">
                   <b className="text-[13px]">{t('student.courseContent')} ({lessons.length})</b>
                   <button
-                    className="text-[11px] text-[#0759ac]"
+                    className="text-[11px] text-[#1B7A1E]"
                     onClick={() => {
                       if (allCollapsed) {
                         setCollapsed({});
@@ -1057,9 +1058,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <button
                             key={lesson.id}
                             onClick={() => openLesson(lesson, index)}
-                            className={`relative grid min-h-[35px] w-full grid-cols-[16px_28px_minmax(0,1fr)_42px_18px] items-center gap-1 px-1 py-1 text-left text-[10px] ${selected ? 'bg-[#e9f2ff] text-[#065eb8]' : 'bg-white text-[#313e58] hover:bg-[#f4f8ff]'} ${locked ? 'opacity-60' : ''}`}
+                            className={`relative grid min-h-[35px] w-full grid-cols-[16px_28px_minmax(0,1fr)_42px_18px] items-center gap-1 px-1 py-1 text-left text-[10px] ${selected ? 'bg-[#e9f2ff] text-[#1B7A1E]' : 'bg-white text-[#313e58] hover:bg-[#f4f8ff]'} ${locked ? 'opacity-60' : ''}`}
                           >
-                            {selected && <span className="absolute bottom-0 left-0 top-0 w-[3px] bg-[#0866f1]" />}
+                            {selected && <span className="absolute bottom-0 left-0 top-0 w-[3px] bg-[#1B7A1E]" />}
                             <span className={`text-center text-[13px] ${done ? 'text-[#11a76a]' : 'text-[#a4b1c2]'}`}>{done ? '▣' : '▫'}</span>
                             <span className="text-[#5e6880]">{lesson.order || index + 1}</span>
                             <span className="truncate">{lesson.title}</span>
@@ -1095,7 +1096,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 </div>
                 <button
                   onClick={() => setCertOpen(true)}
-                  className="ml-[50px] w-[calc(100%-50px)] rounded border border-[#d9e6f1] bg-white px-2 py-1.5 text-[10px] text-[#0b61bb]"
+                  className="ml-[50px] w-[calc(100%-50px)] rounded border border-[#d9e6f1] bg-white px-2 py-1.5 text-[10px] text-[#1B7A1E]"
                 >
                   ▧ &nbsp; {t('student.academy.viewCertificate')} ↗
                 </button>
@@ -1133,7 +1134,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     <div className="flex items-center gap-2">
                       <button onClick={handleRestart} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.replayFromStart')}><RotateCcw size={16} /></button>
                       <button onClick={handleRewind} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.rewind10')}><Rewind size={16} /></button>
-                      <button onClick={handlePlayPause} className="grid h-11 w-11 place-items-center rounded-full bg-[#0b5ce7] text-white">{isPlaying ? <Pause size={18} /> : <Play size={18} />}</button>
+                      <button onClick={handlePlayPause} className="grid h-11 w-11 place-items-center rounded-full bg-[#18701C] text-white">{isPlaying ? <Pause size={18} /> : <Play size={18} />}</button>
                     </div>
                     <button onClick={handleFullscreen} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white"><Maximize size={16} /></button>
                   </div>
@@ -1162,7 +1163,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
               )}
               {progress[selectedLesson.id] && (
                 <span className="h-1.5 w-28 overflow-hidden rounded-full bg-[#e9edf3]">
-                  <span className="block h-full bg-[#075dec]" style={{ width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%` }} />
+                  <span className="block h-full bg-[#1B7A1E]" style={{ width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%` }} />
                 </span>
               )}
             </div>
@@ -1179,7 +1180,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   {t('student.startQuiz')}
                 </button>
               )}
-              <button onClick={goNextLesson} className="rounded bg-[#0b5ce7] px-4 py-2 text-[12px] text-white">
+              <button onClick={goNextLesson} className="rounded bg-[#18701C] px-4 py-2 text-[12px] text-white">
                 {t('student.academy.nextLesson')} →
               </button>
             </div>
@@ -1187,12 +1188,12 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         </div>
       )}
 
-      {introOpen && currentCourse.demoVideoKey && (
+      {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId) && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setIntroOpen(false)}>
           <div className="relative w-full max-w-[760px] rounded-[10px] bg-white p-5" onClick={event => event.stopPropagation()}>
             <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setIntroOpen(false)}>×</button>
             <h2 className="mb-3 mr-8 text-[20px] font-bold">{t('student.introVideo')}</h2>
-            <VideoPlayer videoKey={currentCourse.demoVideoKey} className="aspect-video w-full overflow-hidden rounded-md bg-black" />
+            <DemoVideoView videoKey={currentCourse.demoVideoKey} legacyId={currentCourse.demoVideoId} className="aspect-video w-full overflow-hidden rounded-md bg-black" />
           </div>
         </div>
       )}

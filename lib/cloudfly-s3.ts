@@ -19,5 +19,5 @@ export function getCloudFlyStorage() {
 }
 
 export function isCloudFlyVideoKey(key: string): boolean {
-  return /^videos\/[0-9a-f-]{36}\.(?:mp4|webm)$/i.test(key);
+  return /^videos\/[0-9a-f-]{36}\.(?:mp4|webm|mov|mkv|avi|mpeg|3gp)$/i.test(key);
 }

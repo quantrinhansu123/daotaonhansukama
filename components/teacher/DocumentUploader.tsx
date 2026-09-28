@@ -202,20 +202,20 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           onDragOver={handleDrag}
           onDrop={handleDrop}
           className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${dragActive
-              ? 'border-[#53cafd] bg-[#53cafd]/10'
+              ? 'border-[#1B7A1E] bg-[#1B7A1E]/10'
               : 'border-white/20 hover:border-white/40'
             }`}
         >
           {uploading ? (
             <div className="space-y-4">
-              <Loader className="w-12 h-12 text-[#53cafd] mx-auto animate-spin" />
+              <Loader className="w-12 h-12 text-[#1B7A1E] mx-auto animate-spin" />
               <div>
                 <p className="text-sm font-medium text-white mb-2">
                   {t('teacher.uploadingProgress', { progress: uploadProgress })}
                 </p>
                 <div className="w-full max-w-xs mx-auto h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#53cafd] transition-all duration-300"
+                    className="h-full bg-[#1B7A1E] transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
@@ -238,7 +238,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
                   className="hidden"
                   disabled={uploading}
                 />
-                <span className="inline-block px-6 py-3 bg-[#53cafd] hover:bg-[#3db9f5] text-white rounded-lg font-medium cursor-pointer transition-colors shadow-[#53cafd]/25">
+                <span className="inline-block px-6 py-3 bg-[#1B7A1E] hover:bg-[#156318] text-white rounded-lg font-medium cursor-pointer transition-colors shadow-[#1B7A1E]/25">
                   {t('teacher.selectFile')}
                 </span>
               </label>

@@ -271,11 +271,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold text-white mb-1">{t("teacher.manageLessons")}</h3>
-              <p className="text-slate-300">{t("teacher.courseLabel")}: <span className="font-medium text-[#53cafd]">{course.title}</span></p>
-              <p className="text-sm text-slate-400 mt-1">{t("teacher.totalLessonsCount")}: <span className="font-bold text-[#53cafd]">{lessons.length}</span></p>
+              <p className="text-slate-300">{t("teacher.courseLabel")}: <span className="font-medium text-[#1B7A1E]">{course.title}</span></p>
+              <p className="text-sm text-slate-400 mt-1">{t("teacher.totalLessonsCount")}: <span className="font-bold text-[#1B7A1E]">{lessons.length}</span></p>
             </div>
             {canManage && (
-              <Button onClick={handleAdd} className="flex items-center gap-2 shadow-lg bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+              <Button onClick={handleAdd} className="flex items-center gap-2 shadow-lg bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                 <Plus size={18} />
                 {t("teacher.addLesson")}
               </Button>
@@ -287,15 +287,15 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         {lessons.length === 0 ? (
           <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-12 text-center backdrop-blur-md">
             <div className="max-w-md mx-auto">
-              <div className="w-20 h-20 bg-[#53cafd]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#53cafd]/30">
-                <Play className="w-10 h-10 text-[#53cafd]" />
+              <div className="w-20 h-20 bg-[#1B7A1E]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#1B7A1E]/30">
+                <Play className="w-10 h-10 text-[#1B7A1E]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">{t("teacher.noLessonsTitle")}</h3>
               <p className="text-slate-300 mb-6">
                 {canManage ? t('teacher.noLessonsHint') : t('teacher.noLessonsReadonly')}
               </p>
               {canManage && (
-                <Button onClick={handleAdd} className="shadow-lg bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+                <Button onClick={handleAdd} className="shadow-lg bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                   <Plus size={18} className="mr-2" />
                   {t("teacher.addLesson")}
                 </Button>
@@ -309,7 +309,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                 <div className="p-4">
                   {/* Header Row */}
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#53cafd] to-blue-600 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg shadow-blue-500/30">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#1B7A1E] to-blue-600 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg shadow-blue-500/30">
                       {lesson.order}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -319,7 +319,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     {lesson.tags && lesson.tags.length > 0 && (
                       <div className="flex gap-1">
                         {lesson.tags.slice(0, 2).map((tag, index) => (
-                          <span key={index} className="px-2 py-0.5 bg-[#53cafd]/20 text-[#53cafd] rounded text-xs border border-[#53cafd]/30">
+                          <span key={index} className="px-2 py-0.5 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded text-xs border border-[#1B7A1E]/30">
                             {tag}
                           </span>
                         ))}
@@ -332,7 +332,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     )}
                     {canManage && (
                       <div className="flex gap-1">
-                        <button onClick={() => handleEdit(lesson)} className="p-2 text-[#53cafd] hover:bg-[#53cafd]/20 rounded-lg transition-colors" title={t("common.edit")}>
+                        <button onClick={() => handleEdit(lesson)} className="p-2 text-[#1B7A1E] hover:bg-[#1B7A1E]/20 rounded-lg transition-colors" title={t("common.edit")}>
                           <Edit2 size={16} />
                         </button>
                         <button onClick={() => handleDelete(lesson)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title={t("common.delete")}>
@@ -388,7 +388,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                               <label className="cursor-pointer px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md text-xs font-medium flex items-center gap-1">
                                 <input
                                   type="file"
-                                  accept="video/mp4,video/webm"
+                                  accept="video/*,.mp4,.m4v,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.3gp"
                                   className="hidden"
                                   disabled={uploading}
                                   onChange={(e) => {
@@ -408,7 +408,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <label className="cursor-pointer block">
                           <input
                             type="file"
-                            accept="video/mp4,video/webm"
+                            accept="video/*,.mp4,.m4v,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.3gp"
                             className="hidden"
                             onChange={(e) => {
                               const file = e.target.files?.[0];
@@ -501,7 +501,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-[#311898] border border-white/10 rounded-2xl shadow-2xl p-8 w-full max-w-lg overflow-y-auto max-h-[90vh]">
+            <div className="bg-[#0E3A16] border border-white/10 rounded-2xl shadow-2xl p-8 w-full max-w-lg overflow-y-auto max-h-[90vh]">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-white">
@@ -524,7 +524,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
                     placeholder={t("teacher.lessonNamePlaceholder")}
                   />
                 </div>
@@ -535,7 +535,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400 resize-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400 resize-none"
                     placeholder={t("teacher.descriptionPlaceholder")}
                   />
                 </div>
@@ -547,7 +547,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                     value={formData.order}
                     onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
                     min={1}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white text-center text-lg font-bold"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white text-center text-lg font-bold"
                   />
                   <p className="text-xs text-slate-400 mt-2">{t("teacher.displayOrderHint")}</p>
                 </div>
@@ -560,13 +560,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                      className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+                      className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
                       placeholder={t("teacher.tagPlaceholder")}
                     />
                     <button
                       type="button"
                       onClick={handleAddTag}
-                      className="px-4 py-2 bg-[#53cafd] text-white rounded-xl hover:bg-[#3db9f5] transition-colors font-medium shadow-[#53cafd]/25"
+                      className="px-4 py-2 bg-[#1B7A1E] text-white rounded-xl hover:bg-[#156318] transition-colors font-medium shadow-[#1B7A1E]/25"
                     >
                       {t("common.add")}
                     </button>
@@ -576,7 +576,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                       {formData.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-[#53cafd]/20 text-[#53cafd] border border-[#53cafd]/30 rounded-full text-sm font-medium"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] border border-[#1B7A1E]/30 rounded-full text-sm font-medium"
                         >
                           {tag}
                           <button
@@ -595,7 +595,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
               </div>
 
               <div className="flex gap-3 mt-8">
-                <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 py-3 shadow-lg bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+                <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 py-3 shadow-lg bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                   <Save size={18} />
                   {editingLesson ? t('common.update') : t('teacher.addLesson')}
                 </Button>
@@ -612,8 +612,8 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
         {uploading && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-[#311898] border border-white/10 rounded-2xl shadow-2xl p-8 text-center">
-              <div className="w-20 h-20 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="bg-[#0E3A16] border border-white/10 rounded-2xl shadow-2xl p-8 text-center">
+              <div className="w-20 h-20 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-xl text-white font-bold mb-2">{t("teacher.uploading")}</p>
               <p className="text-sm text-slate-300">{t("teacher.uploadingHint")}</p>
             </div>
@@ -623,7 +623,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         {/* Video Preview Modal */}
         {previewingLesson?.videoKey && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-[#311898] border border-white/10 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#0E3A16] border border-white/10 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-white/10 flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-white">{previewingLesson.title}</h3>

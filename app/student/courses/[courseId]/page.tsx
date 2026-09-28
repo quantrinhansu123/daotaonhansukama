@@ -105,7 +105,7 @@ export default function CourseDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f8fc]">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#0759e8] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#63708a]">{t("common.loading")}</p>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function CourseDetailPage() {
           <p className="text-red-500 mb-4 text-lg font-medium">{error}</p>
           <button
             onClick={handleBack}
-            className="px-6 py-2 bg-[#0b5ce7] text-white rounded-lg hover:bg-[#0759e8] transition-colors"
+            className="px-6 py-2 bg-[#18701C] text-white rounded-lg hover:bg-[#1B7A1E] transition-colors"
           >
             {t("common.backToDashboard")}
           </button>

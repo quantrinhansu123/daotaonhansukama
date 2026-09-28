@@ -186,7 +186,7 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
                   alert(t('shared.urlCopied'));
                 }
               }}
-              className={`mt-1 text-xs underline ${dark ? 'text-[#53cafd] hover:text-[#3db9f5]' : 'text-blue-600 hover:text-blue-700'}`}
+              className={`mt-1 text-xs underline ${dark ? 'text-[#1B7A1E] hover:text-[#156318]' : 'text-blue-600 hover:text-blue-700'}`}
               type="button"
             >
               {t('shared.copyUrl')}
@@ -196,18 +196,18 @@ export const BunnyImageUpload: React.FC<BunnyImageUploadProps> = ({
       ) : (
         <label className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
           dark
-            ? 'border-white/20 bg-white/5 hover:border-[#53cafd]/60 hover:bg-white/10'
+            ? 'border-white/20 bg-white/5 hover:border-[#1B7A1E]/60 hover:bg-white/10'
             : 'border-slate-300 hover:border-brand-500 hover:bg-slate-50'
         }`}>
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             {uploading ? (
               <>
-                <div className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-3 ${dark ? 'border-[#53cafd]' : 'border-brand-500'}`}></div>
+                <div className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-3 ${dark ? 'border-[#1B7A1E]' : 'border-brand-500'}`}></div>
                 <p className={`text-sm ${dark ? 'text-slate-200' : 'text-slate-600'}`}>{t('shared.uploading')}</p>
               </>
             ) : (
               <>
-                <ImageIcon className={`w-12 h-12 mb-3 ${dark ? 'text-[#53cafd]/70' : 'text-slate-400'}`} />
+                <ImageIcon className={`w-12 h-12 mb-3 ${dark ? 'text-[#1B7A1E]/70' : 'text-slate-400'}`} />
                 <p className={`mb-2 text-sm ${dark ? 'text-slate-200' : 'text-slate-600'}`}>
                   <span className="font-semibold">{t('shared.clickToUploadImage')}</span>
                 </p>

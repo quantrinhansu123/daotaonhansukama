@@ -66,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onNavigateH
           {/* Logo */}
           <div onClick={handleLogoClick} className="flex items-center gap-3 cursor-pointer group">
             <div className="h-10 px-3 py-1 bg-white rounded-xl flex items-center justify-center shadow-sm">
-              <img src="/logo.png" alt="Fabico" className="h-7 w-auto object-contain" />
+              <img src="/logo.png" alt="BioKama" className="h-10 w-auto object-contain" />
             </div>
           </div>
 

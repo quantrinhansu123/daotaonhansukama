@@ -68,7 +68,7 @@ export const Hero: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-3 w-full bg-slate-700 rounded-full h-1.5">
-                  <div className="bg-brand-500 h-1.5 rounded-full w-[85%] shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                  <div className="bg-brand-500 h-1.5 rounded-full w-[85%] shadow-[0_0_10px_rgba(27,122,30,0.5)]"></div>
                 </div>
               </div>
             </div>

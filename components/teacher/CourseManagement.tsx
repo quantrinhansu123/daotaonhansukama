@@ -19,7 +19,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({ course, onBa
   return (
     <div className="space-y-6">
       <div>
-        <button onClick={onBack} className="text-[#53cafd] hover:text-[#3db9f5] mb-4 flex items-center gap-2 transition-colors">
+        <button onClick={onBack} className="text-[#1B7A1E] hover:text-[#156318] mb-4 flex items-center gap-2 transition-colors">
           <ArrowLeft size={20} />
           {t('teacher.backToCourses')}
         </button>
@@ -34,7 +34,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({ course, onBa
             <button
               onClick={() => setActiveTab('lessons')}
               className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'lessons'
-                  ? 'text-[#53cafd] border-b-2 border-[#53cafd] bg-[#53cafd]/10'
+                  ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#1B7A1E]/10'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
             >
@@ -44,7 +44,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({ course, onBa
             <button
               onClick={() => setActiveTab('students')}
               className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'students'
-                  ? 'text-[#53cafd] border-b-2 border-[#53cafd] bg-[#53cafd]/10'
+                  ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#1B7A1E]/10'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
             >

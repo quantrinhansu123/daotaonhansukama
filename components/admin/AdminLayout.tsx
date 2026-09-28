@@ -17,20 +17,11 @@ import {
   Building2,
   LogOut,
   Menu,
+  X,
   GraduationCap,
-  FolderKanban,
-  Award,
-  ClipboardCheck,
-  Folder,
-  BarChart3,
-  BadgeCheck,
-  Shield,
-  List,
-  Settings,
-  Headphones,
-  Search,
-  Bell,
-  ChevronDown,
+  Clock,
+  Fingerprint,
+  FolderKanban
 } from 'lucide-react';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -45,10 +36,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
-  const [mobileNav, setMobileNav] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [departments, setDepartments] = useState<Array<{ id: string, managerId?: string }>>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -66,34 +56,76 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     router.push('/');
   };
 
-  const showToast = (message: string) => {
-    setToastMsg(message);
-    window.setTimeout(() => setToastMsg(''), 2200);
-  };
-
-  const menuItems: Array<{
-    id: string;
-    label: string;
-    icon: typeof LayoutDashboard;
-    href?: string;
-    permission?: 'view_dashboard' | 'view_users' | 'view_courses' | 'view_departments' | 'view_projects' | 'view_salary';
-    section?: 'system';
-  }> = [
-    { id: 'dashboard', label: t('student.academy.overview'), icon: LayoutDashboard, href: '/admin', permission: 'view_dashboard' },
-    { id: 'courses', label: t('student.academy.courses'), icon: BookOpen, href: '/admin/courses', permission: 'view_courses' },
-    { id: 'learning', label: t('student.academy.navPrograms'), icon: GraduationCap, href: '/admin/learning' },
-    { id: 'students', label: t('student.academy.navStudents'), icon: Users },
-    { id: 'projects', label: t('student.academy.navProjects'), icon: FolderKanban, href: '/admin/projects', permission: 'view_projects' },
-    { id: 'departments', label: t('student.academy.navDepartments'), icon: Building2, href: '/admin/departments', permission: 'view_departments' },
-    { id: 'positions', label: t('student.academy.navPositions'), icon: Award },
-    { id: 'assessment', label: t('student.academy.navAssessment'), icon: ClipboardCheck, href: '/admin/attendance', permission: 'view_salary' },
-    { id: 'library', label: t('student.academy.navLibrary'), icon: Folder },
-    { id: 'reports', label: t('student.academy.navReports'), icon: BarChart3 },
-    { id: 'certificates', label: t('student.academy.navCertificates'), icon: BadgeCheck },
-    { id: 'users', label: t('student.academy.navUsers'), icon: Users, href: '/admin/users', permission: 'view_users', section: 'system' },
-    { id: 'permissions', label: t('student.academy.navPermissions'), icon: Shield, href: '/admin/departments', permission: 'view_departments', section: 'system' },
-    { id: 'activity', label: t('student.academy.navActivity'), icon: List, section: 'system' },
-    { id: 'settings', label: t('student.academy.navSettings'), icon: Settings, section: 'system' },
+  const menuItems = [
+    {
+      id: 'checkin',
+      label: t('admin.menu.checkin'),
+      icon: Fingerprint,
+      href: '/admin/checkin',
+      permission: null,
+      hideForStaff: false,
+      hideForAdmin: true,
+      hidden: true
+    },
+    {
+      id: 'dashboard',
+      label: t('admin.menu.dashboard'),
+      icon: LayoutDashboard,
+      href: '/admin',
+      permission: 'view_dashboard' as const,
+      hideForStaff: false,
+      hideForManager: true
+    },
+    {
+      id: 'learning',
+      label: t('admin.menu.learning'),
+      icon: GraduationCap,
+      href: '/admin/learning',
+      permission: null,
+      hideForStaff: false,
+      hideForAdmin: true
+    },
+    {
+      id: 'users',
+      label: t('admin.menu.users'),
+      icon: Users,
+      href: '/admin/users',
+      permission: 'view_users' as const,
+      hideForStaff: false
+    },
+    {
+      id: 'courses',
+      label: t('admin.menu.courses'),
+      icon: BookOpen,
+      href: '/admin/courses',
+      permission: 'view_courses' as const,
+      hideForStaff: false
+    },
+    {
+      id: 'departments',
+      label: t('admin.menu.departments'),
+      icon: Building2,
+      href: '/admin/departments',
+      permission: 'view_departments' as const,
+      hideForStaff: false
+    },
+    {
+      id: 'projects',
+      label: t('admin.menu.projects'),
+      icon: FolderKanban,
+      href: '/admin/projects',
+      permission: 'view_projects' as const,
+      hideForStaff: false
+    },
+    {
+      id: 'attendance',
+      label: t('admin.menu.attendance'),
+      icon: Clock,
+      href: '/admin/attendance',
+      permission: 'view_salary' as const,
+      hideForStaff: false,
+      hidden: true
+    },
   ];
 
   const positionLabel = (position?: string) => {
@@ -109,113 +141,155 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return map[position] || position;
   };
 
-  const initials = (userProfile?.displayName || 'U')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(-2)
-    .map(part => part[0]?.toUpperCase() || '')
-    .join('');
-  const roleLabel = positionLabel(userProfile?.position) || t('admin.systemName');
-  const primaryItems = menuItems.filter(item => item.section !== 'system' && (!item.permission || hasPermission(item.permission)));
-  const systemItems = menuItems.filter(item => item.section === 'system' && (!item.permission || hasPermission(item.permission)));
-
-  const renderItem = (item: (typeof menuItems)[number]) => {
-    const Icon = item.icon;
-    const isActive = Boolean(item.href) && (pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`)));
-    const className = `flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] ${isActive ? 'bg-[#06488e] text-white shadow-[inset_3px_0_#2885f5]' : 'text-[#e1eaf4] hover:bg-[#163753]'}`;
-    if (!item.href || item.id === 'settings') {
-      return (
-        <button key={item.id} className={className} onClick={() => item.id === 'settings' ? setShowProfileModal(true) : showToast(t('student.academy.navSoon'))}>
-          <Icon size={18} />
-          {item.label}
-        </button>
-      );
-    }
-    return (
-      <Link key={item.id} href={item.href} className={className} onClick={() => setMobileNav(false)}>
-        <Icon size={18} />
-        {item.label}
-      </Link>
-    );
-  };
-
   return (
-    <div className="flex min-h-screen bg-[#f5f8fc] text-[#111b38] [font-family:Arial,Helvetica,sans-serif]">
-      {mobileNav && (
-        <button className="fixed inset-0 z-30 bg-[#031323]/55 lg:hidden" aria-label={t('student.academy.close')} onClick={() => setMobileNav(false)} />
-      )}
-      <aside className={`fixed top-0 z-40 flex h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#061b2b] to-[#0b2035] text-[#eef5ff] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex h-[72px] items-center justify-center bg-white px-2">
-          <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
-        </div>
-        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2">
-          {primaryItems.map(renderItem)}
-          {systemItems.length > 0 && (
-            <p className="mx-2 mb-1 mt-3 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.navSystem')}</p>
-          )}
-          {systemItems.map(renderItem)}
-        </nav>
-        <div className="border-t border-white/10 px-3 py-4">
-          <div className="rounded-md bg-[#152e47] p-3">
-            <div className="flex items-center gap-2.5">
-              <Headphones size={18} />
-              <span>
-                <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
-                <small className="block text-[10px] text-[#bdcada]">{t('student.academy.supportHint')}</small>
-              </span>
-            </div>
-            <button onClick={() => showToast(t('student.academy.supportSent'))} className="mt-3 w-full rounded bg-[#f7faff] px-2 py-1.5 text-[11px] font-bold text-[#0755b5]">
-              {t('student.academy.sendRequest')}
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <aside className={`transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'} flex flex-col fixed h-screen z-50 bg-[#0a0814]/85 backdrop-blur-xl border-r border-white/[0.06]`}>
+        {/* Logo */}
+        <div className="p-4 flex items-center justify-between">
+          {sidebarOpen ? (
+            <>
+              <div className="flex min-w-0 flex-1 items-center">
+                <div className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-xl bg-white px-2 shadow-lg border border-white/20">
+                  <img src="/logo.png" alt="BioKama" className="h-8 w-auto max-w-full object-contain" />
+                </div>
+              </div>
+              <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-slate-300">
+                <X size={20} />
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setSidebarOpen(true)} className="p-1 hover:bg-white/10 rounded-xl mx-auto transition-colors flex items-center justify-center">
+              <div className="h-10 w-14 bg-white rounded-xl flex items-center justify-center px-1 shadow-md">
+                <img src="/logo.png" alt="BioKama" className="h-7 w-auto max-w-full object-contain object-left" />
+              </div>
             </button>
-          </div>
-          <button onClick={handleSignOut} className="mt-3 flex w-full items-center gap-2 px-1 text-[12px] text-[#d7e3ef]">
-            <LogOut size={16} />
-            {t('admin.logout')}
+          )}
+        </div>
+
+        {/* Menu Items */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => {
+            const isAdmin = userProfile?.role === 'admin';
+            const isStaff = userProfile?.role === 'staff';
+            const isManager = userProfile?.position === 'Trưởng phòng';
+
+            if (item.hidden) {
+              return null;
+            }
+
+            if (isAdmin && item.hideForAdmin) {
+              return null;
+            }
+            if (isStaff && item.hideForStaff) {
+              return null;
+            }
+            if (isManager && item.hideForManager) {
+              return null;
+            }
+
+            if (item.permission && !hasPermission(item.permission)) {
+              return null;
+            }
+
+            const Icon = item.icon;
+            const isActive = pathname === item.href || (item.href === '/admin' && pathname === '/admin');
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
+                  ? 'bg-[#1B7A1E] text-white shadow-lg shadow-[#1B7A1E]/20'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  }`}
+                title={!sidebarOpen ? item.label : ''}
+              >
+                <Icon size={20} className={`flex-shrink-0 transition-transform ${isActive ? '' : 'group-hover:scale-110'}`} />
+                {sidebarOpen && <span className="font-medium text-sm">{item.label}</span>}
+                {isActive && sidebarOpen && (
+                  <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User Info */}
+        <div className="p-3">
+          {sidebarOpen ? (
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="w-full mb-3 p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                {userProfile?.photoURL ? (
+                  <img
+                    src={proxyBunnyUrl(userProfile.photoURL)}
+                    alt={userProfile.displayName}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-md group-hover:border-brand-400 transition-all"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-brand-400 to-brand-600 rounded-full flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform">
+                    {userProfile?.displayName?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-semibold text-white truncate group-hover:text-brand-300 transition-colors">{userProfile?.displayName}</p>
+                  <p className="text-xs text-slate-400 truncate">{userProfile?.email}</p>
+                </div>
+              </div>
+              {userProfile?.position && (
+                <div className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors">
+                  <p className="text-xs text-brand-300 text-center font-medium">{positionLabel(userProfile.position)}</p>
+                </div>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="mb-3 flex justify-center w-full hover:scale-105 transition-transform"
+            >
+              {userProfile?.photoURL ? (
+                <img
+                  src={proxyBunnyUrl(userProfile.photoURL)}
+                  alt={userProfile.displayName}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-md"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-brand-400 to-brand-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                  {userProfile?.displayName?.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </button>
+          )}
+          {sidebarOpen && (
+            <div className="mb-3 flex justify-center">
+              <LanguageSwitcher variant="sidebar" className="w-full justify-center" />
+            </div>
+          )}
+          {!sidebarOpen && (
+            <div className="mb-3 flex justify-center">
+              <LanguageSwitcher variant="sidebar" className="!px-2" />
+            </div>
+          )}
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-500/10 border border-transparent transition-all group"
+            title={!sidebarOpen ? t('admin.logout') : ''}
+          >
+            <LogOut size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
+            {sidebarOpen && <span className="font-medium text-sm">{t('admin.logout')}</span>}
           </button>
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">
-        <header className="flex h-[54px] items-center gap-3 border-b border-[#ecf0f6] bg-white px-4">
-          <button className="p-1 lg:hidden" aria-label="Menu" onClick={() => setMobileNav(true)}>
-            <Menu size={20} />
-          </button>
-          <label className="flex h-[35px] w-full max-w-[460px] items-center gap-2 rounded-md border border-[#eff2f7] bg-[#f7f9fc] px-3 text-[#65718a]">
-            <Search size={16} />
-            <input
-              placeholder={t('student.academy.searchPlaceholder')}
-              aria-label={t('student.academy.searchPlaceholder')}
-              className="min-w-0 flex-1 bg-transparent text-[11px] text-[#111b38] outline-none placeholder:text-[#99a4b5]"
-              onKeyDown={event => {
-                if (event.key === 'Enter') router.push('/admin/courses');
-              }}
-            />
-          </label>
-          <div className="flex-1" />
-          <LanguageSwitcher />
-          <button className="relative p-1.5 text-[#2a3650]" aria-label={t('student.academy.newsTab')} onClick={() => showToast(t('student.academy.noNotifications'))}>
-            <Bell size={18} />
-          </button>
-          <button className="flex items-center gap-2 text-left" onClick={() => setShowProfileModal(true)}>
-            <span className="grid h-[31px] w-[31px] place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#eadac7] to-[#acc0d6] text-[11px] font-bold text-[#2a3550]">
-              {userProfile?.photoURL ? <img src={proxyBunnyUrl(userProfile.photoURL)} alt="" className="h-full w-full object-cover" /> : initials}
-            </span>
-            <span className="hidden sm:block">
-              <b className="block text-[11px]">{userProfile?.displayName}</b>
-              <small className="block text-[10px] text-[#66718b]">{roleLabel}</small>
-            </span>
-            <ChevronDown size={15} className="hidden text-[#111b38] sm:block" />
-          </button>
-        </header>
-        <main className="min-h-[calc(100vh-54px)] bg-[#0b0918] text-white">
-          {children}
-        </main>
-      </div>
+      {/* Main Content */}
+      <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+        {children}
+      </main>
 
+      {/* Profile Modal */}
       <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
-      {toastMsg && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-md bg-[#111b38] px-4 py-2 text-[12px] text-white shadow-lg">{toastMsg}</div>
-      )}
     </div>
   );
 };

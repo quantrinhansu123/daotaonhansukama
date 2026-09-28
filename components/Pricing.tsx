@@ -65,11 +65,11 @@ export const Pricing: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {plans.map((plan, index) => (
             <div key={index} className={`relative flex flex-col p-8 rounded-3xl backdrop-blur-md border transition-all duration-300 ${plan.popular
-                ? 'bg-[#5e3ed0]/40 text-white shadow-2xl scale-105 z-10 border-[#53cafd]/50'
+                ? 'bg-[#5e3ed0]/40 text-white shadow-2xl scale-105 z-10 border-[#1B7A1E]/50'
                 : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
               }`}>
               {plan.popular && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-[#53cafd] to-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide shadow-lg">
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-[#1B7A1E] to-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide shadow-lg">
                   {t('landing.pricing.mostPopular')}
                 </div>
               )}
@@ -86,7 +86,7 @@ export const Pricing: React.FC = () => {
               <ul className="flex-1 space-y-4 mb-8">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <Check className={`w-5 h-5 flex-shrink-0 ${plan.popular ? 'text-[#53cafd]' : 'text-[#53cafd]'}`} />
+                    <Check className={`w-5 h-5 flex-shrink-0 ${plan.popular ? 'text-[#1B7A1E]' : 'text-[#1B7A1E]'}`} />
                     <span className="text-sm text-slate-300">{feature}</span>
                   </li>
                 ))}
@@ -94,7 +94,7 @@ export const Pricing: React.FC = () => {
 
               <Button
                 variant={plan.variant}
-                className={`w-full ${plan.popular ? 'bg-[#53cafd] hover:bg-[#3db9f5] text-white border-none shadow-lg shadow-[#53cafd]/30' : 'bg-white/10 hover:bg-white/20 text-white border-none'}`}
+                className={`w-full ${plan.popular ? 'bg-[#1B7A1E] hover:bg-[#156318] text-white border-none shadow-lg shadow-[#1B7A1E]/30' : 'bg-white/10 hover:bg-white/20 text-white border-none'}`}
               >
                 {plan.cta}
               </Button>

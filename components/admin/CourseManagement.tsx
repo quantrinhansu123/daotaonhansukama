@@ -436,7 +436,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
     return (
       <div className="p-8 flex items-center justify-center min-h-[50vh]">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-2 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-10 h-10 border-2 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm text-slate-300">{t('common.loading')}</p>
         </div>
       </div>
@@ -465,8 +465,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#53cafd]/70">
-            Fabico Learning
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#1B7A1E]/70">
+            BioKama Learning
           </p>
           <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-white">
             {t('admin.courses.title')}
@@ -475,7 +475,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             {t('admin.courses.pageSubtitle')}
           </p>
           {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
-            <p className="text-sm text-[#53cafd] mt-1">
+            <p className="text-sm text-[#1B7A1E] mt-1">
               {t('admin.courses.managerScope')}: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
             </p>
           )}
@@ -513,7 +513,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             <button
               type="button"
               onClick={handleAdd}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-[#0b1b2b] bg-[#53cafd] hover:bg-[#3db9f5] transition-colors shadow-[0_0_24px_rgba(83,202,253,0.25)]"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-[#0b1b2b] bg-[#1B7A1E] hover:bg-[#156318] transition-colors shadow-[0_0_24px_rgba(83,202,253,0.25)]"
             >
               <Plus size={16} />
               {t('admin.courses.addCourse')}
@@ -525,7 +525,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       {/* KPI strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: t('admin.courses.totalCourses'), value: courses.length, icon: Layers, tone: 'text-white', ring: 'from-[#53cafd]/20' },
+          { label: t('admin.courses.totalCourses'), value: courses.length, icon: Layers, tone: 'text-white', ring: 'from-[#1B7A1E]/20' },
           { label: t('admin.courses.levelBeginner'), value: courses.filter(c => c.level === 'beginner').length, icon: GraduationCap, tone: 'text-emerald-300', ring: 'from-emerald-400/20' },
           { label: t('admin.courses.levelIntermediate'), value: courses.filter(c => c.level === 'intermediate').length, icon: Signal, tone: 'text-amber-300', ring: 'from-amber-400/20' },
           { label: t('admin.courses.levelAdvanced'), value: courses.filter(c => c.level === 'advanced').length, icon: BookOpen, tone: 'text-rose-300', ring: 'from-rose-400/20' },
@@ -560,7 +560,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             placeholder={t('admin.courses.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 focus:border-[#53cafd]/30 text-sm text-white placeholder-slate-600"
+            className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 focus:border-[#1B7A1E]/30 text-sm text-white placeholder-slate-600"
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -569,7 +569,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             <select
               value={filterLevel}
               onChange={(e) => setFilterLevel(e.target.value as any)}
-              className="w-full appearance-none pl-9 pr-8 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 [&>option]:bg-[#12101f]"
+              className="w-full appearance-none pl-9 pr-8 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 [&>option]:bg-[#12101f]"
               aria-label={t('admin.courses.filterByLevel')}
             >
               <option value="all">{t('admin.courses.allLevels')}</option>
@@ -581,7 +581,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 [&>option]:bg-[#12101f]"
+            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 [&>option]:bg-[#12101f]"
             aria-label={t('admin.courses.filterByCategory')}
           >
             <option value="all">{t('admin.courses.allCategories')}</option>
@@ -592,7 +592,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <select
             value={filterProjectId}
             onChange={(e) => setFilterProjectId(e.target.value)}
-            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#53cafd]/30 [&>option]:bg-[#12101f]"
+            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 [&>option]:bg-[#12101f]"
             aria-label={t('admin.courses.filterByProject')}
           >
             <option value="">{t('admin.courses.allProjects')}</option>
@@ -609,7 +609,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             <button
               type="button"
               onClick={clearFilters}
-              className="text-[#53cafd] hover:text-[#7dd9ff] font-medium transition-colors"
+              className="text-[#1B7A1E] hover:text-[#7dd9ff] font-medium transition-colors"
             >
               {t('admin.courses.clearFilters')}
             </button>
@@ -668,7 +668,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                           />
                         ) : null}
                         <div
-                          className="h-full w-full items-center justify-center text-[#53cafd]/70"
+                          className="h-full w-full items-center justify-center text-[#1B7A1E]/70"
                           style={{ display: course.thumbnail ? 'none' : 'flex' }}
                         >
                           <BookOpen size={18} />
@@ -737,7 +737,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       <button
                         type="button"
                         onClick={() => setDetailCourse(course)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 bg-[#53cafd]/90 text-[#061018] hover:bg-[#53cafd] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 bg-[#1B7A1E]/90 text-[#061018] hover:bg-[#1B7A1E] transition-colors"
                         title={t('admin.courses.classDetail')}
                       >
                         <BookOpen size={14} className="shrink-0" />
@@ -793,7 +793,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <div className="bg-[#0e0c1a]/98 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
             <div className="flex justify-between items-center gap-3 px-6 py-4 border-b border-white/[0.06] shrink-0">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.12em] text-[#53cafd]/80 font-medium">Bunny Stream</p>
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[#1B7A1E]/80 font-medium">Bunny Stream</p>
                 <h3 className="text-lg font-semibold text-white">
                   {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
                 </h3>
@@ -812,7 +812,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 focus:border-[#53cafd]/40 text-sm text-white"
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 focus:border-[#1B7A1E]/40 text-sm text-white"
                   />
                 </div>
 
@@ -822,7 +822,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 focus:border-[#53cafd]/40 text-sm text-white resize-none"
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 focus:border-[#1B7A1E]/40 text-sm text-white resize-none"
                   />
                 </div>
 
@@ -833,7 +833,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     placeholder={t('admin.courses.categoryPlaceholder')}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 focus:border-[#53cafd]/40 text-sm text-white placeholder-slate-500"
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 focus:border-[#1B7A1E]/40 text-sm text-white placeholder-slate-500"
                   />
                 </div>
 
@@ -843,7 +843,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     <select
                       value={formData.level}
                       onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
-                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 text-sm text-white [&>option]:bg-[#311898]"
+                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white [&>option]:bg-[#0E3A16]"
                     >
                       <option value="beginner">{t('admin.courses.levelBeginner')}</option>
                       <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
@@ -856,7 +856,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       type="number"
                       value={formData.duration}
                       onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 text-sm text-white"
+                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white"
                     />
                   </div>
                 </div>
@@ -870,7 +870,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                     disabled={!!(currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid))}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd]/40 text-sm text-white disabled:opacity-60 disabled:cursor-not-allowed [&>option]:bg-[#311898]"
+                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white disabled:opacity-60 disabled:cursor-not-allowed [&>option]:bg-[#0E3A16]"
                   >
                     <option value="">{t('admin.courses.audienceNone')}</option>
                     <option value="all">{t('admin.courses.audienceAll')}</option>
@@ -879,7 +879,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     ))}
                   </select>
                   {currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid) ? (
-                    <p className="text-xs text-[#53cafd] mt-1.5">
+                    <p className="text-xs text-[#1B7A1E] mt-1.5">
                       {t('admin.courses.managerCreateHint')}
                     </p>
                   ) : (
@@ -893,7 +893,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     {t('admin.courses.projectsLabel')}
                     {formData.projects.length > 0 && (
-                      <span className="ml-2 text-xs text-[#53cafd]">
+                      <span className="ml-2 text-xs text-[#1B7A1E]">
                         ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
                       </span>
                     )}
@@ -909,7 +909,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                             key={project.id}
                             className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
                               isChecked
-                                ? 'bg-[#53cafd]/15 border border-[#53cafd]/30'
+                                ? 'bg-[#1B7A1E]/15 border border-[#1B7A1E]/30'
                                 : 'hover:bg-white/5 border border-transparent'
                             }`}
                           >
@@ -929,7 +929,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                                   });
                                 }
                               }}
-                              className="w-4 h-4 text-[#53cafd] bg-white/5 border-white/20 rounded focus:ring-[#53cafd] focus:ring-2"
+                              className="w-4 h-4 text-[#1B7A1E] bg-white/5 border-white/20 rounded focus:ring-[#1B7A1E] focus:ring-2"
                             />
                             <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
                               {project.name}
@@ -946,7 +946,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                         return project ? (
                           <span
                             key={projectId}
-                            className="inline-flex items-center px-2 py-1 bg-[#53cafd]/15 text-[#53cafd] border border-[#53cafd]/25 rounded-md text-xs font-medium"
+                            className="inline-flex items-center px-2 py-1 bg-[#1B7A1E]/15 text-[#1B7A1E] border border-[#1B7A1E]/25 rounded-md text-xs font-medium"
                           >
                             {project.name}
                           </span>
@@ -983,8 +983,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     {t('admin.courses.bannerRecommend')} · {t('admin.courses.bannerMaxSize')} · {t('admin.courses.bannerFormats')}
                   </p>
                   {uploadingBanner && (
-                    <div className="mt-2 px-3 py-2 bg-[#53cafd]/10 border border-[#53cafd]/25 rounded-xl">
-                      <p className="text-xs text-[#53cafd] font-medium">{t('admin.courses.bannerUploading')}</p>
+                    <div className="mt-2 px-3 py-2 bg-[#1B7A1E]/10 border border-[#1B7A1E]/25 rounded-xl">
+                      <p className="text-xs text-[#1B7A1E] font-medium">{t('admin.courses.bannerUploading')}</p>
                     </div>
                   )}
                   {!uploadingBanner && formData.banner && (

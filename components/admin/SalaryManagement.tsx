@@ -137,14 +137,14 @@ export const SalaryManagement: React.FC = () => {
                 placeholder={t('admin.salary.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
               />
             </div>
           </div>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
           >
             {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
               <option key={month} value={month}>{t('admin.salary.monthN', { n: month })}</option>
@@ -153,13 +153,13 @@ export const SalaryManagement: React.FC = () => {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
           >
             {[2024, 2025, 2026].map(year => (
               <option key={year} value={year}>{year}</option>
             ))}
           </select>
-          <Button className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+          <Button className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
             <Download size={18} />
             {t('admin.salary.export')}
           </Button>
@@ -191,7 +191,7 @@ export const SalaryManagement: React.FC = () => {
                   <td className="px-6 py-4 text-right text-white">{formatCurrency(salary.baseSalary)}</td>
                   <td className="px-6 py-4 text-right text-green-400">{formatCurrency(salary.bonus)}</td>
                   <td className="px-6 py-4 text-right text-red-400">{formatCurrency(salary.deduction)}</td>
-                  <td className="px-6 py-4 text-right font-bold text-[#53cafd]">{formatCurrency(salary.totalSalary)}</td>
+                  <td className="px-6 py-4 text-right font-bold text-[#1B7A1E]">{formatCurrency(salary.totalSalary)}</td>
                   <td className="px-6 py-4 text-center">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${salary.status === 'paid'
                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'

@@ -13,10 +13,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'CloudFly upload tạm khóa trên môi trường công khai cho đến khi có xác thực phía server.' }, { status: 503 });
   }
   const mime = request.headers.get('content-type')?.split(';')[0].toLowerCase();
-  const extension = mime === 'video/mp4' ? 'mp4' : mime === 'video/webm' ? 'webm' : null;
+  const extensions: Record<string, string> = {
+    'video/mp4': 'mp4',
+    'application/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/quicktime': 'mov',
+    'video/x-matroska': 'mkv',
+    'video/x-msvideo': 'avi',
+    'video/mpeg': 'mpeg',
+    'video/3gpp': '3gp',
+  };
+  const extension = mime ? extensions[mime] : null;
   const size = Number(request.headers.get('content-length'));
   if (!extension || !Number.isSafeInteger(size) || size < 1 || size > MAX_VIDEO_BYTES || !request.body) {
-    return NextResponse.json({ error: 'Chỉ nhận video MP4/WebM, tối đa 2 GB.' }, { status: 400 });
+    return NextResponse.json({ error: 'Chỉ nhận video MP4, MOV, MKV, AVI hoặc WebM, tối đa 2 GB.' }, { status: 400 });
   }
 
   try {

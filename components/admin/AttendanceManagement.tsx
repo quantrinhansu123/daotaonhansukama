@@ -357,7 +357,7 @@ export const AttendanceManagement: React.FC = () => {
         </div>
         {/* Only show settings button for admin, not for managers */}
         {isAdmin && (
-          <Button onClick={() => setShowSettingsModal(true)} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+          <Button onClick={() => setShowSettingsModal(true)} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
             <Settings size={18} /> {t('admin.attendance.settings')}
           </Button>
         )}
@@ -377,9 +377,9 @@ export const AttendanceManagement: React.FC = () => {
       )}
 
       {companySettings && isAdmin && (
-        <div className="bg-[#53cafd]/10 border border-[#53cafd]/30 rounded-lg p-4 backdrop-blur-md">
+        <div className="bg-[#1B7A1E]/10 border border-[#1B7A1E]/30 rounded-lg p-4 backdrop-blur-md">
           <div className="flex items-start gap-3">
-            <Wifi className="text-[#53cafd] mt-1" size={20} />
+            <Wifi className="text-[#1B7A1E] mt-1" size={20} />
             <div className="flex-1">
               <p className="font-medium text-white">{t('admin.attendance.companySettings')}</p>
               <p className="text-sm text-slate-300 mt-1">{t('admin.attendance.settingsSummary', { start: companySettings.workStartTime, end: companySettings.workEndTime, days: companySettings.workingDaysPerMonth, count: companySettings.allowedIPs?.length || 0 })}</p>
@@ -395,12 +395,12 @@ export const AttendanceManagement: React.FC = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input type="text" placeholder={t('admin.attendance.searchPlaceholder')} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white placeholder-slate-400" />
+              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400" />
           </div>
           <div className="flex items-center gap-2">
             <Calendar size={20} className="text-slate-400" />
             <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white" />
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white" />
           </div>
         </div>
 
@@ -411,7 +411,7 @@ export const AttendanceManagement: React.FC = () => {
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
             >
               <option value="all">{t('admin.attendance.all')}</option>
               {departments.map(dept => (
@@ -425,7 +425,7 @@ export const AttendanceManagement: React.FC = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
             >
               <option value="all">{t('admin.attendance.all')}</option>
               <option value="checked-in">{t('admin.attendance.checkedInToday')}</option>
@@ -440,7 +440,7 @@ export const AttendanceManagement: React.FC = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white [&>option]:bg-[#311898] [&>option]:text-white"
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
             >
               <option value="name">{t('admin.attendance.sortName')}</option>
               <option value="workDays">{t('admin.attendance.sortWorkDays')}</option>
@@ -476,7 +476,7 @@ export const AttendanceManagement: React.FC = () => {
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
           <p className="text-sm text-slate-300">{t('admin.salary.totalMonth')}</p>
-          <p className="text-2xl font-bold text-[#53cafd]">{filteredUsers.reduce((sum, u) => sum + (u.monthlySalary || 0), 0).toLocaleString(dateLocale)}{t('admin.attendance.currencySuffix')}</p>
+          <p className="text-2xl font-bold text-[#1B7A1E]">{filteredUsers.reduce((sum, u) => sum + (u.monthlySalary || 0), 0).toLocaleString(dateLocale)}{t('admin.attendance.currencySuffix')}</p>
         </div>
         <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
           <p className="text-sm text-slate-300">{t('admin.salary.calculated')}</p>
@@ -556,7 +556,7 @@ export const AttendanceManagement: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#53cafd]/20 text-[#53cafd]">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#1B7A1E]/20 text-[#1B7A1E]">
                       {attendanceRecords.filter(r => r.userId === user.uid).reduce((sum, r) => sum + (r.workHours || 0), 0).toFixed(1)} {t('common.hours')}
                     </span>
                   </td>
@@ -569,7 +569,7 @@ export const AttendanceManagement: React.FC = () => {
                   <td className="px-6 py-4 text-right text-green-400 font-bold">{(savedSalary?.finalSalary || salary?.finalSalary || 0).toLocaleString(dateLocale)}{t('admin.attendance.currencySuffix')}</td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <button onClick={() => setSelectedUserId(user.uid)} className="px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"><Eye size={16} /></button>
-                    {isAdmin && <Button onClick={() => handleSaveSalary(user.uid)} className="px-3 py-1.5 text-sm bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25" disabled={!salary}>{savedSalary ? t('common.update') : t('admin.salary.calculate')}</Button>}
+                    {isAdmin && <Button onClick={() => handleSaveSalary(user.uid)} className="px-3 py-1.5 text-sm bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25" disabled={!salary}>{savedSalary ? t('common.update') : t('admin.salary.calculate')}</Button>}
                   </td>
                 </tr>
               );
@@ -594,7 +594,7 @@ export const AttendanceManagement: React.FC = () => {
               <X size={24} />
               <span>{t('admin.attendance.closeEsc')}</span>
             </button>
-            <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="bg-[#0E3A16]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
               <div className="bg-[#5e3ed0]/20 p-4 text-white border-b border-white/10">
                 <h3 className="text-xl font-bold">{photoModal.userName}</h3>
                 <p className="text-sm text-slate-300">{photoModal.type === 'check-in' ? t('admin.attendance.checkIn') : t('admin.attendance.checkOut')} - {photoModal.time}</p>
@@ -660,7 +660,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#311898]/90 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <div className="bg-[#0E3A16]/90 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         <div className="flex justify-between items-center p-6 border-b border-white/10">
           <h3 className="text-xl font-bold text-white">{t('admin.attendance.companySettings')}</h3>
           <button onClick={onClose} className="text-slate-300 hover:text-white"><X size={24} /></button>
@@ -670,8 +670,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
           {/* IP Management */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold text-white flex items-center gap-2"><Wifi size={20} className="text-[#53cafd]" /> {t('admin.attendance.companyIpTitle')}</h4>
-              <button onClick={() => setShowBulkInput(!showBulkInput)} className="text-sm text-[#53cafd] hover:text-[#3db9f5] font-medium">
+              <h4 className="font-semibold text-white flex items-center gap-2"><Wifi size={20} className="text-[#1B7A1E]" /> {t('admin.attendance.companyIpTitle')}</h4>
+              <button onClick={() => setShowBulkInput(!showBulkInput)} className="text-sm text-[#1B7A1E] hover:text-[#156318] font-medium">
                 {showBulkInput ? t('common.close') : t('admin.attendance.addMultipleIp')}
               </button>
             </div>
@@ -683,7 +683,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
                   <p className="text-sm text-slate-300">{t('admin.attendance.currentIp')}</p>
                   <p className="font-mono text-lg font-bold text-white">{loadingIP ? t('common.loading') : currentIP || t('admin.attendance.unknownIp')}</p>
                 </div>
-                <Button onClick={() => handleAddIP(currentIP)} disabled={!currentIP || ipList.includes(currentIP)} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+                <Button onClick={() => handleAddIP(currentIP)} disabled={!currentIP || ipList.includes(currentIP)} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                   <Plus size={16} /> {t('admin.attendance.addThisIp')}
                 </Button>
               </div>
@@ -691,17 +691,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
 
             {/* Bulk IP Input */}
             {showBulkInput && (
-              <div className="bg-white/5 rounded-lg p-4 mb-4 border border-[#53cafd]/30">
+              <div className="bg-white/5 rounded-lg p-4 mb-4 border border-[#1B7A1E]/30">
                 <p className="text-sm font-medium text-slate-300 mb-2">{t('admin.attendance.bulkIpHint')}</p>
                 <textarea
                   value={bulkIPText}
                   onChange={(e) => setBulkIPText(e.target.value)}
                   placeholder="192.168.1.1&#10;203.0.113.50&#10;10.0.0.1"
                   rows={5}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white font-mono text-sm resize-none placeholder-slate-500"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white font-mono text-sm resize-none placeholder-slate-500"
                 />
                 <div className="flex justify-end mt-3">
-                  <Button onClick={handleBulkAdd} disabled={!bulkIPText.trim()} className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25">
+                  <Button onClick={handleBulkAdd} disabled={!bulkIPText.trim()} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
                     <Plus size={16} /> {t('admin.attendance.addAll')}
                   </Button>
                 </div>
@@ -720,7 +720,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center"><Wifi size={16} className="text-green-400" /></div>
                         <span className="font-mono text-white">{ip}</span>
-                        {ip === currentIP && <span className="text-xs bg-[#53cafd]/20 text-[#53cafd] px-2 py-0.5 rounded-full">{t('admin.attendance.currentIpBadge')}</span>}
+                        {ip === currentIP && <span className="text-xs bg-[#1B7A1E]/20 text-[#1B7A1E] px-2 py-0.5 rounded-full">{t('admin.attendance.currentIpBadge')}</span>}
                       </div>
                       <button onClick={() => handleRemoveIP(ip)} className="p-2 text-pink-500 hover:bg-white/10 rounded-lg"><Trash2 size={18} /></button>
                     </div>
@@ -732,35 +732,35 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
 
           {/* Work Hours */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <h4 className="font-semibold text-white mb-4 flex items-center gap-2"><Clock size={20} className="text-[#53cafd]" /> {t('admin.attendance.workHoursTitle')}</h4>
+            <h4 className="font-semibold text-white mb-4 flex items-center gap-2"><Clock size={20} className="text-[#1B7A1E]" /> {t('admin.attendance.workHoursTitle')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.attendance.workStartTime')}</label>
                 <input type="time" value={workStartTime} onChange={(e) => setWorkStartTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white text-lg" />
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white text-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.attendance.workEndTime')}</label>
                 <input type="time" value={workEndTime} onChange={(e) => setWorkEndTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white text-lg" />
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white text-lg" />
               </div>
             </div>
           </div>
 
           {/* Other Settings */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <h4 className="font-semibold text-white mb-4 flex items-center gap-2"><Settings size={20} className="text-[#53cafd]" /> {t('admin.attendance.otherSettings')}</h4>
+            <h4 className="font-semibold text-white mb-4 flex items-center gap-2"><Settings size={20} className="text-[#1B7A1E]" /> {t('admin.attendance.otherSettings')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.attendance.lateThresholdLabel')}</label>
                 <input type="number" min="0" max="60" value={lateThreshold} onChange={(e) => setLateThreshold(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white" />
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white" />
                 <p className="text-xs text-slate-400 mt-1">{t('admin.attendance.lateThresholdHint')}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.attendance.workingDaysPerMonthLabel')}</label>
                 <input type="number" min="1" max="31" value={workingDays} onChange={(e) => setWorkingDays(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] text-white" />
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white" />
                 <p className="text-xs text-slate-400 mt-1">{t('admin.attendance.workingDaysHint')}</p>
               </div>
             </div>
@@ -768,7 +768,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onSave, onClose
         </div>
 
         <div className="p-6 border-t border-white/10 flex gap-3">
-          <Button onClick={handleSubmit} className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#53cafd] hover:bg-[#3db9f5] border-none text-white shadow-[#53cafd]/25"><Save size={18} /> {t('admin.attendance.saveSettings')}</Button>
+          <Button onClick={handleSubmit} className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25"><Save size={18} /> {t('admin.attendance.saveSettings')}</Button>
           <button onClick={onClose} className="flex-1 px-4 py-3 border border-white/10 rounded-lg hover:bg-white/10 font-medium text-white transition-colors">{t('common.cancel')}</button>
         </div>
       </div>

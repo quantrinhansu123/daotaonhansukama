@@ -247,11 +247,11 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
   }
 
   return (
-    <div className="min-h-screen bg-[#311898] py-6">
+    <div className="min-h-screen bg-[#0E3A16] py-6">
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
         <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 mb-6 backdrop-blur-md">
-          <button onClick={onBack} className="text-[#53cafd] hover:text-[#3db9f5] mb-3 flex items-center gap-2 transition-colors">
+          <button onClick={onBack} className="text-[#1B7A1E] hover:text-[#156318] mb-3 flex items-center gap-2 transition-colors">
             ← {t("teacher.backToLessons")}
           </button>
           <div className="flex items-center justify-between">
@@ -262,12 +262,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
               <p className="text-slate-300">{t("teacher.lessonLabel")}: <span className="font-medium text-white">{lesson.title}</span></p>
               {questions.length > 0 && (
                 <p className="text-sm text-slate-400 mt-1">
-                  {t("teacher.totalQuestions")}: <span className="font-bold text-[#53cafd]">{questions.length}</span>
-                  {lesson.quizDuration && <span> | {t("teacher.timeLabel")}: <span className="font-bold text-[#53cafd]">{lesson.quizDuration} {t("teacher.minutesUnit")}</span></span>}
+                  {t("teacher.totalQuestions")}: <span className="font-bold text-[#1B7A1E]">{questions.length}</span>
+                  {lesson.quizDuration && <span> | {t("teacher.timeLabel")}: <span className="font-bold text-[#1B7A1E]">{lesson.quizDuration} {t("teacher.minutesUnit")}</span></span>}
                 </p>
               )}
               {isReadOnly && (
-                <p className="text-sm text-[#53cafd] mt-2">
+                <p className="text-sm text-[#1B7A1E] mt-2">
                   {t("teacher.readOnlyMode")}
                 </p>
               )}
@@ -277,7 +277,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                 <>
                   <Button
                     onClick={() => setShowResults(true)}
-                    className="flex items-center gap-2 bg-[#53cafd] hover:bg-[#3db9f5] shadow-lg shadow-[#53cafd]/25 text-white border-none"
+                    className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] shadow-lg shadow-[#1B7A1E]/25 text-white border-none"
                   >
                     <BarChart3 size={18} />
                     {t("teacher.viewResults")}
@@ -327,10 +327,10 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                   <p className="text-slate-300">{t("teacher.setCorrectAnswersHint")}</p>
                   <div className="mt-3 flex items-center gap-4 text-sm">
                     <span className="text-slate-300">{t("teacher.timeLabel")}:</span>
-                    <span className="font-bold text-[#53cafd]">{bulkData.duration} {t("teacher.minutesUnit")}</span>
+                    <span className="font-bold text-[#1B7A1E]">{bulkData.duration} {t("teacher.minutesUnit")}</span>
                     <span className="text-slate-500">|</span>
                     <span className="text-slate-300">{t("teacher.totalQuestionsCount")}:</span>
-                    <span className="font-bold text-[#53cafd]">{correctAnswers.length} {t("teacher.questionsUnit")}</span>
+                    <span className="font-bold text-[#1B7A1E]">{correctAnswers.length} {t("teacher.questionsUnit")}</span>
                   </div>
                 </div>
 
@@ -345,7 +345,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                           const newAnswers = correctAnswers.map(() => optIndex);
                           setCorrectAnswers(newAnswers);
                         }}
-                        className="w-10 h-10 rounded-lg font-bold text-sm bg-white/10 border border-white/20 hover:border-[#53cafd] hover:bg-[#53cafd]/20 transition-all shadow-sm text-white"
+                        className="w-10 h-10 rounded-lg font-bold text-sm bg-white/10 border border-white/20 hover:border-[#1B7A1E] hover:bg-[#1B7A1E]/20 transition-all shadow-sm text-white"
                         title={t("teacher.setAllTo", { letter: String.fromCharCode(65 + optIndex) })}
                       >
                         {String.fromCharCode(65 + optIndex)}
@@ -412,13 +412,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
             <div className="mb-6 bg-white/5 rounded-lg p-4 border border-white/10">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-slate-300">{t("teacher.completionProgress")}</span>
-                <span className="text-sm font-bold text-[#53cafd]">
+                <span className="text-sm font-bold text-[#1B7A1E]">
                   {correctAnswers.filter(a => a !== undefined).length}/{correctAnswers.length}
                 </span>
               </div>
               <div className="w-full bg-white/10 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-purple-500 to-[#53cafd] h-2 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-purple-500 to-[#1B7A1E] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${(correctAnswers.filter(a => a !== undefined).length / correctAnswers.length) * 100}%` }}
                 />
               </div>
@@ -451,7 +451,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
               const isEmpty = !question.question && question.options.every(opt => !opt);
 
               return (
-                <div key={question.id} className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 hover:border-[#53cafd]/50 transition-all backdrop-blur-md">
+                <div key={question.id} className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 hover:border-[#1B7A1E]/50 transition-all backdrop-blur-md">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-lg shadow-purple-500/30">
                       {index + 1}
@@ -479,7 +479,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                         <div>
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="text-lg font-bold text-white">{question.question}</h3>
-                            <span className="px-2 py-1 bg-[#53cafd]/20 text-[#53cafd] text-xs font-medium rounded border border-[#53cafd]/30">
+                            <span className="px-2 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] text-xs font-medium rounded border border-[#1B7A1E]/30">
                               {t("teacher.hasContent")}
                             </span>
                           </div>
@@ -537,7 +537,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     onChange={(e) => setBulkData({ ...bulkData, count: Number(e.target.value) })}
                     min={1}
                     max={100}
-                    className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:border-transparent bg-white/5 text-lg font-bold text-center text-white"
+                    className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:border-transparent bg-white/5 text-lg font-bold text-center text-white"
                   />
                   <p className="text-xs text-slate-400 mt-2 text-center">{t("teacher.questionCountHint")}</p>
                 </div>
@@ -582,7 +582,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                     onChange={(e) => setBulkData({ ...bulkData, duration: Number(e.target.value) })}
                     min={1}
                     max={180}
-                    className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:border-transparent bg-white/5 text-lg font-bold text-center text-white"
+                    className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:border-transparent bg-white/5 text-lg font-bold text-center text-white"
                   />
                   <p className="text-xs text-slate-400 mt-2 text-center">{t("teacher.quizDurationHint")}</p>
                 </div>
@@ -693,7 +693,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                             setBulkForms(newForms);
                           }}
                           rows={2}
-                          className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#53cafd] focus:border-transparent bg-white/5 text-white placeholder-slate-500"
+                          className="w-full px-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] focus:border-transparent bg-white/5 text-white placeholder-slate-500"
                           placeholder={t("teacher.questionPlaceholder")}
                         />
                       </div>
@@ -731,7 +731,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ lesson, onBack, 
                                   newForms[formIndex].options[optIndex] = e.target.value;
                                   setBulkForms(newForms);
                                 }}
-                                className="flex-1 px-3 py-2 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#53cafd] bg-transparent text-sm text-white placeholder-slate-500"
+                                className="flex-1 px-3 py-2 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] bg-transparent text-sm text-white placeholder-slate-500"
                                 placeholder={t("teacher.optionPlaceholder", { letter: String.fromCharCode(65 + optIndex) })}
                               />
                             </div>
