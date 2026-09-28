@@ -307,22 +307,21 @@ export default function StudentPage() {
               </section>
 
               <div id="course-list">
-                <CourseEnrollment />
+                <CourseEnrollment showHero={false} />
               </div>
             </>
           )}
 
           {(section === 'courses' || section === 'programs') && (
             <div id="course-list">
-              <div className="mb-4">
-                <h1 className="m-0 text-[24px] font-bold text-[#111b38]">
-                  {section === 'programs' ? t('student.academy.navPrograms') : t('student.academy.courses')}
-                </h1>
-                <p className="mt-1 text-[13px] text-[#63708a]">
-                  {section === 'programs' ? t('student.deptCoursesHint') : t('student.yourCourses')}
-                </p>
-              </div>
-              <CourseEnrollment />
+              <CourseEnrollment
+                showHero
+                heading={
+                  section === 'programs'
+                    ? t('student.academy.navPrograms').toUpperCase()
+                    : undefined
+                }
+              />
             </div>
           )}
 
