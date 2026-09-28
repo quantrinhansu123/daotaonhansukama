@@ -25,13 +25,11 @@ export async function POST(request: NextRequest) {
     const streamCdnUrl = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
     const storageCdnUrl = process.env.NEXT_PUBLIC_BUNNY_STORAGE_CDN_URL;
 
-    // Debug: Log all config values (without exposing full password)
+    // Log only whether configuration is present; never log any key bytes.
     console.log('[Upload API] Config check:', {
       hasStorageZone: !!storageZone,
       storageZone: storageZone,
       hasStoragePassword: !!storagePassword,
-      passwordLength: storagePassword?.length || 0,
-      passwordFirst8: storagePassword?.substring(0, 8) || 'missing',
       hasStorageHostname: !!storageHostname,
       storageHostname: storageHostname,
     });
@@ -74,9 +72,6 @@ export async function POST(request: NextRequest) {
     console.log('[Upload API] Path:', path);
     console.log('[Upload API] File type:', file.type);
     console.log('[Upload API] File size:', buffer.length, 'bytes');
-    console.log('[Upload API] AccessKey length:', trimmedPassword.length);
-    console.log('[Upload API] AccessKey (first 12 chars):', trimmedPassword.substring(0, 12) + '...');
-    console.log('[Upload API] AccessKey (last 8 chars):', '...' + trimmedPassword.substring(trimmedPassword.length - 8));
     
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',

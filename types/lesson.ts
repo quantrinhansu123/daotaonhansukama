@@ -4,8 +4,9 @@ export interface Lesson {
   title: string;
   description: string;
   order: number;
-  videoId?: string; // Bunny.net video ID
-  videoUrl?: string; // Bunny.net video URL
+  videoId?: string; // Mã video cũ, giữ để biết video nào cần tải lại
+  videoUrl?: string; // URL video cũ
+  videoKey?: string; // Object key của video trên CloudFly
   duration?: number; // seconds
   documentUrl?: string; // URL tài liệu (PDF, DOC, etc)
   documentName?: string;

@@ -10,7 +10,8 @@ export interface Course {
   price: number;
   thumbnail: string;
   banner?: string; // Banner ảnh hiển thị ở đầu trang chi tiết khóa học
-  demoVideoId?: string; // Bunny Stream video ID cho video demo
+  demoVideoId?: string; // Mã video cũ, giữ để biết video nào cần tải lại
+  demoVideoKey?: string; // Object key của video demo trên CloudFly
   departmentId?: string; // Phòng ban được xem khóa học này ('all' = chung, undefined = không ai, hoặc ID phòng ban cụ thể)
   students: string[]; // Danh sách UID học viên được tự động cập nhật dựa trên departmentId
   pendingStudents?: string[]; // Danh sách UID học viên chờ phê duyệt

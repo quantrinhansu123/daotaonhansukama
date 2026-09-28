@@ -6,17 +6,16 @@ import { collection, getDocs, query, where, doc, runTransaction } from 'firebase
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
 import { Lesson, QuizResult } from '@/types/lesson';
-import type Hls from 'hls.js';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
-import { BunnyVideoPlayer } from '@/components/shared/BunnyVideoPlayer';
+import { VideoPlayer } from '@/components/shared/VideoPlayer';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { bunnyHlsProxyUrl, proxyBunnyUrl } from '@/lib/bunny-media';
-import { preferSharpLevel, sharpHlsConfig } from '@/lib/hls-playback';
+import { proxyBunnyUrl } from '@/lib/bunny-media';
+import { cloudflyVideoUrl } from '@/lib/cloudfly-video';
 import { getLessonCompletionPercent, getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
 
 interface CourseViewerProps {
@@ -55,11 +54,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const toastTimer = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastProgressSaveAt = useRef(0);
-  const hlsRef = useRef<Hls | null>(null);
   const attentionCheckTimer = useRef<NodeJS.Timeout | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
-
-  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
@@ -96,17 +92,13 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   }, [lessons, selectedTag]);
 
   useEffect(() => {
-    if (playerOpen && selectedLesson && (selectedLesson.videoId || selectedLesson.videoUrl) && progressLoaded && viewMode === 'video') {
+    if (playerOpen && selectedLesson?.videoKey && progressLoaded && viewMode === 'video') {
       lastProgressSaveAt.current = 0;
       const timer = window.setTimeout(() => {
         void initializeVideo();
       }, 60);
       return () => {
         window.clearTimeout(timer);
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
         if (attentionCheckTimer.current) {
           clearTimeout(attentionCheckTimer.current);
         }
@@ -114,15 +106,11 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     }
 
     return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
       if (attentionCheckTimer.current) {
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [selectedLesson?.id, progressLoaded, playerOpen, viewMode]);
+  }, [selectedLesson?.id, selectedLesson?.videoKey, progressLoaded, playerOpen, viewMode]);
 
   // Anti-cheat: Detect tab visibility change (staff only)
   useEffect(() => {
@@ -183,67 +171,17 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     };
   }, [isStaff, selectedLesson?.id, playerOpen]);
 
-  const initializeVideo = async () => {
-    if (!selectedLesson || !videoRef.current) return;
-
-    const videoUrl = selectedLesson.videoId
-      ? bunnyHlsProxyUrl(selectedLesson.videoId)
-      : proxyBunnyUrl(selectedLesson.videoUrl || '');
+  const initializeVideo = () => {
+    if (!selectedLesson?.videoKey || !videoRef.current) return;
+    const video = videoRef.current;
     const savedProgress = progress[selectedLesson.id];
-
-    console.log('🎬 Initializing video for lesson:', selectedLesson.title);
-    console.log('📊 Saved progress:', savedProgress);
-
-    // Check if HLS is supported
-    if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS support (Safari)
-      videoRef.current.src = videoUrl;
-
-      // Set start time after video loads
-      if (savedProgress && savedProgress.watchedSeconds > 5) {
-        console.log('⏩ Will seek to:', savedProgress.watchedSeconds, 'seconds');
-        videoRef.current.addEventListener('loadedmetadata', () => {
-          if (videoRef.current) {
-            console.log('✅ Seeking now to:', savedProgress.watchedSeconds);
-            videoRef.current.currentTime = savedProgress.watchedSeconds;
-          }
-        }, { once: true });
-      }
-    } else {
-      // Use HLS.js for other browsers
-      const Hls = (await import('hls.js')).default;
-
-      if (Hls.isSupported()) {
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-        }
-
-        const hls = new Hls(sharpHlsConfig);
-
-        hls.loadSource(videoUrl);
-        hls.attachMedia(videoRef.current);
-        hlsRef.current = hls;
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          preferSharpLevel(hls);
-          console.log('📺 HLS manifest parsed', hls.levels.map(level => level.height));
-          // Video is ready, seek to saved position if > 5 seconds
-          if (savedProgress && savedProgress.watchedSeconds > 5 && videoRef.current) {
-            console.log('⏩ Will seek to:', savedProgress.watchedSeconds, 'seconds');
-            setTimeout(() => {
-              if (videoRef.current) {
-                console.log('✅ Seeking now to:', savedProgress.watchedSeconds);
-                videoRef.current.currentTime = savedProgress.watchedSeconds;
-              }
-            }, 500);
-          }
-        });
-
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          console.error('❌ HLS error:', data);
-        });
-      }
+    if (savedProgress && savedProgress.watchedSeconds > 5) {
+      video.addEventListener('loadedmetadata', () => {
+        video.currentTime = savedProgress.watchedSeconds;
+      }, { once: true });
     }
+    video.src = cloudflyVideoUrl(selectedLesson.videoKey);
+    video.load();
   };
 
   const loadUserCourses = async () => {
@@ -289,7 +227,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       if (lessonsData.length > 0) {
         setSelectedLesson(lessonsData[0]);
         // Set view mode based on what's available
-        if (lessonsData[0].videoId) {
+        if (lessonsData[0].videoKey) {
           setViewMode('video');
         } else if (lessonsData[0].documentUrl) {
           setViewMode('document');
@@ -554,9 +492,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     );
   }
 
-  const lessonStreamUrl = (lesson: Lesson) =>
-    lesson.videoId ? bunnyHlsProxyUrl(lesson.videoId) : proxyBunnyUrl(lesson.videoUrl || '');
-
   const lessonIndex = (lesson: Lesson) => filteredLessons.findIndex(item => item.id === lesson.id);
   const completedCount = lessons.filter(lesson => progress[lesson.id]?.completed).length;
   const percent = lessons.length ? Math.round((completedCount / lessons.length) * 100) : 0;
@@ -570,7 +505,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     }
     setSelectedLesson(lesson);
     setMobileNav(false);
-    if (lesson.videoId || lesson.videoUrl) {
+    if (!lesson.videoKey && (lesson.videoId || lesson.videoUrl)) {
+      showToast('Video cũ cần được tải lại lên CloudFly.');
+    }
+    if (lesson.videoKey) {
       setViewMode('video');
       setTakingQuiz(false);
       setPlayerOpen(true);
@@ -597,17 +535,17 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   };
 
   const handleIntro = () => {
-    if (currentCourse.demoVideoId) {
+    if (currentCourse.demoVideoKey) {
       setPlayerOpen(false);
       setIntroOpen(true);
       return;
     }
-    const firstVideo = filteredLessons.find(lesson => lesson.videoId || lesson.videoUrl);
+    const firstVideo = filteredLessons.find(lesson => lesson.videoKey);
     if (firstVideo) {
       openLesson(firstVideo, lessonIndex(firstVideo));
       return;
     }
-    showToast(t('student.academy.introMissing'));
+    showToast(currentCourse.demoVideoId ? 'Video giới thiệu cũ cần được tải lại lên CloudFly.' : t('student.academy.introMissing'));
   };
 
   const handleMarkComplete = () => {
@@ -619,7 +557,11 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       showToast(t('student.academy.alreadyComplete'));
       return;
     }
-    if (selectedLesson.videoId || selectedLesson.videoUrl) {
+    if (!selectedLesson.videoKey && (selectedLesson.videoId || selectedLesson.videoUrl)) {
+      showToast('Video cũ cần được tải lại lên CloudFly.');
+      return;
+    }
+    if (selectedLesson.videoKey) {
       setViewMode('video');
       setPlayerOpen(true);
     }
@@ -1169,7 +1111,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setPlayerOpen(false)} aria-label={t('student.academy.close')}>×</button>
             <h2 className="mb-2 mr-8 text-[20px] font-bold">{selectedLesson.title}</h2>
             <p className="mb-3 text-[13px] text-[#5a6680]">{selectedLesson.description}</p>
-            {(selectedLesson.videoId || selectedLesson.videoUrl) ? (
+            {selectedLesson.videoKey ? (
               <div ref={videoContainerRef} className="relative aspect-video overflow-hidden rounded-md bg-black">
                 <video
                   ref={videoRef}
@@ -1184,7 +1126,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   onDoubleClick={handleFullscreen}
                   style={isStaff ? { pointerEvents: 'none' } : undefined}
                 >
-                  <source src={lessonStreamUrl(selectedLesson)} type="application/x-mpegURL" />
                   {t('student.videoNotSupported')}
                 </video>
                 {isStaff && (
@@ -1246,12 +1187,12 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         </div>
       )}
 
-      {introOpen && currentCourse.demoVideoId && (
+      {introOpen && currentCourse.demoVideoKey && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setIntroOpen(false)}>
           <div className="relative w-full max-w-[760px] rounded-[10px] bg-white p-5" onClick={event => event.stopPropagation()}>
             <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setIntroOpen(false)}>×</button>
             <h2 className="mb-3 mr-8 text-[20px] font-bold">{t('student.introVideo')}</h2>
-            <BunnyVideoPlayer videoId={currentCourse.demoVideoId} cdnHostname={CDN_HOSTNAME} className="aspect-video w-full overflow-hidden rounded-md bg-black" />
+            <VideoPlayer videoKey={currentCourse.demoVideoKey} className="aspect-video w-full overflow-hidden rounded-md bg-black" />
           </div>
         </div>
       )}

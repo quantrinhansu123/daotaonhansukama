@@ -11,10 +11,8 @@ import { QuizManagement } from './QuizManagement';
 import { DocumentUploader } from './DocumentUploader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { uploadVideoToBunny } from '@/lib/bunny-upload';
-import { BunnyVideoPlayer } from '@/components/shared/BunnyVideoPlayer';
-
-const BUNNY_VIDEO_ID_RE = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+import { uploadVideoToCloudFly } from '@/lib/cloudfly-video';
+import { VideoPlayer } from '@/components/shared/VideoPlayer';
 
 interface LessonManagementProps {
   course: Course;
@@ -43,8 +41,6 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
   // Check if user can manage lessons (admin or course teacher)
   const canManage = currentUser?.role === 'admin' || currentUser?.uid === course.teacherId;
-
-  const CDN_HOSTNAME = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME;
 
   useEffect(() => {
     loadLessons();
@@ -148,13 +144,6 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     }
 
     try {
-      // Delete video from Bunny.net if exists
-      if (lesson.videoId) {
-        await fetch(`/api/bunny/video/${lesson.videoId}`, {
-          method: 'DELETE'
-        });
-      }
-
       // Delete lesson from Firestore
       await deleteDoc(doc(db, 'lessons', lesson.id));
       alert(t('teacher.deleteLessonSuccess'));
@@ -166,21 +155,19 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   };
 
   const handleVideoUpload = async (lesson: Lesson, file: File) => {
-    let uploadedVideoId: string | undefined;
+    let uploadedVideoKey: string | undefined;
     try {
-      if (!CDN_HOSTNAME) {
-        throw new Error(t('teacher.missingBunnyConfig'));
-      }
       setUploading(true);
       setUploadingLessonId(lesson.id);
       setUploadProgress(0);
-      uploadedVideoId = await uploadVideoToBunny(file, lesson.title, setUploadProgress);
+      uploadedVideoKey = await uploadVideoToCloudFly(file, setUploadProgress);
 
       // Save the new link before reporting success. This also replaces a legacy video link.
       const lessonRef = doc(db, 'lessons', lesson.id);
       await updateDoc(lessonRef, {
-        videoId: uploadedVideoId,
-        videoUrl: `https://${CDN_HOSTNAME}/${uploadedVideoId}/playlist.m3u8`,
+        videoKey: uploadedVideoKey,
+        videoId: deleteField(),
+        videoUrl: deleteField(),
         duration: deleteField(),
         updatedAt: new Date()
       });
@@ -189,8 +176,8 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
       alert(t('teacher.uploadVideoSuccess'));
     } catch (error) {
       console.error('[LessonManagement] Error uploading video:', error);
-      const errorMessage = uploadedVideoId
-        ? t('teacher.videoUploadedButNotSaved', { id: uploadedVideoId })
+      const errorMessage = uploadedVideoKey
+        ? `Video đã lên CloudFly nhưng chưa lưu vào bài học. Mã tệp: ${uploadedVideoKey}`
         : error instanceof Error ? error.message : t('teacher.uploadVideoUnknownError');
       alert(t("teacher.uploadVideoError", { message: errorMessage }));
     } finally {
@@ -199,66 +186,17 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     }
   };
 
-  const handleAttachExistingVideo = async (lesson: Lesson) => {
-    if (!CDN_HOSTNAME) {
-      alert(t('teacher.missingBunnyConfig'));
-      return;
-    }
-    const videoId = prompt(t('teacher.enterBunnyVideoId'))?.trim();
-    if (!videoId) return;
-    if (!BUNNY_VIDEO_ID_RE.test(videoId)) {
-      alert(t('teacher.invalidBunnyVideoId'));
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/bunny/video/${encodeURIComponent(videoId)}`, { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error(t('teacher.videoNotInCurrentLibrary'));
-      }
-      const video = await response.json();
-      if (!confirm(t('teacher.confirmAttachVideo', { title: video.title || videoId, lesson: lesson.title }))) {
-        return;
-      }
-
-      await updateDoc(doc(db, 'lessons', lesson.id), {
-        videoId,
-        videoUrl: `https://${CDN_HOSTNAME}/${videoId}/playlist.m3u8`,
-        duration: deleteField(),
-        updatedAt: new Date()
-      });
-      await loadLessons();
-      alert(t('teacher.attachVideoSuccess'));
-    } catch (error) {
-      console.error('[LessonManagement] Error attaching video:', error);
-      alert(t('teacher.attachVideoError', { message: error instanceof Error ? error.message : '' }));
-    }
-  };
-
   const handleVideoDelete = async (lesson: Lesson) => {
-    if (!confirm(t('teacher.confirmDeleteVideo'))) {
+    if (!confirm('Gỡ video khỏi bài học? Tệp trên CloudFly vẫn được giữ để tránh mất dữ liệu.')) {
       return;
     }
 
     try {
       setLoading(true);
-      let missingInBunny = false;
-      if (lesson.videoId) {
-        const response = await fetch(`/api/bunny/video/${encodeURIComponent(lesson.videoId)}`, {
-          method: 'DELETE'
-        });
-        if (response.status === 404) {
-          missingInBunny = true;
-          if (!confirm(t('teacher.confirmDetachMissingVideo'))) return;
-        } else if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || t('teacher.deleteVideoError'));
-        }
-      }
-
       // Update lesson in Firestore to remove video info
       const lessonRef = doc(db, 'lessons', lesson.id);
       await updateDoc(lessonRef, {
+        videoKey: deleteField(),
         videoId: deleteField(),
         videoUrl: deleteField(),
         duration: deleteField(),
@@ -266,7 +204,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
       });
 
       await loadLessons();
-      alert(t(missingInBunny ? 'teacher.detachedMissingVideo' : 'teacher.deleteVideoSuccess'));
+      alert('Đã gỡ video khỏi bài học. Tệp trên CloudFly vẫn được giữ để tránh mất dữ liệu.');
     } catch (error) {
       console.error('Error deleting video:', error);
       alert(`${t('teacher.deleteVideoError')}: ${error instanceof Error ? error.message : ''}`);
@@ -415,11 +353,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <h4 className="font-semibold text-white text-xs">{t("teacher.video")}</h4>
                       </div>
 
-                      {lesson.videoId ? (
+                      {lesson.videoKey || lesson.videoId || lesson.videoUrl ? (
                         <div className="space-y-2">
-                          <div className={`flex items-center gap-1.5 text-xs font-medium ${BUNNY_VIDEO_ID_RE.test(lesson.videoId) ? 'text-green-400' : 'text-amber-300'}`}>
+                          <div className={`flex items-center gap-1.5 text-xs font-medium ${lesson.videoKey ? 'text-green-400' : 'text-amber-300'}`}>
                             <CheckCircle size={14} />
-                            {t(BUNNY_VIDEO_ID_RE.test(lesson.videoId) ? 'teacher.uploaded' : 'teacher.legacyVideoNotice')}
+                            {lesson.videoKey ? 'CloudFly' : 'Video cũ cần tải lại lên CloudFly'}
                           </div>
                           {lesson.duration && (
                             <p className="text-xs text-slate-400 flex items-center gap-1">
@@ -428,13 +366,13 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                             </p>
                           )}
                           <div className="flex gap-1.5">
-                            <button
+                            {lesson.videoKey && <button
                               onClick={() => setPreviewingLesson(lesson)}
                               className="flex-1 px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md hover:bg-green-500/30 text-xs font-medium flex items-center justify-center gap-1 transition-colors"
                             >
                               <Play size={12} />
                               {t("teacher.view")}
-                            </button>
+                            </button>}
                             {canManage && (
                               <button
                                 onClick={() => handleVideoDelete(lesson)}
@@ -450,7 +388,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                               <label className="cursor-pointer px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md text-xs font-medium flex items-center gap-1">
                                 <input
                                   type="file"
-                                  accept="video/*"
+                                  accept="video/mp4,video/webm"
                                   className="hidden"
                                   disabled={uploading}
                                   onChange={(e) => {
@@ -462,14 +400,6 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                                 <Upload size={12} />
                                 {uploadingLessonId === lesson.id ? `${uploadProgress}%` : t('teacher.replaceVideo')}
                               </label>
-                              <button
-                                type="button"
-                                onClick={() => void handleAttachExistingVideo(lesson)}
-                                disabled={uploading}
-                                className="px-2 py-1.5 bg-blue-500/20 text-blue-300 border border-blue-500/50 rounded-md text-xs font-medium"
-                              >
-                                {t('teacher.attachExistingVideo')}
-                              </button>
                             </div>
                           )}
                         </div>
@@ -478,7 +408,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <label className="cursor-pointer block">
                           <input
                             type="file"
-                            accept="video/*"
+                            accept="video/mp4,video/webm"
                             className="hidden"
                             onChange={(e) => {
                               const file = e.target.files?.[0];
@@ -492,14 +422,6 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                             {uploadingLessonId === lesson.id ? `${uploadProgress}%` : t("common.upload")}
                           </div>
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => void handleAttachExistingVideo(lesson)}
-                          disabled={uploading}
-                          className="w-full px-2 py-1.5 bg-blue-500/20 text-blue-300 border border-blue-500/50 rounded-md text-xs font-medium"
-                        >
-                          {t('teacher.attachExistingVideo')}
-                        </button>
                         </div>
                       ) : (
                         <p className="text-xs text-slate-500 italic">{t("teacher.noVideo")}</p>
@@ -699,7 +621,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
         )}
 
         {/* Video Preview Modal */}
-        {previewingLesson && previewingLesson.videoId && (
+        {previewingLesson?.videoKey && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-[#311898] border border-white/10 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-white/10 flex items-center justify-between">
@@ -716,10 +638,8 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
               </div>
               <div className="p-6">
                 <div className="bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                  <BunnyVideoPlayer
-                    videoId={previewingLesson.videoId}
-                    videoUrl={previewingLesson.videoUrl}
-                    cdnHostname={CDN_HOSTNAME}
+                  <VideoPlayer
+                    videoKey={previewingLesson.videoKey}
                     autoPlay
                     className="w-full h-full"
                   />

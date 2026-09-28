@@ -50,7 +50,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
         </div>
 
-        {course.demoVideoId && (
+        {course.demoVideoKey && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
             <div className="rounded-full bg-white p-3 text-[#0759e8]">
               <Play className="h-6 w-6" fill="currentColor" />

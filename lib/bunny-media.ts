@@ -31,8 +31,3 @@ export function proxyBunnyUrl(url?: string | null): string {
 
   return url;
 }
-
-/** HLS playlist qua proxy (không phụ thuộc DNS trình duyệt) */
-export function bunnyHlsProxyUrl(videoId: string): string {
-  return `/api/bunny/cdn/${videoId}/playlist.m3u8`;
-}

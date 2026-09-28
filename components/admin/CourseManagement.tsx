@@ -8,7 +8,7 @@ import { Search, Plus, Edit2, Trash2, X, Save, BookOpen, Users, Clock, Layers, S
 import { Button } from '@/components/Button';
 import { CourseDetailPage } from './CourseDetailPage';
 import { BunnyImageUpload } from '@/components/shared/BunnyImageUpload';
-import { BunnyVideoUpload } from '@/components/shared/BunnyVideoUpload';
+import { CloudFlyVideoUpload } from '@/components/shared/CloudFlyVideoUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
@@ -41,6 +41,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
     thumbnail: '',
     banner: '',
     demoVideoId: '',
+    demoVideoKey: '',
     departmentId: '',
     projects: [] as string[]
   });
@@ -185,6 +186,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       thumbnail: '',
       banner: '',
       demoVideoId: '',
+      demoVideoKey: '',
       departmentId: defaultDepartmentId || '',
       projects: []
     });
@@ -203,6 +205,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       thumbnail: course.thumbnail || '',
       banner: course.banner || '',
       demoVideoId: course.demoVideoId || '',
+      demoVideoKey: course.demoVideoKey || '',
       departmentId: course.departmentId || '',
       projects: Array.isArray(course.projects) ? course.projects : []
     });
@@ -313,6 +316,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         // Optional fields - explicitly set to null if empty
         updateData.banner = formData.banner && formData.banner.trim() !== '' ? String(formData.banner) : null;
         updateData.demoVideoId = formData.demoVideoId && formData.demoVideoId.trim() !== '' ? String(formData.demoVideoId) : null;
+        updateData.demoVideoKey = formData.demoVideoKey && formData.demoVideoKey.trim() !== '' ? String(formData.demoVideoKey) : null;
         updateData.departmentId = formData.departmentId && formData.departmentId.trim() !== '' ? String(formData.departmentId) : null;
         
         // Final cleanup - remove any undefined that might have slipped through
@@ -353,6 +357,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         // Optional fields
         newCourse.banner = formData.banner && formData.banner.trim() !== '' ? String(formData.banner) : null;
         newCourse.demoVideoId = formData.demoVideoId && formData.demoVideoId.trim() !== '' ? String(formData.demoVideoId) : null;
+        newCourse.demoVideoKey = formData.demoVideoKey && formData.demoVideoKey.trim() !== '' ? String(formData.demoVideoKey) : null;
         newCourse.departmentId = formData.departmentId && formData.departmentId.trim() !== '' ? String(formData.departmentId) : null;
         
         // Final cleanup
@@ -990,10 +995,11 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <BunnyVideoUpload
+                  <CloudFlyVideoUpload
                     label={t('admin.courses.videoDemoLabel')}
-                    currentVideoId={formData.demoVideoId}
-                    onUploadComplete={(videoId) => setFormData(prev => ({ ...prev, demoVideoId: videoId }))}
+                    currentVideoKey={formData.demoVideoKey}
+                    currentLegacyVideoId={formData.demoVideoId}
+                    onUploadComplete={(key) => setFormData(prev => ({ ...prev, demoVideoKey: key, demoVideoId: key ? '' : prev.demoVideoId }))}
                     onUploadStateChange={setUploadingVideo}
                     variant="dark"
                   />

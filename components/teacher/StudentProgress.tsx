@@ -84,7 +84,7 @@ export const StudentProgress: React.FC<StudentProgressProps> = ({ course, onClos
     const studentProgress = progress[studentId] || [];
     const totalWatched = studentProgress.reduce((sum, p) => sum + (p.viewedSeconds ?? p.watchedSeconds), 0);
     const completedLessons = studentProgress.filter(p => p.completed).length;
-    const totalLessons = lessons.filter(l => l.videoId).length;
+    const totalLessons = lessons.filter(l => l.videoKey).length;
     const completionRate = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
     return {
@@ -179,7 +179,7 @@ export const StudentProgress: React.FC<StudentProgressProps> = ({ course, onClos
                       {t('teacher.viewLessonDetails')}
                     </summary>
                     <div className="mt-3 space-y-2">
-                      {lessons.filter(l => l.videoId).map((lesson) => {
+                      {lessons.filter(l => l.videoKey).map((lesson) => {
                         const lessonProgress = studentProgress.find(p => p.lessonId === lesson.id);
                         const watchedPercent = lessonProgress
                           ? ((lessonProgress.viewedSeconds ?? lessonProgress.watchedSeconds) / lessonProgress.totalSeconds) * 100
