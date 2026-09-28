@@ -14,6 +14,9 @@ export function getCloudFlyStorage() {
     region: process.env.CLOUDFLY_S3_REGION || 'hn',
     forcePathStyle: true,
     credentials: { accessKeyId, secretAccessKey },
+    // CloudFly từ chối chữ ký có checksum mặc định của AWS SDK mới.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
   return { client, bucket };
 }
