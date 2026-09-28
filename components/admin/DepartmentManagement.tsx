@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, deleteDoc } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Building2, Plus, Edit2, Trash2, X, Save, Users, Search, Shield } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Department } from '@/types/department';

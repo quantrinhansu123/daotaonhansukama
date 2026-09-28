@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, deleteField } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import React, { useState, useEffect, useRef } from 'react';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, deleteField } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
 import { Lesson } from '@/types/lesson';
 import { Plus, Edit2, Trash2, X, Save, Upload, Play, Clock, FileText, HelpCircle, CheckCircle } from 'lucide-react';
@@ -11,7 +11,7 @@ import { QuizManagement } from './QuizManagement';
 import { DocumentUploader } from './DocumentUploader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { uploadVideoToCloudFly } from '@/lib/cloudfly-video';
+import { useVideoUploads } from '@/contexts/VideoUploadContext';
 import { VideoPlayer } from '@/components/shared/VideoPlayer';
 
 interface LessonManagementProps {
@@ -26,9 +26,10 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadingLessonId, setUploadingLessonId] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const { jobs, startUpload } = useVideoUploads();
+  const visibleCourseId = useRef(course.id);
+  const mounted = useRef(false);
+  visibleCourseId.current = course.id;
   const [managingQuiz, setManagingQuiz] = useState<Lesson | null>(null);
   const [previewingLesson, setPreviewingLesson] = useState<Lesson | null>(null);
   const [formData, setFormData] = useState({
@@ -41,14 +42,22 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
   // Check if user can manage lessons (admin or course teacher)
   const canManage = currentUser?.role === 'admin' || currentUser?.uid === course.teacherId;
+  const activeLessonJob = (lessonId: string) => jobs.find(job =>
+    job.targetId === `lesson:${lessonId}` && ['queued', 'uploading', 'finalizing', 'saving'].includes(job.status)
+  );
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   useEffect(() => {
     loadLessons();
   }, [course.id]);
 
-  const loadLessons = async () => {
+  const loadLessons = async (quiet = false) => {
     try {
-      setLoading(true);
+      if (!quiet) setLoading(true);
       const lessonsRef = collection(db, 'lessons');
       const q = query(lessonsRef, where('courseId', '==', course.id));
       const snapshot = await getDocs(q);
@@ -64,7 +73,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     } catch (error) {
       console.error('Error loading lessons:', error);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   };
 
@@ -154,36 +163,26 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     }
   };
 
-  const handleVideoUpload = async (lesson: Lesson, file: File) => {
-    let uploadedVideoKey: string | undefined;
-    try {
-      setUploading(true);
-      setUploadingLessonId(lesson.id);
-      setUploadProgress(0);
-      uploadedVideoKey = await uploadVideoToCloudFly(file, setUploadProgress);
-
-      // Save the new link before reporting success. This also replaces a legacy video link.
-      const lessonRef = doc(db, 'lessons', lesson.id);
-      await updateDoc(lessonRef, {
-        videoKey: uploadedVideoKey,
-        videoId: deleteField(),
-        videoUrl: deleteField(),
-        duration: deleteField(),
-        updatedAt: new Date()
-      });
-
-      await loadLessons();
-      alert(t('teacher.uploadVideoSuccess'));
-    } catch (error) {
-      console.error('[LessonManagement] Error uploading video:', error);
-      const errorMessage = uploadedVideoKey
-        ? `Video đã lên CloudFly nhưng chưa lưu vào bài học. Mã tệp: ${uploadedVideoKey}`
-        : error instanceof Error ? error.message : t('teacher.uploadVideoUnknownError');
-      alert(t("teacher.uploadVideoError", { message: errorMessage }));
-    } finally {
-      setUploading(false);
-      setUploadingLessonId(null);
-    }
+  const handleVideoUpload = (lesson: Lesson, file: File) => {
+    startUpload({
+      file,
+      targetId: `lesson:${lesson.id}`,
+      label: `${course.title} · ${lesson.title}`,
+      save: async uploadedKey => {
+        try {
+          await updateDoc(doc(db, 'lessons', lesson.id), {
+            videoKey: uploadedKey,
+            videoId: deleteField(),
+            videoUrl: deleteField(),
+            duration: deleteField(),
+            updatedAt: new Date(),
+          });
+        } catch {
+          throw new Error(`Video đã lên CloudFly nhưng chưa lưu vào bài học. Mã tệp: ${uploadedKey}`);
+        }
+        if (mounted.current && visibleCourseId.current === course.id) void loadLessons(true);
+      },
+    });
   };
 
   const handleVideoDelete = async (lesson: Lesson) => {
@@ -352,6 +351,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         </div>
                         <h4 className="font-semibold text-white text-xs">{t("teacher.video")}</h4>
                       </div>
+                      {canManage && <p className="mb-2 text-[11px] text-slate-400">Tối đa 2 GB · không giới hạn thời lượng · nên dùng MP4 H.264/AAC, 1080p</p>}
 
                       {lesson.videoKey || lesson.videoId || lesson.videoUrl ? (
                         <div className="space-y-2">
@@ -390,7 +390,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                                   type="file"
                                   accept="video/*,.mp4,.m4v,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.3gp"
                                   className="hidden"
-                                  disabled={uploading}
+                                  disabled={Boolean(activeLessonJob(lesson.id))}
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     e.target.value = '';
@@ -398,7 +398,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                                   }}
                                 />
                                 <Upload size={12} />
-                                {uploadingLessonId === lesson.id ? `${uploadProgress}%` : t('teacher.replaceVideo')}
+                                {activeLessonJob(lesson.id) ? `${activeLessonJob(lesson.id)?.percent}%` : t('teacher.replaceVideo')}
                               </label>
                             </div>
                           )}
@@ -415,11 +415,11 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                               e.target.value = '';
                               if (file) void handleVideoUpload(lesson, file);
                             }}
-                            disabled={uploading}
+                            disabled={Boolean(activeLessonJob(lesson.id))}
                           />
                           <div className="px-2 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-md hover:bg-green-500/30 flex items-center justify-center gap-1 text-xs font-medium transition-colors">
                             <Upload size={12} />
-                            {uploadingLessonId === lesson.id ? `${uploadProgress}%` : t("common.upload")}
+                            {activeLessonJob(lesson.id) ? `${activeLessonJob(lesson.id)?.percent}%` : t("common.upload")}
                           </div>
                         </label>
                         </div>
@@ -606,16 +606,6 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                   {t("common.cancel")}
                 </button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {uploading && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-[#0E3A16] border border-white/10 rounded-2xl shadow-2xl p-8 text-center">
-              <div className="w-20 h-20 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-xl text-white font-bold mb-2">{t("teacher.uploading")}</p>
-              <p className="text-sm text-slate-300">{t("teacher.uploadingHint")}</p>
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SSOProvider } from "@/components/SSOProvider";
 import { CleanupAttributes } from "@/components/CleanupAttributes";
+import { VideoUploadProvider } from "@/contexts/VideoUploadContext";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -122,7 +123,7 @@ export default function RootLayout({
         <LanguageProvider>
           <AuthProvider>
             <SSOProvider>
-              {children}
+              <VideoUploadProvider>{children}</VideoUploadProvider>
             </SSOProvider>
           </AuthProvider>
         </LanguageProvider>

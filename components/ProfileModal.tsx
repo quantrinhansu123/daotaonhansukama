@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { doc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, setDoc, collection, getDocs, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserProfile } from '@/types/user';
@@ -129,7 +129,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         photoURL: photoURL || null,
         updatedAt: new Date(),
       };
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED !== 'true' && process.env.NEXT_PUBLIC_SUPABASE_ENABLED !== 'true') {
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      }
       
       alert(t('profile.updateSuccess'));
       onClose();

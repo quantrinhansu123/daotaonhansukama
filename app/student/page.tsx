@@ -10,8 +10,8 @@ import { StudentCertificates } from '@/components/student/StudentCertificates';
 import { StudentSettings } from '@/components/student/StudentSettings';
 import { StudentLibrary } from '@/components/student/StudentLibrary';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { getVideoPoints, VIDEO_POINTS_PER_LESSON } from '@/lib/learning-progress';
 
 interface LearningStats {

@@ -4,13 +4,17 @@ import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import { Upload } from '@aws-sdk/lib-storage';
 import { NextRequest, NextResponse } from 'next/server';
 import { CLOUDFLY_VIDEO_PREFIX, getCloudFlyStorage } from '@/lib/cloudfly-s3';
+import { authorizeRequest } from '@/lib/server-auth';
 
 export const runtime = 'nodejs';
 const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'CloudFly upload tạm khóa trên môi trường công khai cho đến khi có xác thực phía server.' }, { status: 503 });
+  if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true' || process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true') {
+    const authorized = await authorizeRequest(request, ['admin', 'teacher']);
+    if (authorized instanceof NextResponse) return authorized;
+  } else if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'CloudFly upload tạm khóa cho đến khi chuyển sang Firebase Auth.' }, { status: 503 });
   }
   const mime = request.headers.get('content-type')?.split(';')[0].toLowerCase();
   const extensions: Record<string, string> = {

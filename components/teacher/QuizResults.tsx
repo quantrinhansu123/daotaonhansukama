@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, orderBy } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Lesson, QuizResult, Question } from '@/types/lesson';
 import { ArrowLeft, Users, Award, Clock, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/Button';

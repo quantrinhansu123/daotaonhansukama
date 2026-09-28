@@ -34,7 +34,7 @@ export interface EmploymentInfo {
 export interface UserProfile {
   uid: string;
   email: string;
-  password: string;
+  password?: string; // Chỉ có trong dữ liệu cũ, sẽ xóa sau khi chuyển sang Firebase Auth.
   displayName: string;
   role: UserRole;
   position?: Position; // Chức vụ

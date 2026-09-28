@@ -7,8 +7,8 @@ import { ArrowLeft, PlayCircle, Users, UserPlus, Trash2 } from 'lucide-react';
 import { LessonManagement } from '@/components/teacher/LessonManagement';
 import { CourseDetail } from '@/components/teacher/CourseDetail';
 import { CourseStudents } from '@/components/admin/CourseStudents';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, getDoc, deleteDoc } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 
 interface CourseDetailPageProps {
   course: Course;

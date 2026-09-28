@@ -1,43 +1,68 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { doc, updateDoc } from '@/lib/data-store';
 import { Upload, X } from 'lucide-react';
+import { db } from '@/lib/data-store';
 import { resolveDemoVideo } from '@/lib/demo-video';
-import { uploadVideoToCloudFly } from '@/lib/cloudfly-video';
+import { useVideoUploads } from '@/contexts/VideoUploadContext';
 import { DemoVideoView } from './DemoVideoView';
 
 interface Props {
   label: string;
+  courseId: string;
   currentVideoKey?: string;
   currentLegacyVideoId?: string;
   onUploadComplete: (key: string) => void;
-  onUploadStateChange?: (uploading: boolean) => void;
+  onSaved?: (key: string) => void;
   variant?: 'light' | 'dark';
 }
 
-export function CloudFlyVideoUpload({ label, currentVideoKey, currentLegacyVideoId, onUploadComplete, onUploadStateChange, variant = 'light' }: Props) {
-  const [key, setKey] = useState(currentVideoKey || '');
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
+export function CloudFlyVideoUpload({ label, courseId, currentVideoKey, currentLegacyVideoId, onUploadComplete, onSaved, variant = 'light' }: Props) {
+  const key = currentVideoKey || '';
   const [error, setError] = useState('');
+  const mounted = useRef(false);
+  const { jobs, startUpload } = useVideoUploads();
+  const job = jobs.find(item => item.targetId === `course:${courseId}:demo` && ['queued', 'uploading', 'finalizing', 'saving'].includes(item.status));
+  const loading = Boolean(job);
   const dark = variant === 'dark';
 
-  useEffect(() => setKey(currentVideoKey || ''), [currentVideoKey]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
-  const handleFile = async (file: File) => {
-    setLoading(true);
-    onUploadStateChange?.(true);
-    setProgress(0);
+  const handleFile = (file: File) => {
     setError('');
+    startUpload({
+      file,
+      targetId: `course:${courseId}:demo`,
+      label: `Video giới thiệu: ${label}`,
+      save: async uploadedKey => {
+        try {
+          await updateDoc(doc(db, 'courses', courseId), {
+            demoVideoKey: uploadedKey,
+            demoVideoId: null,
+            updatedAt: new Date(),
+          });
+        } catch {
+          throw new Error(`Video đã lên CloudFly nhưng chưa lưu vào khóa học. Mã tệp: ${uploadedKey}`);
+        }
+        onSaved?.(uploadedKey);
+        if (mounted.current) {
+          onUploadComplete(uploadedKey);
+        }
+      },
+    });
+  };
+
+  const handleRemove = async () => {
     try {
-      const uploadedKey = await uploadVideoToCloudFly(file, setProgress);
-      setKey(uploadedKey);
-      onUploadComplete(uploadedKey);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không tải được video lên CloudFly.');
-    } finally {
-      setLoading(false);
-      onUploadStateChange?.(false);
+      await updateDoc(doc(db, 'courses', courseId), { demoVideoKey: null, demoVideoId: null, updatedAt: new Date() });
+      onUploadComplete('');
+      onSaved?.('');
+    } catch {
+      setError('Không gỡ được video khỏi khóa học.');
     }
   };
 
@@ -47,15 +72,16 @@ export function CloudFlyVideoUpload({ label, currentVideoKey, currentLegacyVideo
       <DemoVideoView videoKey={key} legacyId={currentLegacyVideoId} className="h-full w-full" />
     </div>}
     <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-sm font-semibold ${dark ? 'border-white/20 bg-white/5 text-[#1B7A1E] hover:bg-white/10' : 'border-slate-300 bg-slate-50 text-blue-700 hover:bg-blue-50'}`}>
-      <Upload size={17} /> {loading ? `Đang tải lên CloudFly ${progress}%` : key || currentLegacyVideoId ? 'Thay bằng video CloudFly' : 'Tải video lên CloudFly'}
+      <Upload size={17} /> {loading ? `Đang tải nền ${job?.percent || 0}%` : key || currentLegacyVideoId ? 'Thay bằng video CloudFly' : 'Tải video lên CloudFly'}
       <input type="file" accept="video/*,.mp4,.m4v,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.3gp" disabled={loading} className="hidden" onChange={event => {
         const file = event.target.files?.[0];
         event.target.value = '';
-        if (file) void handleFile(file);
+        if (file) handleFile(file);
       }} />
     </label>
-    {loading && <div className={`h-2 overflow-hidden rounded-full ${dark ? 'bg-white/10' : 'bg-slate-200'}`}><div className="h-full bg-[#1B7A1E]" style={{ width: `${progress}%` }} /></div>}
-    {key && <button type="button" className="inline-flex items-center gap-1 text-xs text-rose-400 hover:underline" onClick={() => { setKey(''); onUploadComplete(''); }}><X size={13} /> Gỡ khỏi khóa học (tệp vẫn lưu)</button>}
+    <p className={`text-xs ${dark ? 'text-slate-400' : 'text-slate-500'}`}>Video tối đa 2 GB; thời lượng không giới hạn. Nên dùng MP4 H.264/AAC, 1080p để phát rõ và tua mượt.</p>
+    {loading && <p className="text-xs text-slate-400">Bạn có thể đóng cửa sổ và tiếp tục thao tác; tiến trình vẫn ở góc màn hình.</p>}
+    {key && !loading && <button type="button" className="inline-flex items-center gap-1 text-xs text-rose-400 hover:underline" onClick={() => void handleRemove()}><X size={13} /> Gỡ khỏi khóa học (tệp vẫn lưu)</button>}
     {error && <p className="text-xs text-rose-400" role="alert">{error}</p>}
   </div>;
 }

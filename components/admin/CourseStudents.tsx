@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, arrayRemove, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, updateDoc, getDoc, arrayUnion, arrayRemove, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
 import { UserProfile } from '@/types/user';
 import { Search, UserPlus, UserCheck, UserX, X } from 'lucide-react';

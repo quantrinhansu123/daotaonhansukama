@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { PermissionAction, DEFAULT_ROLES } from '@/types/permission';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 
 interface PermissionContextType {
   permissions: PermissionAction[];
