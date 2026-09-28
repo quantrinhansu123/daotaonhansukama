@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { authorizeRequest } from '@/lib/server-auth';
 import { profileFields } from '@/lib/admin-user-fields';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
@@ -41,6 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ uid }, { status: 201 });
   }
   try {
+    const { adminAuth, adminDb } = await import('@/lib/firebase-admin');
     await adminAuth().createUser({ uid, email, password, displayName });
     try {
       await adminDb().collection('users').doc(uid).set({

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { authorizeRequest } from '@/lib/server-auth';
 import { profileFields } from '@/lib/admin-user-fields';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
@@ -37,6 +36,7 @@ export async function PATCH(request: NextRequest, context: Context) {
     if (updated.error) return NextResponse.json({ error: 'Không cập nhật được hồ sơ.' }, { status: 502 });
     return NextResponse.json({ ok: true });
   }
+  const { adminAuth, adminDb } = await import('@/lib/firebase-admin');
   const target = await adminDb().collection('users').doc(uid).get();
   if (!target.exists) return NextResponse.json({ error: 'Không tìm thấy tài khoản.' }, { status: 404 });
   if (target.data()?.role === 'admin') return NextResponse.json({ error: 'Không sửa tài khoản quản trị tại đây.' }, { status: 403 });
@@ -84,6 +84,7 @@ export async function DELETE(request: NextRequest, context: Context) {
     if (deleted.error) return NextResponse.json({ error: 'Không xóa được hồ sơ tài khoản.' }, { status: 502 });
     return NextResponse.json({ ok: true });
   }
+  const { adminAuth, adminDb } = await import('@/lib/firebase-admin');
   const target = await adminDb().collection('users').doc(uid).get();
   if (!target.exists) return NextResponse.json({ error: 'Không tìm thấy tài khoản.' }, { status: 404 });
   if (target.data()?.role === 'admin') return NextResponse.json({ error: 'Không xóa tài khoản quản trị tại đây.' }, { status: 403 });

@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { authorizeRequest } from '@/lib/server-auth';
 import type { EmploymentInfo } from '@/types/user';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
@@ -82,6 +81,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ created, updated, skipped });
     }
 
+    const { adminAuth, adminDb } = await import('@/lib/firebase-admin');
     const db = adminDb();
     for (const employee of employees) {
       const email = employee.email?.trim().toLowerCase();

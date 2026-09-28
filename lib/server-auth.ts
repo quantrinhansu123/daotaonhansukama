@@ -1,6 +1,5 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export type AuthorizedUser = { uid: string; role: string; approved: boolean };
@@ -39,6 +38,7 @@ export async function authorizeRequest(request: NextRequest, roles?: string[]): 
 
   let uid: string;
   try {
+    const { adminAuth } = await import('@/lib/firebase-admin');
     uid = (await adminAuth().verifyIdToken(token, true)).uid;
   } catch (error) {
     const code = (error as { code?: string }).code || '';
@@ -50,6 +50,7 @@ export async function authorizeRequest(request: NextRequest, roles?: string[]): 
   }
 
   try {
+    const { adminDb } = await import('@/lib/firebase-admin');
     const profile = await adminDb().collection('users').doc(uid).get();
     if (!profile.exists) return NextResponse.json({ error: 'Không tìm thấy hồ sơ người dùng.' }, { status: 403 });
     const data = profile.data() || {};
