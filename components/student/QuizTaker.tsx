@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, doc, setDoc, deleteDoc } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Question, QuizResult } from '@/types/lesson';
 import { useAuth } from '@/contexts/AuthContext';
 import {

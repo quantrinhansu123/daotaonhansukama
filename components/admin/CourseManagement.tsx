@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
 import { Search, Plus, Edit2, Trash2, X, Save, BookOpen, Users, Clock, Layers, Signal, GraduationCap, Filter } from 'lucide-react';
 import { Button } from '@/components/Button';
@@ -50,7 +50,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -315,8 +314,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         
         // Optional fields - explicitly set to null if empty
         updateData.banner = formData.banner && formData.banner.trim() !== '' ? String(formData.banner) : null;
-        updateData.demoVideoId = formData.demoVideoId && formData.demoVideoId.trim() !== '' ? String(formData.demoVideoId) : null;
-        updateData.demoVideoKey = formData.demoVideoKey && formData.demoVideoKey.trim() !== '' ? String(formData.demoVideoKey) : null;
+        // Video intro is saved by the background upload. Do not overwrite a
+        // completed upload with an older copy of this form.
         updateData.departmentId = formData.departmentId && formData.departmentId.trim() !== '' ? String(formData.departmentId) : null;
         
         // Final cleanup - remove any undefined that might have slipped through
@@ -798,7 +797,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
                 </h3>
               </div>
-              <button onClick={() => setShowModal(false)} disabled={uploadingVideo} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-50">
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10">
                 <X size={20} />
               </button>
             </div>
@@ -995,14 +994,22 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <CloudFlyVideoUpload
-                    label={t('admin.courses.videoDemoLabel')}
-                    currentVideoKey={formData.demoVideoKey}
-                    currentLegacyVideoId={formData.demoVideoId}
-                    onUploadComplete={(key) => setFormData(prev => ({ ...prev, demoVideoKey: key, demoVideoId: key ? '' : prev.demoVideoId }))}
-                    onUploadStateChange={setUploadingVideo}
-                    variant="dark"
-                  />
+                  {editingCourse ? (
+                    <CloudFlyVideoUpload
+                      key={editingCourse.id}
+                      courseId={editingCourse.id}
+                      label={t('admin.courses.videoDemoLabel')}
+                      currentVideoKey={formData.demoVideoKey}
+                      currentLegacyVideoId={formData.demoVideoId}
+                      onUploadComplete={(key) => setFormData(prev => ({ ...prev, demoVideoKey: key, demoVideoId: '' }))}
+                      onSaved={(key) => setCourses(previous => previous.map(item => item.id === editingCourse.id
+                        ? { ...item, demoVideoKey: key || undefined, demoVideoId: undefined }
+                        : item))}
+                      variant="dark"
+                    />
+                  ) : (
+                    <p className="text-sm text-slate-300">Lưu khóa học trước, sau đó mở lại để tải video giới thiệu lên CloudFly.</p>
+                  )}
                 </div>
               </section>
             </div>
@@ -1011,15 +1018,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
               <div className="flex gap-3">
                 <Button
                   onClick={handleSave}
-                  disabled={uploadingThumbnail || uploadingBanner || uploadingVideo}
+                  disabled={uploadingThumbnail || uploadingBanner}
                   className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={18} />
-                  {uploadingVideo ? t('admin.courses.uploadingVideo') : uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
+                  {uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
                 </Button>
                 <button
                   onClick={() => setShowModal(false)}
-                  disabled={uploadingVideo}
                   className="flex-1 px-4 py-2.5 border border-white/10 rounded-xl hover:bg-white/10 text-sm font-medium text-white disabled:opacity-50 transition-colors"
                 >
                   {t('common.cancel')}

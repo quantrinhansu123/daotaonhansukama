@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { FolderKanban, Plus, Edit2, Trash2, X, Save, Search, Users, Calendar, DollarSign, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Project, ProjectStatus, ProjectPriority } from '@/types/project';

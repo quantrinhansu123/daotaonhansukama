@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDhc9bWAA8h1bqXEZcW0tq7j9t5lTQeoN4",
@@ -27,9 +28,10 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const auth = getAuth(app);
 
 // Test connection in browser
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED !== 'true' && process.env.NEXT_PUBLIC_SUPABASE_ENABLED !== 'true') {
   // Test Firestore connection after a short delay
   setTimeout(() => {
     const testRef = collection(db, 'users');

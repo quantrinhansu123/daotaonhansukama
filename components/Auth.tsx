@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from './Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserRole, UserProfile } from '@/types/user';
+import { auth } from '@/lib/firebase';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface AuthProps {
@@ -17,18 +20,20 @@ interface AuthProps {
 
 export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showBackButton = false }) => {
   const { t } = useLanguage();
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const firebaseLoginOnly = process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true';
+  const [mode, setMode] = useState<'login' | 'register'>(firebaseLoginOnly ? 'login' : initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState<UserRole>('staff');
+  const [role] = useState<UserRole>('staff');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('Việt Nam');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [workLocation, setWorkLocation] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { signIn, signUp } = useAuth();
@@ -37,6 +42,29 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
   const toggleMode = () => {
     setMode(mode === 'login' ? 'register' : 'login');
     setError('');
+    setNotice('');
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      setError('Nhập email trước khi đặt lại mật khẩu.');
+      return;
+    }
+    setError('');
+    setNotice('');
+    try {
+      if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
+        const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+      } else {
+        await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+      }
+      setNotice('Nếu email có tài khoản, hãy kiểm tra hộp thư để đặt lại mật khẩu.');
+    } catch {
+      setError('Không gửi được email đặt lại mật khẩu. Vui lòng thử lại.');
+    }
   };
 
   const redirectByRole = (userRole: UserRole) => {
@@ -59,6 +87,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
 
     try {
@@ -94,8 +123,8 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
           setDisplayName('');
         }
       }
-    } catch (err: any) {
-      setError(err.message || t('common.error'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -197,6 +226,11 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                   {error}
                 </div>
               )}
+              {notice && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-300 text-sm">
+                  {notice}
+                </div>
+              )}
 
               {mode === 'register' && (
                 <>
@@ -292,10 +326,10 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <label className="text-sm font-medium text-slate-300">{t('auth.password')}</label>
-                  {mode === 'login' && (
-                    <a href="#" className="text-sm font-medium text-[#1B7A1E] hover:text-[#156318]">
+                  {mode === 'login' && firebaseLoginOnly && (
+                    <button type="button" onClick={handlePasswordReset} className="text-sm font-medium text-[#1B7A1E] hover:text-[#156318]">
                       {t('auth.forgotPassword')}
-                    </a>
+                    </button>
                   )}
                 </div>
                 <div className="relative">
@@ -327,12 +361,12 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
               </Button>
             </form>
 
-            <p className="text-center text-sm text-slate-400">
+            {!firebaseLoginOnly && <p className="text-center text-sm text-slate-400">
               {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
               <button onClick={toggleMode} className="font-bold text-[#1B7A1E] hover:text-[#156318] hover:underline">
                 {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
               </button>
-            </p>
+            </p>}
           </div>
         </div>
       </div>

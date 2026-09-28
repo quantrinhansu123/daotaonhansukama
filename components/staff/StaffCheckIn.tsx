@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AttendanceRecord, CompanySettings } from '@/types/attendance';

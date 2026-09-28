@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Lesson, Question } from '@/types/lesson';
 import { Plus, Trash2, X, Save, FileText, Wand2, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/Button';

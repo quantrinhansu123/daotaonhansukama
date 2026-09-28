@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { UserProfile, UserRole, Position } from '@/types/user';
 import { Search, Plus, Edit2, Trash2, X, Save, CheckCircle, XCircle, Shield, Users, BookOpen } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { syncEmploymentToUsers } from '@/lib/syncEmployment';
+import { authenticatedJson } from '@/lib/authenticated-fetch';
 
 interface Department {
   id: string;
@@ -335,7 +336,7 @@ export const UserManagement: React.FC = () => {
     setEditingUser(user);
     setFormData({
       email: user.email,
-      password: user.password,
+      password: process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true' ? '' : user.password || '',
       displayName: user.displayName,
       role: user.role,
       position: user.position || '',
@@ -507,7 +508,7 @@ export const UserManagement: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      if (!formData.email || !formData.password || !formData.displayName) {
+      if (!formData.email || (!editingUser && !formData.password) || !formData.displayName) {
         alert(t('admin.users.fillRequired'));
         return;
       }
@@ -537,8 +538,6 @@ export const UserManagement: React.FC = () => {
           console.error('Editing user missing both docId and uid:', editingUser);
           return;
         }
-
-        const userRef = doc(db, 'users', userDocId);
 
         const updateData: Record<string, any> = {
           email: String(formData.email || ''),
@@ -616,7 +615,11 @@ export const UserManagement: React.FC = () => {
           }
         }
 
-        await updateDoc(userRef, finalData);
+        if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
+          await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}`, 'PATCH', finalData);
+        } else {
+          await updateDoc(doc(db, 'users', userDocId), finalData);
+        }
         alert(t('admin.users.updateSuccess'));
       } else {
         // Check if email exists
@@ -712,8 +715,11 @@ export const UserManagement: React.FC = () => {
           }
         }
 
-        // Use setDoc with custom ID instead of addDoc
-        await setDoc(doc(db, 'users', newUserId), finalNewUser);
+        if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
+          await authenticatedJson('/api/admin/users', 'POST', finalNewUser);
+        } else {
+          await setDoc(doc(db, 'users', newUserId), finalNewUser);
+        }
         alert(t('admin.users.createSuccess'));
       }
 
@@ -764,7 +770,11 @@ export const UserManagement: React.FC = () => {
         return;
       }
 
-      await deleteDoc(doc(db, 'users', userDocId));
+      if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
+        await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}`, 'DELETE');
+      } else {
+        await deleteDoc(doc(db, 'users', userDocId));
+      }
       alert(t('admin.users.deleteSuccess'));
       loadUsers();
     } catch (error) {
@@ -814,12 +824,12 @@ export const UserManagement: React.FC = () => {
         return;
       }
 
-      const userRef = doc(db, 'users', userDocId);
-
-      await updateDoc(userRef, {
-        approved: approve,
-        updatedAt: new Date()
-      });
+      if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
+        await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}/approval`, 'PATCH', { approved: approve });
+      } else {
+        const userRef = doc(db, 'users', userDocId);
+        await updateDoc(userRef, { approved: approve, updatedAt: new Date() });
+      }
 
       alert(approve ? t('admin.users.approveSuccess') : t('admin.users.rejectSuccess'));
       loadUsers();
@@ -1337,9 +1347,9 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.password')} *</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.password')}{editingUser ? ' (để trống nếu không đổi)' : ' *'}</label>
                     <input
-                      type="text"
+                      type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, query, where, doc, runTransaction } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, doc, runTransaction } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
 import { Lesson, QuizResult } from '@/types/lesson';
 import { LessonProgress } from '@/types/progress';

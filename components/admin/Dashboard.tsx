@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Users, BookOpen, Building2, DollarSign, TrendingUp, Activity } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 

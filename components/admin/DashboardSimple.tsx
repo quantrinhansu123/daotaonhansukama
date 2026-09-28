@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Users, BookOpen, Building2, Clock, Award, CheckCircle, Trophy, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 

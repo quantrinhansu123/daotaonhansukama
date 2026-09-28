@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, updateDoc } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { Department } from '@/types/department';
 import { PERMISSIONS, PermissionAction } from '@/types/permission';
 import { Shield, Save, X } from 'lucide-react';

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, query, where } from '@/lib/data-store';
+import { db } from '@/lib/data-store';
 import { DollarSign, Search, Download, Calendar, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/Button';
 
