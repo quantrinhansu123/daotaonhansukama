@@ -17,7 +17,7 @@ import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { cloudflyVideoUrl } from '@/lib/cloudfly-video';
-import { getLessonCompletionPercent, getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
+import { getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
 
 interface CourseViewerProps {
   course: Course;
@@ -45,6 +45,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [activeTab, setActiveTab] = useState<'info' | 'docs' | 'qa' | 'reviews' | 'news'>('info');
   const [playerOpen, setPlayerOpen] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
+  const [playSession, setPlaySession] = useState(0);
   const [certOpen, setCertOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [mobileNav, setMobileNav] = useState(false);
@@ -57,18 +58,36 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const lastProgressSaveAt = useRef(0);
   const attentionCheckTimer = useRef<NodeJS.Timeout | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
 
-  // Get current course info
-  const currentCourse = allCourses.find(c => c.id === selectedCourseId) || course;
+  // Prefer fresh course prop from the page so admin updates (demo video) are not overwritten by a stale allCourses cache.
+  const listedCourse = allCourses.find(c => c.id === selectedCourseId);
+  const currentCourse = selectedCourseId === course.id
+    ? { ...(listedCourse || {}), ...course, id: course.id }
+    : (listedCourse || course);
+
+  useEffect(() => {
+    setSelectedCourseId(course.id);
+  }, [course.id]);
+
+  useEffect(() => {
+    setAllCourses(prev => {
+      if (!prev.length) return prev;
+      const index = prev.findIndex(item => item.id === course.id);
+      if (index < 0) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], ...course, id: course.id };
+      return next;
+    });
+  }, [course]);
 
   // Reset banner error when course changes or banner URL changes
   useEffect(() => {
     setBannerError(false);
-    console.log('🔄 Banner error reset, course banner:', course.banner);
-  }, [course.id, course.banner]);
+  }, [currentCourse.id, currentCourse.banner, currentCourse.demoVideoKey]);
 
   useEffect(() => {
     loadUserCourses();
@@ -78,9 +97,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     if (selectedCourseId) {
       setProgressLoaded(false);
       setProgress({});
-      loadLessons();
-      loadProgress();
-      loadQuizResults();
+      void loadLessons();
+      void loadProgress();
+      void loadQuizResults();
     }
   }, [selectedCourseId]);
 
@@ -93,7 +112,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   }, [lessons, selectedTag]);
 
   useEffect(() => {
-    if (playerOpen && selectedLesson?.videoKey && progressLoaded && viewMode === 'video') {
+    const canPlayCloudFly = Boolean(selectedLesson && resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl)?.kind === 'cloudfly');
+    if (playerOpen && canPlayCloudFly && progressLoaded && viewMode === 'video') {
       lastProgressSaveAt.current = 0;
       const timer = window.setTimeout(() => {
         void initializeVideo();
@@ -111,7 +131,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [selectedLesson?.id, selectedLesson?.videoKey, progressLoaded, playerOpen, viewMode]);
+  }, [selectedLesson?.id, selectedLesson?.videoKey, selectedLesson?.videoId, selectedLesson?.videoUrl, progressLoaded, playerOpen, viewMode, playSession]);
 
   // Anti-cheat: Detect tab visibility change (staff only)
   useEffect(() => {
@@ -173,15 +193,22 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   }, [isStaff, selectedLesson?.id, playerOpen]);
 
   const initializeVideo = () => {
-    if (!selectedLesson?.videoKey || !videoRef.current) return;
+    if (!selectedLesson || !videoRef.current) return;
+    const source = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
+    if (source?.kind !== 'cloudfly') return;
     const video = videoRef.current;
+    const nextSrc = cloudflyVideoUrl(source.key);
+    // Avoid reloading the same stream (looks like the page keeps refreshing).
+    if (video.getAttribute('src') === nextSrc || video.src.endsWith(nextSrc)) {
+      return;
+    }
     const savedProgress = progress[selectedLesson.id];
     if (savedProgress && savedProgress.watchedSeconds > 5) {
       video.addEventListener('loadedmetadata', () => {
         video.currentTime = savedProgress.watchedSeconds;
       }, { once: true });
     }
-    video.src = cloudflyVideoUrl(selectedLesson.videoKey);
+    video.src = nextSrc;
     video.load();
   };
 
@@ -210,7 +237,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   const loadLessons = async () => {
     try {
-      setLoading(true);
+      const isFirstLoad = lessons.length === 0;
+      if (isFirstLoad) setLoading(true);
       const lessonsRef = collection(db, 'lessons');
       const q = query(lessonsRef, where('courseId', '==', selectedCourseId));
       const snapshot = await getDocs(q);
@@ -220,22 +248,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         updatedAt: doc.data().updatedAt?.toDate()
       })) as Lesson[];
 
-      // Sort in memory instead of using orderBy
       lessonsData.sort((a, b) => a.order - b.order);
       setLessons(lessonsData);
 
-      // Auto select first lesson
-      if (lessonsData.length > 0) {
-        setSelectedLesson(lessonsData[0]);
-        // Set view mode based on what's available
-        if (lessonsData[0].videoKey) {
-          setViewMode('video');
-        } else if (lessonsData[0].documentUrl) {
-          setViewMode('document');
-        } else if (lessonsData[0].hasQuiz) {
-          setViewMode('quiz');
+      setSelectedLesson(prev => {
+        if (prev && lessonsData.some(item => item.id === prev.id)) {
+          return prev;
         }
-      }
+        return lessonsData[0] || null;
+      });
     } catch (error) {
       console.error('Error loading lessons:', error);
     } finally {
@@ -504,27 +525,32 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       alert(t('student.unlockLessonAlert', { title: previousLesson?.title || '' }));
       return;
     }
+
+    const isSameLesson = selectedLesson?.id === lesson.id && playerOpen;
     setSelectedLesson(lesson);
     setMobileNav(false);
-    if (!lesson.videoKey && (lesson.videoId || lesson.videoUrl)) {
-      showToast('Video cũ cần được tải lại lên CloudFly.');
+    setTakingQuiz(false);
+    setIntroOpen(false);
+    setViewMode('video');
+    setPlayerOpen(true);
+    if (!isSameLesson) {
+      setPlaySession(value => value + 1);
     }
-    if (lesson.videoKey) {
-      setViewMode('video');
-      setTakingQuiz(false);
-      setPlayerOpen(true);
-      setIntroOpen(false);
-      return;
+
+    const chapterName = chapters.find(chapter => chapter.items.some(item => item.id === lesson.id))?.name;
+    if (chapterName) {
+      setCollapsed(prev => ({ ...prev, [chapterName]: false }));
     }
-    if (lesson.hasQuiz) {
-      setViewMode('quiz');
-      setTakingQuiz(true);
-      setActiveTab('qa');
-      setPlayerOpen(false);
-      return;
+
+    window.setTimeout(() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+
+    if (!resolveDemoVideo(lesson.videoKey, lesson.videoId || lesson.videoUrl)) {
+      if (lesson.hasQuiz) {
+        setActiveTab('qa');
+        setTakingQuiz(true);
+      }
+      showToast(t('student.noVideoYet'));
     }
-    setActiveTab('docs');
-    setPlayerOpen(false);
   };
 
   const handleContinue = () => {
@@ -539,14 +565,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     if (resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)) {
       setPlayerOpen(false);
       setIntroOpen(true);
+      window.setTimeout(() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
       return;
     }
-    const firstVideo = filteredLessons.find(lesson => lesson.videoKey);
+    const firstVideo = filteredLessons.find(lesson => resolveDemoVideo(lesson.videoKey, lesson.videoId || lesson.videoUrl));
     if (firstVideo) {
       openLesson(firstVideo, lessonIndex(firstVideo));
       return;
     }
-    showToast(currentCourse.demoVideoId ? 'Video giới thiệu cũ cần được tải lại lên CloudFly.' : t('student.academy.introMissing'));
+    showToast(t('student.academy.introMissing'));
   };
 
   const handleMarkComplete = () => {
@@ -558,11 +585,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       showToast(t('student.academy.alreadyComplete'));
       return;
     }
-    if (!selectedLesson.videoKey && (selectedLesson.videoId || selectedLesson.videoUrl)) {
-      showToast('Video cũ cần được tải lại lên CloudFly.');
-      return;
-    }
-    if (selectedLesson.videoKey) {
+    const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
+    if (lessonVideo) {
       setViewMode('video');
       setPlayerOpen(true);
     }
@@ -788,28 +812,145 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2.03fr)_minmax(310px,1fr)]">
             <div className="min-w-0">
-              <div className="relative aspect-[636/355] overflow-hidden rounded bg-[#113e30] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                {bannerSrc ? (
-                  <img
-                    src={bannerSrc}
-                    alt={currentCourse.title}
-                    className="h-full w-full object-cover"
-                    onError={() => setBannerError(true)}
+              <div ref={heroRef} className="relative aspect-[636/355] overflow-hidden rounded bg-[#113e30] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId) ? (
+                  <DemoVideoView
+                    key={`${currentCourse.demoVideoKey || ''}:${currentCourse.demoVideoId || ''}`}
+                    videoKey={currentCourse.demoVideoKey}
+                    legacyId={currentCourse.demoVideoId}
+                    autoPlay
+                    className="h-full w-full bg-black object-contain"
                   />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#0a4136] to-[#0a1c2f]" />
+                ) : playerOpen && selectedLesson ? (() => {
+                  const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
+                  if (!lessonVideo) {
+                    return (
+                      <div key={`empty-${selectedLesson.id}-${playSession}`} className="grid h-full place-items-center bg-[#0b1424] text-white">
+                        <div className="text-center">
+                          <Play className="mx-auto mb-2 opacity-60" />
+                          <p className="mb-1 text-[14px] font-semibold">{selectedLesson.title}</p>
+                          <p>{t('student.noVideoYet')}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (lessonVideo.kind !== 'cloudfly') {
+                    return (
+                      <DemoVideoView
+                        key={`legacy-${selectedLesson.id}-${playSession}`}
+                        videoKey={selectedLesson.videoKey}
+                        legacyId={selectedLesson.videoId || selectedLesson.videoUrl}
+                        autoPlay
+                        className="h-full w-full bg-black object-contain"
+                      />
+                    );
+                  }
+                  return (
+                    <div key={`cf-${selectedLesson.id}-${playSession}`} ref={videoContainerRef} className="relative h-full w-full bg-black">
+                      <video
+                        ref={videoRef}
+                        className="h-full w-full"
+                        controls={!isStaff}
+                        controlsList="nodownload"
+                        onTimeUpdate={handleTimeUpdate}
+                        onPause={handleVideoPause}
+                        onEnded={handleVideoEnded}
+                        playsInline
+                        onContextMenu={event => isStaff && event.preventDefault()}
+                        onDoubleClick={handleFullscreen}
+                        style={isStaff ? { pointerEvents: 'none' } : undefined}
+                      >
+                        {t('student.videoNotSupported')}
+                      </video>
+                      {isStaff && (
+                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3" style={{ pointerEvents: 'auto' }}>
+                          <div className="flex items-center gap-2">
+                            <button onClick={handleRestart} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.replayFromStart')}><RotateCcw size={16} /></button>
+                            <button onClick={handleRewind} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.rewind10')}><Rewind size={16} /></button>
+                            <button onClick={handlePlayPause} className="grid h-11 w-11 place-items-center rounded-full bg-[#18701C] text-white">{isPlaying ? <Pause size={18} /> : <Play size={18} />}</button>
+                          </div>
+                          <button onClick={handleFullscreen} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white"><Maximize size={16} /></button>
+                        </div>
+                      )}
+                      {!isStaff && (
+                        <button onClick={handleFullscreen} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded bg-black/50 text-white">
+                          <Maximize size={16} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })() : (
+                  <>
+                    {bannerSrc ? (
+                      <img
+                        src={bannerSrc}
+                        alt={currentCourse.title}
+                        className="h-full w-full object-cover"
+                        onError={() => setBannerError(true)}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#0a4136] to-[#0a1c2f]" />
+                    )}
+                    <button
+                      onClick={handleIntro}
+                      className="absolute inset-0 flex items-center justify-center bg-black/15 text-white"
+                      aria-label={t('student.academy.watchIntro')}
+                    >
+                      <span className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-bold text-[#1B7A1E] shadow">
+                        <Play size={16} fill="currentColor" />
+                        {t('student.academy.watchIntro')}
+                      </span>
+                    </button>
+                  </>
                 )}
-                <button
-                  onClick={handleIntro}
-                  className="absolute inset-0 flex items-center justify-center bg-black/15 text-white"
-                  aria-label={t('student.academy.watchIntro')}
-                >
-                  <span className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-bold text-[#1B7A1E] shadow">
-                    <Play size={16} fill="currentColor" />
-                    {t('student.academy.watchIntro')}
-                  </span>
-                </button>
               </div>
+
+              {(introOpen || (playerOpen && selectedLesson)) && (
+                <div className="flex flex-wrap items-center gap-2 border-b border-[#e7edf5] bg-white px-3 py-2.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                  <div className="min-w-0 flex-1">
+                    <b className="block truncate text-[13px] text-[#111b38]">
+                      {introOpen ? t('student.introVideo') : selectedLesson?.title}
+                    </b>
+                    {!introOpen && selectedLesson && progress[selectedLesson.id] && (
+                      <small className="text-[11px] text-[#63708a]">
+                        {t('student.watchedLabel')}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
+                        {progress[selectedLesson.id].completed ? ` · ${t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}` : ''}
+                      </small>
+                    )}
+                  </div>
+                  {!introOpen && selectedLesson?.hasQuiz && (
+                    <button
+                      onClick={() => {
+                        setPlayerOpen(false);
+                        setActiveTab('qa');
+                        setTakingQuiz(true);
+                      }}
+                      className="rounded border border-[#bbc6d4] px-3 py-1.5 text-[11px]"
+                    >
+                      {t('student.startQuiz')}
+                    </button>
+                  )}
+                  {!introOpen && selectedLesson && (
+                    <button onClick={goNextLesson} className="rounded bg-[#18701C] px-3 py-1.5 text-[11px] text-white">
+                      {t('student.academy.nextLesson')} →
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setPlayerOpen(false);
+                      setIntroOpen(false);
+                      if (videoRef.current) {
+                        videoRef.current.pause();
+                        videoRef.current.removeAttribute('src');
+                        videoRef.current.load();
+                      }
+                    }}
+                    className="rounded border border-[#dbe5f0] px-3 py-1.5 text-[11px] text-[#52617c]"
+                  >
+                    {t('student.academy.close')}
+                  </button>
+                </div>
+              )}
 
               <div className="mt-0 flex h-[47px] items-stretch gap-5 overflow-x-auto bg-white px-3 shadow-[0_4px_16px_rgba(24,48,93,0.045)]" role="tablist">
                 {tabs.map(tab => (
@@ -1105,98 +1246,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           </div>
         </main>
       </div>
-
-      {playerOpen && selectedLesson && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setPlayerOpen(false)}>
-          <div className="relative max-h-[92vh] w-full max-w-[860px] overflow-auto rounded-[10px] bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
-            <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setPlayerOpen(false)} aria-label={t('student.academy.close')}>×</button>
-            <h2 className="mb-2 mr-8 text-[20px] font-bold">{selectedLesson.title}</h2>
-            <p className="mb-3 text-[13px] text-[#5a6680]">{selectedLesson.description}</p>
-            {selectedLesson.videoKey ? (
-              <div ref={videoContainerRef} className="relative aspect-video overflow-hidden rounded-md bg-black">
-                <video
-                  ref={videoRef}
-                  className="h-full w-full"
-                  controls={!isStaff}
-                  controlsList="nodownload"
-                  onTimeUpdate={handleTimeUpdate}
-                  onPause={handleVideoPause}
-                  onEnded={handleVideoEnded}
-                  playsInline
-                  onContextMenu={event => isStaff && event.preventDefault()}
-                  onDoubleClick={handleFullscreen}
-                  style={isStaff ? { pointerEvents: 'none' } : undefined}
-                >
-                  {t('student.videoNotSupported')}
-                </video>
-                {isStaff && (
-                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3" style={{ pointerEvents: 'auto' }}>
-                    <div className="flex items-center gap-2">
-                      <button onClick={handleRestart} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.replayFromStart')}><RotateCcw size={16} /></button>
-                      <button onClick={handleRewind} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.rewind10')}><Rewind size={16} /></button>
-                      <button onClick={handlePlayPause} className="grid h-11 w-11 place-items-center rounded-full bg-[#18701C] text-white">{isPlaying ? <Pause size={18} /> : <Play size={18} />}</button>
-                    </div>
-                    <button onClick={handleFullscreen} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white"><Maximize size={16} /></button>
-                  </div>
-                )}
-                {!isStaff && (
-                  <button onClick={handleFullscreen} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded bg-black/50 text-white">
-                    <Maximize size={16} />
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="grid aspect-video place-items-center rounded-md bg-[#0b1424] text-white">
-                <div className="text-center">
-                  <Play className="mx-auto mb-2 opacity-60" />
-                  <p>{t('student.noVideoYet')}</p>
-                </div>
-              </div>
-            )}
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-[#52617c]">
-              {selectedLesson.duration ? <span className="flex items-center gap-1"><Clock size={14} />{formatDuration(selectedLesson.duration)}</span> : null}
-              {progress[selectedLesson.id] && (
-                <span>
-                  {t('student.watchedLabel')}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
-                  {progress[selectedLesson.id].completed ? ` · ${t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}` : ''}
-                </span>
-              )}
-              {progress[selectedLesson.id] && (
-                <span className="h-1.5 w-28 overflow-hidden rounded-full bg-[#e9edf3]">
-                  <span className="block h-full bg-[#1B7A1E]" style={{ width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%` }} />
-                </span>
-              )}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {selectedLesson.hasQuiz && (
-                <button
-                  onClick={() => {
-                    setPlayerOpen(false);
-                    setActiveTab('qa');
-                    setTakingQuiz(true);
-                  }}
-                  className="rounded border border-[#bbc6d4] px-4 py-2 text-[12px]"
-                >
-                  {t('student.startQuiz')}
-                </button>
-              )}
-              <button onClick={goNextLesson} className="rounded bg-[#18701C] px-4 py-2 text-[12px] text-white">
-                {t('student.academy.nextLesson')} →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId) && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setIntroOpen(false)}>
-          <div className="relative w-full max-w-[760px] rounded-[10px] bg-white p-5" onClick={event => event.stopPropagation()}>
-            <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setIntroOpen(false)}>×</button>
-            <h2 className="mb-3 mr-8 text-[20px] font-bold">{t('student.introVideo')}</h2>
-            <DemoVideoView videoKey={currentCourse.demoVideoKey} legacyId={currentCourse.demoVideoId} className="aspect-video w-full overflow-hidden rounded-md bg-black" />
-          </div>
-        </div>
-      )}
 
       {certOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setCertOpen(false)}>

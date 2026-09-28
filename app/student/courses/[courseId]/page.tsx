@@ -31,25 +31,15 @@ export default function CourseDetailPage() {
   }, [userProfile, authLoading, router]);
 
   useEffect(() => {
-    if (courseId && userProfile) {
-      loadCourse();
+    if (courseId && userProfile?.uid) {
+      void loadCourse();
     }
-  }, [courseId, userProfile]);
-
-  // Reload course when window gets focus (to get latest banner)
-  useEffect(() => {
-    const handleFocus = () => {
-      if (courseId && userProfile) {
-        loadCourse();
-      }
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [courseId, userProfile]);
+  }, [courseId, userProfile?.uid]);
 
   const loadCourse = async () => {
+    const isFirstLoad = !course || course.id !== courseId;
     try {
-      setLoading(true);
+      if (isFirstLoad) setLoading(true);
       setError(null);
 
       const courseRef = doc(db, 'courses', courseId);
@@ -65,23 +55,11 @@ export default function CourseDetailPage() {
         id: courseSnap.id,
         createdAt: courseSnap.data().createdAt?.toDate(),
         updatedAt: courseSnap.data().updatedAt?.toDate(),
-        banner: courseSnap.data().banner || undefined // Ensure banner is preserved
+        banner: courseSnap.data().banner || undefined,
+        demoVideoKey: courseSnap.data().demoVideoKey || undefined,
+        demoVideoId: courseSnap.data().demoVideoId || undefined,
       } as Course;
 
-      // Debug: Log banner info
-      console.log('📚 Course loaded:', {
-        id: courseData.id,
-        title: courseData.title,
-        banner: courseData.banner,
-        bannerType: typeof courseData.banner,
-        bannerLength: courseData.banner?.length || 0,
-        hasBanner: !!courseData.banner,
-        bannerTrimmed: courseData.banner?.trim() || '',
-        updatedAt: courseData.updatedAt,
-        rawBanner: courseSnap.data().banner
-      });
-
-      // Check if user is enrolled (staff can access all courses)
       if (userProfile?.role !== 'staff' && !courseData.students?.includes(userProfile?.uid || '')) {
         setError(t('student.notEnrolled'));
         return;
@@ -92,7 +70,7 @@ export default function CourseDetailPage() {
       console.error('Error loading course:', err);
       setError(t('student.loadCourseError'));
     } finally {
-      setLoading(false);
+      if (isFirstLoad) setLoading(false);
     }
   };
 
