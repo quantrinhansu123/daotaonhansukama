@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import Hls from 'hls.js';
 import { bunnyHlsProxyUrl } from '@/lib/bunny-media';
+import { preferSharpLevel, sharpHlsConfig } from '@/lib/hls-playback';
 
 interface BunnyVideoPlayerProps {
   videoId: string;
@@ -59,12 +60,10 @@ export function BunnyVideoPlayer({
     }
 
     if (Hls.isSupported()) {
-      const hls = new Hls({
-        // Segment requests cũng đi qua cùng origin → proxy
-        enableWorker: true,
-      });
+      const hls = new Hls(sharpHlsConfig);
       hls.loadSource(source);
       hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => preferSharpLevel(hls));
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           console.error('[BunnyVideoPlayer] HLS fatal', data.type, data.details);

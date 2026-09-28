@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { collection, getDocs, query, where, doc, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Course } from '@/types/course';
@@ -9,9 +10,13 @@ import type Hls from 'hls.js';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Play, Pause, Lock, CheckCircle, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
 import { BunnyVideoPlayer } from '@/components/shared/BunnyVideoPlayer';
+import { ProfileModal } from '@/components/ProfileModal';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { bunnyHlsProxyUrl, proxyBunnyUrl } from '@/lib/bunny-media';
+import { preferSharpLevel, sharpHlsConfig } from '@/lib/hls-playback';
 import { getLessonCompletionPercent, getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
 
 interface CourseViewerProps {
@@ -21,7 +26,7 @@ interface CourseViewerProps {
 
 export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) => {
   const { userProfile } = useAuth();
-  const { t } = useLanguage();
+  const { t, dateLocale } = useLanguage();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -37,8 +42,17 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [quizResults, setQuizResults] = useState<Record<string, QuizResult>>({});
   const [bannerError, setBannerError] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true); // Toggle sidebar visibility - default to true
-  const [showQuizSection, setShowQuizSection] = useState(true); // Toggle quiz section visibility - default to true
+  const [activeTab, setActiveTab] = useState<'info' | 'docs' | 'qa' | 'reviews' | 'news'>('info');
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [introOpen, setIntroOpen] = useState(false);
+  const [certOpen, setCertOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [mobileNav, setMobileNav] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [lessonQuery, setLessonQuery] = useState('');
+  const [showProfile, setShowProfile] = useState(false);
+  const toastTimer = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastProgressSaveAt = useRef(0);
   const hlsRef = useRef<Hls | null>(null);
@@ -49,9 +63,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
-
-  // Get all unique tags from lessons
-  const allTags = Array.from(new Set(lessons.flatMap(lesson => lesson.tags || []))).sort();
 
   // Get current course info
   const currentCourse = allCourses.find(c => c.id === selectedCourseId) || course;
@@ -85,9 +96,21 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   }, [lessons, selectedTag]);
 
   useEffect(() => {
-    if (selectedLesson && selectedLesson.videoId && progressLoaded) {
+    if (playerOpen && selectedLesson && (selectedLesson.videoId || selectedLesson.videoUrl) && progressLoaded && viewMode === 'video') {
       lastProgressSaveAt.current = 0;
-      initializeVideo();
+      const timer = window.setTimeout(() => {
+        void initializeVideo();
+      }, 60);
+      return () => {
+        window.clearTimeout(timer);
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+          hlsRef.current = null;
+        }
+        if (attentionCheckTimer.current) {
+          clearTimeout(attentionCheckTimer.current);
+        }
+      };
     }
 
     return () => {
@@ -99,7 +122,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [selectedLesson?.id, progressLoaded]);
+  }, [selectedLesson?.id, progressLoaded, playerOpen, viewMode]);
 
   // Anti-cheat: Detect tab visibility change (staff only)
   useEffect(() => {
@@ -158,16 +181,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [isStaff, selectedLesson?.id]);
+  }, [isStaff, selectedLesson?.id, playerOpen]);
 
   const initializeVideo = async () => {
     if (!selectedLesson || !videoRef.current) return;
 
-    const videoUrl = selectedLesson.videoId && CDN_HOSTNAME
-      ? `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`
-      : (selectedLesson.videoUrl
-          ? (CDN_HOSTNAME ? selectedLesson.videoUrl.replace(/https:\/\/[^/]+\.b-cdn\.net\//, `https://${CDN_HOSTNAME}/`) : selectedLesson.videoUrl)
-          : '');
+    const videoUrl = selectedLesson.videoId
+      ? bunnyHlsProxyUrl(selectedLesson.videoId)
+      : proxyBunnyUrl(selectedLesson.videoUrl || '');
     const savedProgress = progress[selectedLesson.id];
 
     console.log('🎬 Initializing video for lesson:', selectedLesson.title);
@@ -197,17 +218,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           hlsRef.current.destroy();
         }
 
-        const hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-        });
+        const hls = new Hls(sharpHlsConfig);
 
         hls.loadSource(videoUrl);
         hls.attachMedia(videoRef.current);
         hlsRef.current = hls;
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log('📺 HLS manifest parsed');
+          preferSharpLevel(hls);
+          console.log('📺 HLS manifest parsed', hls.levels.map(level => level.height));
           // Video is ready, seek to saved position if > 5 seconds
           if (savedProgress && savedProgress.watchedSeconds > 5 && videoRef.current) {
             console.log('⏩ Will seek to:', savedProgress.watchedSeconds, 'seconds');
@@ -506,937 +525,775 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  useEffect(() => {
+    setSaved(window.localStorage.getItem(`course-saved-${currentCourse.id}`) === '1');
+  }, [currentCourse.id]);
+
+  const chapters = useMemo(() => {
+    const grouped = new Map<string, Lesson[]>();
+    filteredLessons.forEach(lesson => {
+      const name = lesson.tags?.[0] || t('student.courseContent');
+      const bucket = grouped.get(name) || [];
+      bucket.push(lesson);
+      grouped.set(name, bucket);
+    });
+    return Array.from(grouped.entries()).map(([name, items]) => ({ name, items }));
+  }, [filteredLessons, t]);
+
+  const showToast = (message: string) => {
+    setToastMsg(message);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToastMsg(''), 3200);
+  };
+
   if (loading) {
-    return <div className="text-center py-8 text-white">{t("common.loading")}</div>;
+    return (
+      <div className="min-h-screen grid place-items-center bg-[#f5f8fc] text-[#63708a]">
+        {t('common.loading')}
+      </div>
+    );
   }
 
-  // Debug: Log banner info
-  const hasBanner = course.banner && course.banner.trim() !== '';
-  const willShowBanner = hasBanner && !bannerError;
-  
-  console.log('🖼️ Banner Debug:', {
-    hasBanner,
-    bannerUrl: course.banner,
-    bannerType: typeof course.banner,
-    bannerLength: course.banner?.length || 0,
-    bannerError,
-    willShowBanner,
-    courseId: course.id,
-    courseTitle: course.title,
-    bannerTrimmed: course.banner?.trim() || ''
+  const lessonStreamUrl = (lesson: Lesson) =>
+    lesson.videoId ? bunnyHlsProxyUrl(lesson.videoId) : proxyBunnyUrl(lesson.videoUrl || '');
+
+  const lessonIndex = (lesson: Lesson) => filteredLessons.findIndex(item => item.id === lesson.id);
+  const completedCount = lessons.filter(lesson => progress[lesson.id]?.completed).length;
+  const percent = lessons.length ? Math.round((completedCount / lessons.length) * 100) : 0;
+
+  const openLesson = (lesson: Lesson, index: number) => {
+    const safeIndex = index < 0 ? lessonIndex(lesson) : index;
+    if (safeIndex > 0 && isLessonLocked(lesson, safeIndex)) {
+      const previousLesson = filteredLessons[safeIndex - 1];
+      alert(t('student.unlockLessonAlert', { title: previousLesson?.title || '' }));
+      return;
+    }
+    setSelectedLesson(lesson);
+    setMobileNav(false);
+    if (lesson.videoId || lesson.videoUrl) {
+      setViewMode('video');
+      setTakingQuiz(false);
+      setPlayerOpen(true);
+      setIntroOpen(false);
+      return;
+    }
+    if (lesson.hasQuiz) {
+      setViewMode('quiz');
+      setTakingQuiz(true);
+      setActiveTab('qa');
+      setPlayerOpen(false);
+      return;
+    }
+    setActiveTab('docs');
+    setPlayerOpen(false);
+  };
+
+  const handleContinue = () => {
+    const next = filteredLessons.find((lesson, index) => !progress[lesson.id]?.completed && !isLessonLocked(lesson, index))
+      || selectedLesson
+      || filteredLessons[0];
+    if (!next) return;
+    openLesson(next, lessonIndex(next));
+  };
+
+  const handleIntro = () => {
+    if (currentCourse.demoVideoId) {
+      setPlayerOpen(false);
+      setIntroOpen(true);
+      return;
+    }
+    const firstVideo = filteredLessons.find(lesson => lesson.videoId || lesson.videoUrl);
+    if (firstVideo) {
+      openLesson(firstVideo, lessonIndex(firstVideo));
+      return;
+    }
+    showToast(t('student.academy.introMissing'));
+  };
+
+  const handleMarkComplete = () => {
+    if (!selectedLesson) {
+      handleContinue();
+      return;
+    }
+    if (progress[selectedLesson.id]?.completed) {
+      showToast(t('student.academy.alreadyComplete'));
+      return;
+    }
+    if (selectedLesson.videoId || selectedLesson.videoUrl) {
+      setViewMode('video');
+      setPlayerOpen(true);
+    }
+    showToast(t('student.academy.markNeedWatch'));
+  };
+
+  const goNextLesson = () => {
+    if (!selectedLesson) return;
+    const index = lessonIndex(selectedLesson);
+    const next = filteredLessons[index + 1];
+    if (!next) {
+      setPlayerOpen(false);
+      showToast(percent === 100 ? t('student.academy.certificateReady') : t('student.academy.certificatePending'));
+      return;
+    }
+    openLesson(next, index + 1);
+  };
+
+  const toggleSaved = () => {
+    const next = !saved;
+    setSaved(next);
+    window.localStorage.setItem(`course-saved-${currentCourse.id}`, next ? '1' : '0');
+    showToast(t(next ? 'student.academy.savedCourse' : 'student.academy.unsavedCourse'));
+  };
+
+  const lastStamp = Object.values(progress).reduce((max, item) => {
+    const time = item.lastWatchedAt ? new Date(item.lastWatchedAt).getTime() : 0;
+    return Math.max(max, time);
+  }, 0);
+  const totalSeconds = lessons.reduce((sum, lesson) => sum + (lesson.duration || 0), 0);
+  const durationText = totalSeconds > 0
+    ? `${Math.floor(totalSeconds / 3600) > 0 ? `${Math.floor(totalSeconds / 3600)} ${t('student.academy.hours')} ` : ''}${Math.floor((totalSeconds % 3600) / 60)} ${t('student.academy.minutes')}`
+    : `${currentCourse.duration || 0} ${t('student.hoursUnit')}`;
+  const learnerCount = currentCourse.students?.length || 0;
+  const learnerLabel = learnerCount >= 1000 ? `${(learnerCount / 1000).toFixed(1).replace(/\.0$/, '')}K+` : String(learnerCount);
+  const documents = lessons.flatMap(lesson => {
+    const rows: { key: string; title: string; href: string }[] = [];
+    if (lesson.documentUrl) {
+      rows.push({
+        key: `${lesson.id}-doc`,
+        title: lesson.documentName || lesson.title,
+        href: proxyBunnyUrl(lesson.documentUrl),
+      });
+    }
+    if (lesson.quizDocumentUrl) {
+      rows.push({
+        key: `${lesson.id}-quiz`,
+        title: lesson.quizDocumentName || lesson.title,
+        href: proxyBunnyUrl(lesson.quizDocumentUrl),
+      });
+    }
+    return rows;
   });
+  const quizLessons = lessons.filter(lesson => lesson.hasQuiz);
+  const banner = currentCourse.banner || currentCourse.thumbnail;
+  const bannerSrc = banner && !bannerError
+    ? (banner.startsWith('/api/') ? banner : proxyBunnyUrl(banner))
+    : '';
+  const initials = (userProfile?.displayName || 'U')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(-2)
+    .map(part => part[0]?.toUpperCase() || '')
+    .join('');
+  const roleLabel = userProfile?.position
+    || (userProfile?.role === 'staff' ? t('student.academy.staffRole') : t('student.academy.studentRole'));
+  const levelLabel = currentCourse.level === 'beginner'
+    ? t('student.levelBeginner')
+    : currentCourse.level === 'intermediate'
+      ? t('student.levelIntermediate')
+      : t('student.levelAdvanced');
+  const allCollapsed = chapters.length > 0 && chapters.every(chapter => collapsed[chapter.name]);
+  const tabs = [
+    { id: 'info' as const, label: t('student.academy.courseInfo') },
+    { id: 'docs' as const, label: t('student.academy.documentsTab', { count: documents.length }) },
+    { id: 'qa' as const, label: t('student.academy.qaTab', { count: quizLessons.length }) },
+    { id: 'reviews' as const, label: t('student.academy.reviewsTab') },
+    { id: 'news' as const, label: t('student.academy.newsTab') },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0b1424] via-[#111d30] to-[#0b1424]">
-      {/* Banner Section - Wider */}
-      <div className="w-full relative overflow-hidden min-h-[500px]">
-        {course.banner && course.banner.trim() !== '' && !bannerError ? (
-          <>
-            {/* Banner Image with Parallax Effect */}
-            <div className="absolute inset-0">
-              <img
-                key={`banner-${course.id}-${course.updatedAt?.getTime() || Date.now()}`}
-                src={(() => {
-                  if (!course.banner) return '';
-                  
-                  // If already proxy URL, use directly
-                  if (course.banner.startsWith('/api/banner')) {
-                    console.log('✅ Using existing proxy URL:', course.banner);
-                    return course.banner;
-                  }
-                  
-                  // If storage URL, convert to proxy
-                  if (course.banner.includes('storage.bunnycdn.com')) {
-                    const proxyUrl = `/api/banner?url=${encodeURIComponent(course.banner)}`;
-                    console.log('🔄 Converting storage URL to proxy:', course.banner, '→', proxyUrl);
-                    return proxyUrl;
-                  }
-                  
-                  // If CDN URL, convert to proxy
-                  if (course.banner.includes('b-cdn.net')) {
-                    const proxyUrl = `/api/banner?url=${encodeURIComponent(course.banner)}`;
-                    console.log('🔄 Converting CDN URL to proxy:', course.banner, '→', proxyUrl);
-                    return proxyUrl;
-                  }
-                  
-                  // Otherwise, use as is (might be a different URL format)
-                  console.log('⚠️ Using banner URL as-is:', course.banner);
-                  return course.banner;
-                })()}
-                alt={`Banner ${course.title}`}
-                className="w-full h-full object-cover"
-                style={{ minHeight: '500px' }}
-                onError={(e) => {
-                  const currentSrc = e.currentTarget.src;
-                  console.error('❌ Banner load error:', {
-                    originalBanner: course.banner,
-                    currentSrc: currentSrc,
-                    isProxyUrl: currentSrc.includes('/api/banner')
-                  });
-                  
-                  // If already using proxy and still fails, show fallback
-                  if (currentSrc.includes('/api/banner')) {
-                    console.error('❌ Proxy API also failed, showing fallback');
-                    setBannerError(true);
-                    e.currentTarget.style.display = 'none';
-                    return;
-                  }
-                  
-                  // Try proxy API route if direct URL fails
-                  if (course.banner && !course.banner.includes('/api/banner')) {
-                    const proxyUrl = `/api/banner?url=${encodeURIComponent(course.banner)}`;
-                    console.log('🔄 Retrying with proxy API:', proxyUrl);
-                    e.currentTarget.src = proxyUrl;
-                    return;
-                  }
-                  
-                  // Set error state to show fallback
-                  setBannerError(true);
-                  e.currentTarget.style.display = 'none';
-                }}
-                onLoad={() => {
-                  console.log('✅ Banner loaded successfully:', course.banner);
-                  // Clear error if banner loads successfully
-                  if (bannerError) {
-                    setBannerError(false);
-                  }
-                }}
-              />
-              {/* Multi-layer Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#0b1424]"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0b1424]/80 via-transparent to-[#0b1424]/60"></div>
-            </div>
-
-            {/* Content Overlay - Compact top left */}
-            <div className="relative z-10 max-w-7xl mx-auto px-4 py-4">
-              <div className="flex items-start gap-4">
-                <button
-                  onClick={onBack}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-lg transition-all text-sm border border-white/20"
-                >
-                  ← {t("common.back")}
-                </button>
-
-                <div>
-                  <h1 className="text-xl font-bold mb-1 text-white drop-shadow-lg">
-                    {course.title}
-                  </h1>
-                  <p className="text-sm text-white mb-2 drop-shadow-md">
-                    {course.description}
-                  </p>
-
-                  {/* Course Meta Info - Compact */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="px-2 py-1 bg-white/10 backdrop-blur-md rounded text-xs border border-white/20">
-                      <span className="text-white">{course.duration} {t("student.hoursUnit")}</span>
-                    </div>
-
-                    <div className="px-2 py-1 bg-white/10 backdrop-blur-md rounded text-xs border border-white/20">
-                      <span className="text-white">{course.teacherName}</span>
-                    </div>
-
-                    <div className={`px-2 py-1 backdrop-blur-md rounded text-xs border ${course.level === 'beginner' ? 'bg-green-500/20 border-green-400/30 text-white' :
-                      course.level === 'intermediate' ? 'bg-yellow-500/20 border-yellow-400/30 text-white' :
-                        'bg-red-500/20 border-red-400/30 text-white'
-                      }`}>
-                      <span>
-                        {course.level === 'beginner' ? t('student.levelBeginner') :
-                          course.level === 'intermediate' ? t('student.levelIntermediate') : t('student.levelAdvanced')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          // Fallback gradient background if no banner or banner error
-          <div className="bg-gradient-to-br from-[#0b1424] via-[#111d30] to-[#0b1424] text-white shadow-2xl min-h-[500px]">
-            <div className="max-w-7xl mx-auto px-4 py-3">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onBack}
-                  className="px-2.5 py-1 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded text-xs border border-white/20"
-                >
-                  ← {t("common.back")}
-                </button>
-
-                <h1 className="text-lg font-bold text-white drop-shadow-lg">
-                  {course.title}
-                </h1>
-                <span className="text-xs text-white">•</span>
-                <p className="text-xs text-white drop-shadow-md">
-                  {course.description}
-                </p>
-
-                {/* Course Meta Info - Inline compact */}
-                <div className="flex items-center gap-1.5 ml-auto">
-                  <span className="px-1.5 py-0.5 bg-white/10 backdrop-blur-md rounded text-[10px] border border-white/20 text-white">
-                    {course.duration} {t("student.hoursUnit")}
-                  </span>
-                  <span className="px-1.5 py-0.5 bg-white/10 backdrop-blur-md rounded text-[10px] border border-white/20 text-white">
-                    {course.teacherName}
-                  </span>
-                  <span className={`px-1.5 py-0.5 backdrop-blur-md rounded text-[10px] border text-white ${course.level === 'beginner' ? 'bg-green-500/20 border-green-400/30' :
-                    course.level === 'intermediate' ? 'bg-yellow-500/20 border-yellow-400/30' :
-                      'bg-red-500/20 border-red-400/30'
-                    }`}>
-                    {course.level === 'beginner' ? t('student.levelBeginner') :
-                          course.level === 'intermediate' ? t('student.levelIntermediate') : t('student.levelAdvanced')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Demo Video */}
-      {course.demoVideoId && !selectedLesson && (
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-6 mb-6 border border-[#223852] shadow-2xl">
-            <h2 className="text-xl font-bold text-white mb-4">{t("student.introVideo")}</h2>
-            <div className="aspect-video bg-black rounded-lg overflow-hidden border border-white/10">
-              <BunnyVideoPlayer videoId={course.demoVideoId} cdnHostname={CDN_HOSTNAME} className="w-full h-full" />
-            </div>
-          </div>
-        </div>
+    <div className="flex min-h-screen bg-[#f5f8fc] text-[#111b38] [font-family:Arial,Helvetica,sans-serif]">
+      {mobileNav && (
+        <button
+          className="fixed inset-0 z-30 bg-[#031323]/55 lg:hidden"
+          aria-label={t('student.academy.close')}
+          onClick={() => setMobileNav(false)}
+        />
       )}
 
-      {/* Video View - Special layout when video is playing */}
-      {viewMode === 'video' && selectedLesson && selectedLesson.videoId ? (
-        <div className="max-w-[98vw] mx-auto px-2 py-4">
-          <div className="relative">
-            {/* Toggle Sidebar Button */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">{selectedLesson.title}</h2>
-              <div className="flex items-center gap-2">
-                {/* Quiz Button - Small button above video */}
-                {selectedLesson.hasQuiz && (
-                  <button
-                    onClick={() => {
-                      if (!takingQuiz) {
-                        setTakingQuiz(true);
-                        setShowQuizSection(true);
-                      } else {
-                        setShowQuizSection(!showQuizSection);
-                      }
-                    }}
-                    className="px-3 py-1.5 bg-gradient-to-br from-[#111d30] to-[#0b1424] hover:from-[#223852] hover:to-[#0b1424] rounded-lg border border-[#223852] text-white transition-colors text-xs font-medium shadow-lg flex items-center gap-1.5"
-                    title={t("student.quiz")}
-                  >
-                    <HelpCircle size={14} />
-                    {takingQuiz ? (showQuizSection ? t('student.hideQuiz') : t('student.showQuiz')) : t('student.takeQuizShort')}
-                  </button>
+      <aside className={`fixed top-0 z-40 flex h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#061b2b] to-[#0b2035] text-[#eef5ff] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="flex h-[72px] items-center justify-center bg-white px-2">
+          <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
+        </div>
+        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2" aria-label={t('student.academy.courses')}>
+          <Link href="/student" className="flex min-h-[38px] items-center gap-3 rounded px-2.5 text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+            <Home size={18} />
+            {t('student.academy.overview')}
+          </Link>
+          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#06488e] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#2885f5]">
+            <BookOpen size={18} />
+            {t('student.academy.courses')}
+          </div>
+          {[
+            { icon: GraduationCap, label: t('student.academy.navPrograms') },
+            { icon: Users, label: t('student.academy.navStudents') },
+            { icon: FolderKanban, label: t('student.academy.navProjects') },
+            { icon: Building2, label: t('student.academy.navDepartments') },
+            { icon: Award, label: t('student.academy.navPositions') },
+            { icon: ClipboardCheck, label: t('student.academy.navAssessment') },
+            { icon: Folder, label: t('student.academy.navLibrary') },
+            { icon: BarChart3, label: t('student.academy.navReports') },
+            { icon: BadgeCheck, label: t('student.academy.navCertificates') },
+          ].map(item => (
+            <button key={item.label} onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+              <item.icon size={18} />
+              {item.label}
+            </button>
+          ))}
+          <p className="mx-2 mb-1 mt-3 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.navSystem')}</p>
+          {[
+            { icon: Users, label: t('student.academy.navUsers') },
+            { icon: Shield, label: t('student.academy.navPermissions') },
+            { icon: List, label: t('student.academy.navActivity') },
+            { icon: Settings, label: t('student.academy.navSettings') },
+          ].map(item => (
+            <button key={item.label} onClick={() => item.label === t('student.academy.navSettings') ? setShowProfile(true) : showToast(t('student.academy.navSoon'))} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+              <item.icon size={18} />
+              {item.label}
+            </button>
+          ))}
+          {allCourses.length > 1 && (
+            <div className="pt-3">
+              <p className="mx-2 mb-2 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.myCourses')}</p>
+              {allCourses.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedCourseId(item.id);
+                    setSelectedTag('all');
+                    setSelectedLesson(null);
+                    setPlayerOpen(false);
+                    setMobileNav(false);
+                  }}
+                  className={`mb-1 w-full truncate rounded px-2.5 py-2 text-left text-[12px] ${selectedCourseId === item.id ? 'bg-[#163753] text-white' : 'text-[#e1eaf4] hover:bg-[#163753]'}`}
+                >
+                  {item.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </nav>
+        <div className="border-t border-white/10 px-3 py-4">
+          <div className="rounded-md bg-[#152e47] p-3">
+            <div className="flex items-center gap-2.5">
+              <Headphones size={18} />
+              <span>
+                <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
+                <small className="block text-[10px] text-[#bdcada]">{t('student.academy.supportHint')}</small>
+              </span>
+            </div>
+            <button
+              onClick={() => showToast(t('student.academy.supportSent'))}
+              className="mt-3 w-full rounded bg-[#f7faff] px-2 py-1.5 text-[11px] font-bold text-[#0755b5]"
+            >
+              {t('student.academy.sendRequest')}
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        <header className="flex h-[54px] items-center gap-3 border-b border-[#ecf0f6] bg-white px-4">
+          <button className="p-1 lg:hidden" aria-label="Menu" onClick={() => setMobileNav(true)}>
+            <Menu size={20} />
+          </button>
+          <label className="flex h-[35px] w-full max-w-[460px] items-center gap-2 rounded-md border border-[#eff2f7] bg-[#f7f9fc] px-3 text-[#65718a]">
+            <Search size={16} />
+            <input
+              value={lessonQuery}
+              onChange={event => setLessonQuery(event.target.value)}
+              onKeyDown={event => {
+                if (event.key !== 'Enter') return;
+                const keyword = lessonQuery.trim().toLowerCase();
+                if (!keyword) return;
+                const match = lessons.find(lesson => lesson.title.toLowerCase().includes(keyword));
+                if (!match) {
+                  showToast(t('student.academy.lessonNotFound'));
+                  return;
+                }
+                setCollapsed({});
+                openLesson(match, lessonIndex(match));
+                showToast(t('student.academy.lessonFound', { title: match.title }));
+              }}
+              placeholder={t('student.academy.searchPlaceholder')}
+              aria-label={t('student.academy.searchPlaceholder')}
+              className="min-w-0 flex-1 bg-transparent text-[11px] text-[#111b38] outline-none placeholder:text-[#99a4b5]"
+            />
+          </label>
+          <div className="flex-1" />
+          <LanguageSwitcher />
+          <button className="p-1.5 text-[#2a3650]" aria-label={t('student.academy.newsTab')} onClick={() => showToast(t('student.academy.noNotifications'))}>
+            <Bell size={18} />
+          </button>
+          <button className="flex items-center gap-2 text-left" onClick={() => setShowProfile(true)}>
+            <span className="grid h-[31px] w-[31px] place-items-center rounded-full bg-gradient-to-br from-[#eadac7] to-[#acc0d6] text-[11px] font-bold text-[#2a3550]">
+              {initials}
+            </span>
+            <span className="hidden sm:block">
+              <b className="block text-[11px]">{userProfile?.displayName}</b>
+              <small className="block text-[10px] text-[#66718b]">{roleLabel}</small>
+            </span>
+            <ChevronDown size={15} className="hidden text-[#111b38] sm:block" />
+          </button>
+        </header>
+
+        <main className="mx-auto max-w-[1500px] px-4 py-3 pb-8">
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] text-[#66758e]">
+            <button onClick={onBack} className="text-[#537394]">{`← ${t('student.academy.backToCourses')}`}</button>
+            <span>›</span>
+            <span className="truncate">{currentCourse.title}</span>
+          </div>
+
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2.03fr)_minmax(310px,1fr)]">
+            <div className="min-w-0">
+              <div className="relative aspect-[636/355] overflow-hidden rounded bg-[#113e30] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                {bannerSrc ? (
+                  <img
+                    src={bannerSrc}
+                    alt={currentCourse.title}
+                    className="h-full w-full object-cover"
+                    onError={() => setBannerError(true)}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#0a4136] to-[#0a1c2f]" />
                 )}
                 <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowSidebar(!showSidebar);
-                  }}
-                  className="p-2 bg-gradient-to-br from-[#111d30] to-[#0b1424] hover:from-[#223852] hover:to-[#111d30] rounded-lg border border-[#223852] text-white transition-colors z-50 relative shadow-lg"
-                  title={showSidebar ? t("student.hideLessonList") : t("student.showLessonList")}
+                  onClick={handleIntro}
+                  className="absolute inset-0 flex items-center justify-center bg-black/15 text-white"
+                  aria-label={t('student.academy.watchIntro')}
                 >
-                  {showSidebar ? <X size={20} /> : <Menu size={20} />}
+                  <span className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-bold text-[#0759e8] shadow">
+                    <Play size={16} fill="currentColor" />
+                    {t('student.academy.watchIntro')}
+                  </span>
                 </button>
               </div>
-            </div>
-            
-            {/* Video Container - Always large */}
-            <div
-              ref={videoContainerRef}
-              className="bg-black rounded-xl overflow-hidden relative border border-white/10 shadow-2xl w-full"
-              style={{ 
-                paddingTop: '45%'  // Large video always
-              }}
-            >
-              {/* Quiz Section - Floating above video */}
-              {selectedLesson.hasQuiz && takingQuiz && (
-                <div className="absolute top-4 left-4 z-50 bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-lg border border-[#223852] shadow-2xl max-w-md w-full">
-                  <div className="flex items-center justify-between p-3 border-b border-[#223852]/50">
-                    <div className="flex items-center gap-2">
-                      <HelpCircle className="w-4 h-4 text-[#53cafd]" />
-                      <h3 className="text-sm font-bold text-white">{t("student.quizSection")}</h3>
+
+              <div className="mt-0 flex h-[47px] items-stretch gap-5 overflow-x-auto bg-white px-3 shadow-[0_4px_16px_rgba(24,48,93,0.045)]" role="tablist">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`shrink-0 border-b-2 text-[11px] ${activeTab === tab.id ? 'border-[#0870d8] font-bold text-[#0260bd]' : 'border-transparent text-[#313d57]'}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === 'info' && (
+                <>
+                  <section className="bg-white px-3 py-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                    <div className="flex items-start gap-3">
+                      <h1 className="m-0 flex-1 text-[21px] font-bold leading-tight tracking-tight">{currentCourse.title}</h1>
+                      <button
+                        onClick={toggleSaved}
+                        aria-label={t('student.academy.savedCourse')}
+                        className={`grid h-[33px] w-[33px] place-items-center rounded border ${saved ? 'border-[#0a60c8] bg-[#eaf4ff] text-[#0a60c8]' : 'border-[#dbe5f0] bg-white text-[#0a60c8]'}`}
+                      >
+                        <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setShowQuizSection(!showQuizSection);
-                      }}
-                      className="p-1 hover:bg-white/10 rounded transition-colors text-white"
-                      title={showQuizSection ? t("student.collapse") : t("student.expand")}
-                    >
-                      {showQuizSection ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
-                  </div>
-                  {showQuizSection && (
-                    <div className="p-3">
-                      <QuizTaker
-                        lessonId={selectedLesson.id}
-                        courseId={selectedCourseId}
-                        quizDuration={selectedLesson.quizDuration}
-                        quizDocumentUrl={selectedLesson.quizDocumentUrl}
-                        quizDocumentName={selectedLesson.quizDocumentName}
-                        onComplete={() => {
-                          setTakingQuiz(false);
-                          setShowQuizSection(false);
-                        }}
-                      />
+                    <p className="mb-5 mt-2 max-w-[640px] text-[12px] text-[#53617b]">{currentCourse.description}</p>
+                    <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-7 w-7 place-items-center rounded-full bg-[#e3ccd0] text-[10px] text-[#493e48]">
+                          {(currentCourse.teacherName || 'GV').slice(0, 2).toUpperCase()}
+                        </span>
+                        <span>
+                          <small className="block text-[10px] text-[#67758d]">{t('student.academy.instructor')}</small>
+                          <b className="block text-[11px]">{currentCourse.teacherName}</b>
+                        </span>
+                      </div>
+                      {[
+                        { icon: Clock, label: t('student.academy.duration'), value: durationText, tone: 'bg-[#eff6ff] text-[#0b67d6]' },
+                        { icon: Clapperboard, label: t('student.academy.lessonCount'), value: t('student.academy.lessonsUnit', { count: lessons.length }), tone: 'bg-[#eff6ff] text-[#0b67d6]' },
+                        { icon: Users, label: t('student.academy.learners'), value: learnerLabel, tone: 'bg-[#eff6ff] text-[#0b67d6]' },
+                        { icon: Calendar, label: t('student.academy.updated'), value: currentCourse.updatedAt ? new Date(currentCourse.updatedAt).toLocaleDateString(dateLocale) : '—', tone: 'bg-[#fff6e9] text-[#df8b00]' },
+                      ].map(fact => (
+                        <div key={fact.label} className="flex min-w-0 items-center gap-2">
+                          <span className={`grid h-7 w-7 shrink-0 place-items-center rounded ${fact.tone}`}>
+                            <fact.icon size={15} />
+                          </span>
+                          <span className="min-w-0">
+                            <small className="block text-[10px] text-[#67758d]">{fact.label}</small>
+                            <b className="block truncate text-[11px]">{fact.value}</b>
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
+                  </section>
+
+                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                    <h2 className="m-0 mb-1.5 text-[16px]">{t('student.academy.about')}</h2>
+                    <p className="m-0 text-[12px] leading-relaxed text-[#52617c]">{currentCourse.description}</p>
+                  </section>
+
+                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                    <h2 className="m-0 text-[16px]">{t('student.academy.whatYouLearn')}</h2>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {(lessons.length ? lessons.slice(0, 8) : []).map(lesson => (
+                        <div key={lesson.id} className="flex items-start gap-2 text-[11px] text-[#4f5e78]">
+                          <span className="grid h-[17px] w-[17px] shrink-0 place-items-center rounded-full bg-[#16ab70] text-[11px] text-white">✓</span>
+                          <span>{lesson.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                    <h2 className="m-0 text-[16px]">{t('student.academy.suitableFor')}</h2>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-3">
+                      {[currentCourse.category || t('student.general'), levelLabel, currentCourse.teacherName].filter(Boolean).map(item => (
+                        <div key={item} className="text-[11px] text-[#4e5c78]">
+                          <span className="mx-auto mb-1 grid h-7 w-8 place-items-center rounded bg-[#f4f7fc] text-[#1b3256]">
+                            <Users size={14} />
+                          </span>
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-2.5 bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                    <h2 className="m-0 mb-2 text-[16px]">{t('student.academy.requirements')}</h2>
+                    {[t('student.academy.requirementWatch'), t('student.academy.requirementQuiz')].map(line => (
+                      <div key={line} className="mt-1.5 flex items-start gap-2 text-[11px] text-[#4f5e78]">
+                        <span className="grid h-[17px] w-[17px] shrink-0 place-items-center rounded-full bg-[#16ab70] text-[11px] text-white">✓</span>
+                        <span>{line}</span>
+                      </div>
+                    ))}
+                  </section>
+                </>
               )}
 
-              {/* Video wrapper to contain both video and sidebar */}
-              <div className="absolute inset-0">
+              {activeTab === 'docs' && (
+                <section className="mt-2.5 min-h-[300px] bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                  <h2 className="m-0 text-[16px]">{t('student.academy.documentsTab', { count: documents.length })}</h2>
+                  {documents.length === 0 ? (
+                    <p className="mt-3 text-[12px] text-[#52617c]">{t('student.academy.noDocuments')}</p>
+                  ) : documents.map((item, index) => (
+                    <a
+                      key={item.key}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 flex items-center justify-between gap-3 rounded border border-[#e7edf5] px-3 py-3 text-[13px] hover:bg-[#f6faff]"
+                    >
+                      <span className="flex items-center gap-2"><FileText size={16} className="text-[#0759e8]" />{index + 1}. {item.title}</span>
+                      <span className="text-[#0759e8]">{t('student.downloadDocument')}</span>
+                    </a>
+                  ))}
+                </section>
+              )}
+
+              {activeTab === 'qa' && (
+                <section className="mt-2.5 min-h-[300px] bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                  <h2 className="m-0 text-[16px]">{t('student.academy.qaTab', { count: quizLessons.length })}</h2>
+                  {quizLessons.length === 0 ? (
+                    <p className="mt-3 text-[12px] text-[#52617c]">{t('student.academy.noQa')}</p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      {quizLessons.map(lesson => (
+                        <button
+                          key={lesson.id}
+                          onClick={() => {
+                            setSelectedLesson(lesson);
+                            setTakingQuiz(true);
+                          }}
+                          className={`flex w-full items-center justify-between rounded border px-3 py-3 text-left text-[13px] ${selectedLesson?.id === lesson.id ? 'border-[#0759e8] bg-[#f6faff]' : 'border-[#e7edf5] hover:bg-[#f6faff]'}`}
+                        >
+                          <span className="flex items-center gap-2"><HelpCircle size={16} className="text-[#0759e8]" />{lesson.title}</span>
+                          <span className="text-[#0759e8]">{quizResults[lesson.id] ? `${quizResults[lesson.id].score}%` : t('student.startQuiz')}</span>
+                        </button>
+                      ))}
+                      {selectedLesson?.hasQuiz && takingQuiz && (
+                        <div className="pt-3">
+                          <QuizTaker
+                            lessonId={selectedLesson.id}
+                            courseId={selectedCourseId}
+                            quizDuration={selectedLesson.quizDuration}
+                            quizDocumentUrl={selectedLesson.quizDocumentUrl}
+                            quizDocumentName={selectedLesson.quizDocumentName}
+                            onComplete={() => {
+                              setTakingQuiz(false);
+                              void loadQuizResults();
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {activeTab === 'reviews' && (
+                <section className="mt-2.5 min-h-[220px] bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                  <h2 className="m-0 text-[16px]">{t('student.academy.reviewsTab')}</h2>
+                  <p className="mt-3 text-[12px] text-[#52617c]">{t('student.academy.noReviews')}</p>
+                </section>
+              )}
+
+              {activeTab === 'news' && (
+                <section className="mt-2.5 min-h-[220px] bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                  <h2 className="m-0 text-[16px]">{t('student.academy.newsTab')}</h2>
+                  <p className="mt-3 text-[12px] text-[#52617c]">{t('student.academy.noNews')}</p>
+                </section>
+              )}
+            </div>
+
+            <aside className="min-w-0">
+              <section className="rounded bg-white px-3 py-3.5 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                <div className="flex items-center justify-between">
+                  <b className="text-[13px]">{t('student.academy.learningProgress')}</b>
+                  <strong className="text-[21px]">{percent}%</strong>
+                </div>
+                <div className="my-1.5 h-[9px] overflow-hidden rounded-full bg-[#e9edf3]">
+                  <span className="block h-full rounded-full bg-[#075dec]" style={{ width: `${percent}%` }} />
+                </div>
+                <small className="text-[11px] text-[#6a7690]">
+                  {t('student.academy.completedOf', { done: completedCount, total: lessons.length })}
+                </small>
+                <button onClick={handleContinue} className="mt-3 flex min-h-[37px] w-full items-center justify-center gap-2 rounded border border-[#0d5ce4] bg-[#0b5ce7] text-[11px] text-white">
+                  <Play size={14} fill="currentColor" />
+                  {t('student.continueLearningBtn')}
+                </button>
+                <button onClick={handleMarkComplete} className="mt-2 flex min-h-[37px] w-full items-center justify-center gap-2 rounded border border-[#bbc6d4] bg-white text-[11px] text-[#293957]">
+                  <Bookmark size={14} />
+                  {t('student.markComplete')}
+                </button>
+                <p className="mt-3 text-[10px] text-[#6a758d]">
+                  {lastStamp
+                    ? t('student.academy.lastLearned', { time: new Date(lastStamp).toLocaleString(dateLocale) })
+                    : t('student.academy.notStartedYet')}
+                </p>
+              </section>
+
+              <section className="mt-3 rounded bg-white px-2.5 py-3 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                  <b className="text-[13px]">{t('student.courseContent')} ({lessons.length})</b>
+                  <button
+                    className="text-[11px] text-[#0759ac]"
+                    onClick={() => {
+                      if (allCollapsed) {
+                        setCollapsed({});
+                        return;
+                      }
+                      const next: Record<string, boolean> = {};
+                      chapters.forEach(chapter => { next[chapter.name] = true; });
+                      setCollapsed(next);
+                    }}
+                  >
+                    {allCollapsed ? t('student.academy.expandAll') : t('student.academy.collapseAll')}
+                  </button>
+                </div>
+                {chapters.length === 0 && (
+                  <p className="px-2 py-4 text-center text-[12px] text-[#63708a]">{t('student.noLessonsYet')}</p>
+                )}
+                {chapters.map((chapter, chapterIndex) => {
+                  const doneInChapter = chapter.items.filter(lesson => progress[lesson.id]?.completed).length;
+                  const isCollapsed = Boolean(collapsed[chapter.name]);
+                  return (
+                    <div key={chapter.name} className="mb-2 overflow-hidden rounded">
+                      <button
+                        className="flex min-h-[43px] w-full items-center gap-2 bg-[#f8fafc] px-2 py-2 text-left text-[11px] font-bold hover:bg-[#eef5ff]"
+                        aria-expanded={!isCollapsed}
+                        onClick={() => setCollapsed(prev => ({ ...prev, [chapter.name]: !prev[chapter.name] }))}
+                      >
+                        <span className="w-4">{chapterIndex + 1}.</span>
+                        <span className="flex-1">{chapter.name}</span>
+                        <span className="font-normal text-[#2f3c57]">{doneInChapter}/{chapter.items.length}</span>
+                        <ChevronDown size={14} className={`transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+                      </button>
+                      {!isCollapsed && chapter.items.map(lesson => {
+                        const index = lessonIndex(lesson);
+                        const locked = isLessonLocked(lesson, index);
+                        const done = Boolean(progress[lesson.id]?.completed);
+                        const selected = selectedLesson?.id === lesson.id;
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => openLesson(lesson, index)}
+                            className={`relative grid min-h-[35px] w-full grid-cols-[16px_28px_minmax(0,1fr)_42px_18px] items-center gap-1 px-1 py-1 text-left text-[10px] ${selected ? 'bg-[#e9f2ff] text-[#065eb8]' : 'bg-white text-[#313e58] hover:bg-[#f4f8ff]'} ${locked ? 'opacity-60' : ''}`}
+                          >
+                            {selected && <span className="absolute bottom-0 left-0 top-0 w-[3px] bg-[#0866f1]" />}
+                            <span className={`text-center text-[13px] ${done ? 'text-[#11a76a]' : 'text-[#a4b1c2]'}`}>{done ? '▣' : '▫'}</span>
+                            <span className="text-[#5e6880]">{lesson.order || index + 1}</span>
+                            <span className="truncate">{lesson.title}</span>
+                            <span className="text-right text-[#53617a]">{lesson.duration ? formatDuration(lesson.duration) : ''}</span>
+                            <span className={`grid h-4 w-4 place-items-center justify-self-center rounded-full border ${done ? 'border-[#13ab71] bg-[#13ab71] text-[10px] text-white' : 'border-[#a4b1c2]'}`}>
+                              {locked ? <Lock size={9} /> : done ? '✓' : ''}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </section>
+
+              <section className="mt-3 flex gap-2.5 rounded bg-[#fff9ec] p-3 text-[11px] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                <span className="grid h-11 w-10 shrink-0 place-items-center rounded bg-[#fff1d0] text-[#e2a020]">
+                  <Lightbulb size={18} />
+                </span>
+                <div>
+                  <b className="text-[12px]">{t('student.academy.noteTitle')}</b>
+                  <p className="m-0 mt-1 leading-relaxed text-[#56627a]">{t('student.academy.noteBody')}</p>
+                </div>
+              </section>
+
+              <section className="mt-3 flex flex-wrap gap-2.5 rounded bg-[#edfbf8] p-3 text-[11px] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                <span className="grid h-11 w-10 shrink-0 place-items-center rounded bg-[#d5f7e9] text-[#07965f]">
+                  <Award size={18} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <b className="text-[12px]">{t('student.academy.certificate')}</b>
+                  <p className="m-0 mt-1 leading-relaxed text-[#56627a]">{t('student.academy.certificateHint')}</p>
+                </div>
+                <button
+                  onClick={() => setCertOpen(true)}
+                  className="ml-[50px] w-[calc(100%-50px)] rounded border border-[#d9e6f1] bg-white px-2 py-1.5 text-[10px] text-[#0b61bb]"
+                >
+                  ▧ &nbsp; {t('student.academy.viewCertificate')} ↗
+                </button>
+              </section>
+            </aside>
+          </div>
+        </main>
+      </div>
+
+      {playerOpen && selectedLesson && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setPlayerOpen(false)}>
+          <div className="relative max-h-[92vh] w-full max-w-[860px] overflow-auto rounded-[10px] bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}>
+            <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setPlayerOpen(false)} aria-label={t('student.academy.close')}>×</button>
+            <h2 className="mb-2 mr-8 text-[20px] font-bold">{selectedLesson.title}</h2>
+            <p className="mb-3 text-[13px] text-[#5a6680]">{selectedLesson.description}</p>
+            {(selectedLesson.videoId || selectedLesson.videoUrl) ? (
+              <div ref={videoContainerRef} className="relative aspect-video overflow-hidden rounded-md bg-black">
                 <video
                   ref={videoRef}
-                  className="absolute inset-0 w-full h-full cursor-pointer"
+                  className="h-full w-full"
                   controls={!isStaff}
                   controlsList="nodownload"
                   onTimeUpdate={handleTimeUpdate}
                   onPause={handleVideoPause}
                   onEnded={handleVideoEnded}
                   playsInline
-                  onContextMenu={(e) => isStaff && e.preventDefault()}
+                  onContextMenu={event => isStaff && event.preventDefault()}
                   onDoubleClick={handleFullscreen}
-                  style={isStaff ? { pointerEvents: 'none' } : {}}
+                  style={isStaff ? { pointerEvents: 'none' } : undefined}
                 >
-                  <source
-                    src={selectedLesson.videoId && CDN_HOSTNAME
-                      ? `https://${CDN_HOSTNAME}/${selectedLesson.videoId}/playlist.m3u8`
-                      : (selectedLesson.videoUrl
-                          ? (CDN_HOSTNAME ? selectedLesson.videoUrl.replace(/https:\/\/[^/]+\.b-cdn\.net\//, `https://${CDN_HOSTNAME}/`) : selectedLesson.videoUrl)
-                          : '')}
-                    type="application/x-mpegURL"
-                  />
-                  {t("student.videoNotSupported")}
+                  <source src={lessonStreamUrl(selectedLesson)} type="application/x-mpegURL" />
+                  {t('student.videoNotSupported')}
                 </video>
-
-                  {/* Custom Controls for Staff */}
-                  {isStaff && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4" style={{ pointerEvents: 'auto' }}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {/* Restart Button */}
-                          <button
-                            onClick={handleRestart}
-                            className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
-                            title={t("student.replayFromStart")}
-                          >
-                            <RotateCcw size={18} />
-                          </button>
-
-                          {/* Rewind 10s */}
-                          <button
-                            onClick={handleRewind}
-                            className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
-                            title={t("student.rewind10")}
-                          >
-                            <Rewind size={18} />
-                          </button>
-
-                          {/* Play/Pause */}
-                          <button
-                            onClick={handlePlayPause}
-                            className="w-12 h-12 bg-[#53cafd] hover:bg-[#3db9f5] rounded-full flex items-center justify-center text-white transition-colors shadow-lg shadow-[#53cafd]/25"
-                          >
-                            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-                          </button>
-
-                          <span className="text-white text-sm ml-2 font-medium">
-                            {isPlaying ? t('student.playing') : t('student.paused')}
-                          </span>
-                        </div>
-
-                        {/* Fullscreen */}
-                        <button
-                          onClick={handleFullscreen}
-                          className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors backdrop-blur-sm"
-                          title={t("student.fullscreen")}
-                        >
-                          <Maximize size={20} />
-                        </button>
-                      </div>
-                      <div className="mt-2 text-center">
-                        <span className="text-white text-xs">
-                          {t("student.videoControlsHint")}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Fullscreen button for students (floating) */}
-                  {!isStaff && (
-                    <button
-                      onClick={handleFullscreen}
-                      className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-lg flex items-center justify-center text-white transition-colors backdrop-blur-sm z-10"
-                      title={t("student.fullscreenOrDblClick")}
-                    >
-                      <Maximize size={20} />
-                    </button>
-                  )}
-
-                  {/* Sidebar - Slide in/out from right - Same height as video */}
-                  <div
-                    className={`absolute top-0 right-0 h-full w-80 bg-[#111d30] backdrop-blur-md border-l border-[#223852] shadow-2xl z-40 transition-transform duration-300 ease-in-out overflow-y-auto custom-scrollbar ${
-                      showSidebar ? 'translate-x-0' : 'translate-x-full'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                  <div className="p-3 border-b border-[#223852]/50 sticky top-0 bg-[#111d30] z-10">
-                    <h3 className="font-bold text-white text-sm">{t("student.courseContent")}</h3>
-                    <p className="text-xs text-white mt-1 line-clamp-1">{currentCourse.title}</p>
-                    <p className="text-xs text-white mt-1">
-                      {selectedTag === 'all' ? t('student.lessonsCount', { count: lessons.length }) : t('student.lessonsFiltered', { filtered: filteredLessons.length, total: lessons.length })}
-                    </p>
-                  </div>
-
-                  <div className="p-3">
-                    {filteredLessons.length === 0 ? (
-                      <div className="text-center text-white py-4">
-                        <p className="text-xs">
-                          {selectedTag === 'all' ? t('student.noLessonsYet') : t('student.noLessonsWithTag', { tag: selectedTag })}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-[#223852]/30">
-                        {filteredLessons.map((lesson, index) => {
-                          const hasContent = lesson.videoId || lesson.documentUrl || lesson.hasQuiz;
-                          const locked = isLessonLocked(lesson, index);
-                          const previousLesson = index > 0 ? filteredLessons[index - 1] : null;
-
-                          return (
-                            <button
-                              key={lesson.id}
-                              onClick={() => {
-                                if (locked) {
-                                  alert(t("student.unlockLessonAlert", { title: previousLesson?.title || "" }));
-                                  return;
-                                }
-                                if (hasContent) {
-                                  setSelectedLesson(lesson);
-                                  if (lesson.videoId) setViewMode('video');
-                                  else if (lesson.documentUrl) setViewMode('document');
-                                  else if (lesson.hasQuiz) setViewMode('quiz');
-                                }
-                              }}
-                              disabled={!hasContent || locked}
-                              className={`w-full p-2.5 text-left transition-colors ${selectedLesson?.id === lesson.id ? 'bg-[#223852]/50 border-l-4 border-[#53cafd]' : ''
-                                } ${locked ? 'opacity-50 cursor-not-allowed bg-white/5' : 'hover:bg-[#223852]/40'} ${!hasContent && !locked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                              <div className="flex items-start gap-2">
-                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold relative ${locked ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white'
-                                  }`}>
-                                  {locked ? <Lock size={14} /> : lesson.order}
-                                  {!locked && progress[lesson.id]?.completed && (
-                                    <CheckCircle size={10} className="absolute -top-1 -right-1 text-green-400 bg-[#111d30] rounded-full" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className={`font-medium mb-0.5 line-clamp-2 text-xs ${locked ? 'text-white' : 'text-white'}`}>
-                                    {lesson.title}
-                                    {locked && (
-                                      <span className="ml-1 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/30">
-                                        {t("student.needPassPrevious")}
-                                      </span>
-                                    )}
-                                  </h4>
-                                  {!locked && progress[lesson.id] && (
-                                    <div className="mb-0.5">
-                                      <div className="w-full h-0.5 bg-white/10 rounded-full overflow-hidden">
-                                        <div
-                                          className="h-full bg-[#53cafd]"
-                                          style={{
-                                            width: `${getLessonCompletionPercent(progress[lesson.id])}%`
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-1.5 text-[10px] text-white flex-wrap">
-                                    {lesson.videoId && (
-                                      <span className="flex items-center gap-0.5">
-                                        <Play size={10} />
-                                        Video
-                                      </span>
-                                    )}
-                                    {lesson.documentUrl && (
-                                      <span className="flex items-center gap-0.5 text-[#53cafd]">
-                                        <FileText size={10} />
-                                        {t("student.documents")}
-                                      </span>
-                                    )}
-                                    {lesson.hasQuiz && (
-                                      <span className="flex items-center gap-0.5 text-purple-300">
-                                        <HelpCircle size={10} />
-                                        Quiz
-                                      </span>
-                                    )}
-                                    {!hasContent && (
-                                      <span className="flex items-center gap-0.5">
-                                        <Lock size={10} />
-                                        {t("student.notAvailable")}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Lesson info below video */}
-                {selectedLesson && (
-                  <div className="bg-gradient-to-br from-[#111d30]/40 to-[#0b1424]/40 backdrop-blur-md rounded-lg p-3 mt-4 border border-[#223852]/50 shadow-lg">
-                    <h2 className="text-base font-bold text-white mb-1">{selectedLesson.title}</h2>
-                    <p className="text-xs text-white/90 mb-2">{selectedLesson.description}</p>
-                    <div className="flex items-center gap-3 text-xs">
-                      {selectedLesson.duration && (
-                        <div className="flex items-center gap-1.5 text-white">
-                          <Clock size={12} />
-                          <span>{t("student.durationLabel")}: {formatDuration(selectedLesson.duration)}</span>
-                        </div>
-                      )}
-                      {progress[selectedLesson.id] && (
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <span className="text-[10px] text-white">
-                                {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
-                              </span>
-                              {progress[selectedLesson.id].completed && (
-                                <CheckCircle size={12} className="text-green-400" />
-                              )}
-                            </div>
-                            <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[#53cafd] transition-all"
-                                style={{
-                                  width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%`
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {selectedLesson.videoId && progress[selectedLesson.id]?.completed && (
-                        <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-medium text-emerald-300">
-                          {t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Default layout for non-video views or video without videoId */
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-            {/* Content Area */}
-            <div className="lg:col-span-2">
-              {selectedLesson && (
-                <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-4 mb-4 border border-[#223852] shadow-2xl">
-                  <div className="flex items-center gap-2">
-                    {selectedLesson.videoId && (
-                      <button
-                        onClick={() => setViewMode('video')}
-                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${viewMode === 'video'
-                          ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                          }`}
-                      >
-                        <Play size={16} />
-                        Video
-                      </button>
-                    )}
-                    {selectedLesson.documentUrl && (
-                      <button
-                        onClick={() => setViewMode('document')}
-                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${viewMode === 'document'
-                          ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                          }`}
-                      >
-                        <FileText size={16} />
-                        {t("student.documents")}
-                      </button>
-                    )}
-                    {selectedLesson.hasQuiz && (
-                      <button
-                        onClick={() => setViewMode('quiz')}
-                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${viewMode === 'quiz'
-                          ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                          }`}
-                      >
-                        <HelpCircle size={16} />
-                        {t("student.quizSection")}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {viewMode === 'video' && !selectedLesson?.videoId ? (
-                <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl relative border border-[#223852] shadow-2xl" style={{ paddingTop: '56.25%' }}>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p>{t("student.noVideoYet")}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Document View */}
-            {viewMode === 'document' && selectedLesson && selectedLesson.documentUrl ? (
-              <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-8 border border-[#223852] shadow-2xl">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 text-[#53cafd] mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-white mb-2">{t("student.lessonDocuments")}</h3>
-                  <p className="text-white mb-4">{selectedLesson.documentName}</p>
-                  <a
-                    href={selectedLesson.documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-6 py-3 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] transition-all shadow-lg shadow-[#53cafd]/25"
-                  >
-                    {t("student.downloadDocument")}
-                  </a>
-                </div>
-              </div>
-            ) : viewMode === 'document' ? (
-              <div className="bg-gradient-to-br from-[#111d30] to-[#0b1424] backdrop-blur-md rounded-xl p-8 text-center border border-[#223852] shadow-2xl">
-                <FileText className="w-16 h-16 text-white mx-auto mb-4" />
-                <p className="text-white">{t("student.noDocumentYet")}</p>
-              </div>
-            ) : null}
-
-            {/* Quiz View - Removed, now shown in bottom bar of lesson info */}
-
-            {selectedLesson && (
-              <div className="bg-gradient-to-br from-[#111d30]/40 to-[#0b1424]/40 backdrop-blur-md rounded-lg p-3 mt-4 border border-[#223852]/50 shadow-lg">
-                <h2 className="text-base font-bold text-white mb-1">{selectedLesson.title}</h2>
-                <p className="text-xs text-white/90 mb-2">{selectedLesson.description}</p>
-                <div className="flex items-center gap-3 text-xs">
-                  {selectedLesson.duration && (
-                    <div className="flex items-center gap-1.5 text-white">
-                      <Clock size={12} />
-                      <span>{t("student.durationLabel")}: {formatDuration(selectedLesson.duration)}</span>
-                    </div>
-                  )}
-                  {progress[selectedLesson.id] && (
+                {isStaff && (
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3" style={{ pointerEvents: 'auto' }}>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-[10px] text-white">
-                            {t("student.watchedLabel")}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
-                          </span>
-                          {progress[selectedLesson.id].completed && (
-                            <CheckCircle size={12} className="text-green-400" />
-                          )}
-                        </div>
-                        <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#53cafd] transition-all"
-                            style={{
-                              width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%`
-                            }}
-                          />
-                        </div>
-                      </div>
+                      <button onClick={handleRestart} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.replayFromStart')}><RotateCcw size={16} /></button>
+                      <button onClick={handleRewind} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.rewind10')}><Rewind size={16} /></button>
+                      <button onClick={handlePlayPause} className="grid h-11 w-11 place-items-center rounded-full bg-[#0b5ce7] text-white">{isPlaying ? <Pause size={18} /> : <Play size={18} />}</button>
                     </div>
-                  )}
-                  {selectedLesson.videoId && progress[selectedLesson.id]?.completed && (
-                    <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-medium text-emerald-300">
-                      {t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}
-                    </span>
-                  )}
-                </div>
-
-                {/* Quiz Section - Bottom Bar */}
-                {selectedLesson.hasQuiz && (
-                  <div className="border-t border-white/10 pt-4 mt-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <HelpCircle className="w-6 h-6 text-[#53cafd]" />
-                        <div>
-                          <h3 className="text-lg font-bold text-white">{t("student.quizSection")}</h3>
-                          <p className="text-sm text-white">{t("student.quizSectionHint")}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowQuizSection(!showQuizSection)}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white hover:text-white"
-                        title={showQuizSection ? t("student.collapse") : t("student.expand")}
-                      >
-                        {showQuizSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                      </button>
-                    </div>
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        showQuizSection ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
-                      }`}
-                    >
-                      <div>
-                        {takingQuiz ? (
-                          <QuizTaker
-                            lessonId={selectedLesson.id}
-                            courseId={course.id}
-                            quizDuration={selectedLesson.quizDuration}
-                            quizDocumentUrl={selectedLesson.quizDocumentUrl}
-                            quizDocumentName={selectedLesson.quizDocumentName}
-                            onComplete={() => setTakingQuiz(false)}
-                          />
-                        ) : (
-                          <div className="flex justify-end">
-                            <button
-                              onClick={() => setTakingQuiz(true)}
-                              className="px-6 py-3 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] transition-all shadow-lg shadow-[#53cafd]/25 font-medium"
-                            >
-                              {t("student.startQuiz")}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <button onClick={handleFullscreen} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white"><Maximize size={16} /></button>
                   </div>
                 )}
+                {!isStaff && (
+                  <button onClick={handleFullscreen} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded bg-black/50 text-white">
+                    <Maximize size={16} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid aspect-video place-items-center rounded-md bg-[#0b1424] text-white">
+                <div className="text-center">
+                  <Play className="mx-auto mb-2 opacity-60" />
+                  <p>{t('student.noVideoYet')}</p>
+                </div>
               </div>
             )}
-          </div>
-
-          {/* Left Sidebar - Tag Filter (Hạng mục) */}
-          <div className={`lg:col-span-1 transition-all duration-300 ${
-            selectedLesson && viewMode === 'video' && !showSidebar 
-              ? 'hidden lg:hidden' 
-              : 'block'
-          }`}>
-            <div className="bg-[#111d30] backdrop-blur-md rounded-xl border border-[#223852] overflow-hidden sticky top-24 shadow-lg">
-              <div className="p-3 border-b border-[#223852]/50">
-                <h3 className="font-bold text-white text-sm">{t("student.categories")}</h3>
-                <p className="text-xs text-white mt-1">
-                  {t("student.topicsCount", { count: allTags.length })}
-                </p>
-              </div>
-
-              <div className="p-3 space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
-                {allTags.length > 0 ? (
-                  <>
-                    <button
-                      onClick={() => setSelectedTag('all')}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedTag === 'all'
-                          ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                          : 'text-white hover:bg-[#223852]/40'
-                        }`}
-                    >
-                      {t("student.allWithCount", { count: lessons.length })}
-                    </button>
-                    {allTags.map((tag) => {
-                      const count = lessons.filter(l => l.tags?.includes(tag)).length;
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedTag(tag)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedTag === tag
-                              ? 'bg-[#53cafd] text-white shadow-lg shadow-[#53cafd]/25'
-                              : 'text-white hover:bg-[#223852]/40'
-                            }`}
-                        >
-                          {tag} ({count})
-                        </button>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <p className="text-xs text-white">{t('student.noTags')}</p>
-                )}
-              </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-[#52617c]">
+              {selectedLesson.duration ? <span className="flex items-center gap-1"><Clock size={14} />{formatDuration(selectedLesson.duration)}</span> : null}
+              {progress[selectedLesson.id] && (
+                <span>
+                  {t('student.watchedLabel')}: {formatDuration(progress[selectedLesson.id].viewedSeconds ?? progress[selectedLesson.id].watchedSeconds)}
+                  {progress[selectedLesson.id].completed ? ` · ${t('student.videoPointsEarned', { points: VIDEO_POINTS_PER_LESSON })}` : ''}
+                </span>
+              )}
+              {progress[selectedLesson.id] && (
+                <span className="h-1.5 w-28 overflow-hidden rounded-full bg-[#e9edf3]">
+                  <span className="block h-full bg-[#075dec]" style={{ width: `${getLessonCompletionPercent(progress[selectedLesson.id])}%` }} />
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selectedLesson.hasQuiz && (
+                <button
+                  onClick={() => {
+                    setPlayerOpen(false);
+                    setActiveTab('qa');
+                    setTakingQuiz(true);
+                  }}
+                  className="rounded border border-[#bbc6d4] px-4 py-2 text-[12px]"
+                >
+                  {t('student.startQuiz')}
+                </button>
+              )}
+              <button onClick={goNextLesson} className="rounded bg-[#0b5ce7] px-4 py-2 text-[12px] text-white">
+                {t('student.academy.nextLesson')} →
+              </button>
             </div>
           </div>
-
-          {/* Lesson List - Moved to Right */}
-          <div className={`lg:col-span-1 transition-all duration-300 ${
-            selectedLesson && viewMode === 'video' && !showSidebar 
-              ? 'hidden lg:hidden' 
-              : 'block'
-          }`}>
-            <div className="bg-[#111d30] backdrop-blur-md rounded-xl border border-[#223852] overflow-hidden sticky top-24 shadow-lg">
-              <div className="p-3 border-b border-[#223852]/50">
-                <h3 className="font-bold text-white text-sm">{t("student.courseContent")}</h3>
-                <p className="text-xs text-white mt-1 line-clamp-1">{currentCourse.title}</p>
-                <p className="text-xs text-white mt-1">
-                  {selectedTag === 'all' ? t('student.lessonsCount', { count: lessons.length }) : t('student.lessonsFiltered', { filtered: filteredLessons.length, total: lessons.length })}
-                </p>
-              </div>
-
-              <div className="max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
-                {filteredLessons.length === 0 ? (
-                  <div className="p-4 text-center text-white">
-                    <p className="text-xs">
-                      {selectedTag === 'all' ? t('student.noLessonsYet') : t('student.noLessonsWithTag', { tag: selectedTag })}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#223852]/30">
-                    {filteredLessons.map((lesson, index) => {
-                      const hasContent = lesson.videoId || lesson.documentUrl || lesson.hasQuiz;
-                      const locked = isLessonLocked(lesson, index);
-                      const previousLesson = index > 0 ? filteredLessons[index - 1] : null;
-
-                      return (
-                        <button
-                          key={lesson.id}
-                          onClick={() => {
-                            if (locked) {
-                              alert(t("student.unlockLessonAlert", { title: previousLesson?.title || "" }));
-                              return;
-                            }
-                            if (hasContent) {
-                              setSelectedLesson(lesson);
-                              // Auto select view mode
-                              if (lesson.videoId) setViewMode('video');
-                              else if (lesson.documentUrl) setViewMode('document');
-                              else if (lesson.hasQuiz) setViewMode('quiz');
-                            }
-                          }}
-                          disabled={!hasContent || locked}
-                          className={`w-full p-2.5 text-left transition-colors ${selectedLesson?.id === lesson.id ? 'bg-[#223852]/50 border-l-3 border-[#53cafd]' : ''
-                            } ${locked ? 'opacity-50 cursor-not-allowed bg-[#0b1424]/30' : 'hover:bg-[#223852]/40'} ${!hasContent && !locked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs font-bold relative ${locked ? 'bg-red-500/30 text-red-300' : 'bg-white/15 text-white'
-                              }`}>
-                              {locked ? <Lock size={12} /> : lesson.order}
-                              {!locked && progress[lesson.id]?.completed && (
-                                <CheckCircle size={10} className="absolute -top-0.5 -right-0.5 text-green-400 bg-[#111d30] rounded-full" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className={`font-medium mb-0.5 line-clamp-2 ${locked ? 'text-white' : 'text-white'} text-xs leading-tight`}>
-                                {lesson.title}
-                                {locked && (
-                                  <span className="ml-1 text-[10px] bg-red-500/30 text-red-300 px-1.5 py-0.5 rounded border border-red-500/40">
-                                    70%
-                                  </span>
-                                )}
-                              </h4>
-                              {!locked && progress[lesson.id] && (
-                                <div className="mb-1">
-                                  <div className="w-full h-0.5 bg-white/10 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-[#53cafd]"
-                                      style={{
-                                        width: `${getLessonCompletionPercent(progress[lesson.id])}%`
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1.5 text-[10px] text-white flex-wrap">
-                                {lesson.videoId && (
-                                  <span className="flex items-center gap-0.5">
-                                    <Play size={10} />
-                                    Video
-                                  </span>
-                                )}
-                                {lesson.documentUrl && (
-                                  <span className="flex items-center gap-0.5 text-[#53cafd]">
-                                    <FileText size={10} />
-                                    {t("student.documents")}
-                                  </span>
-                                )}
-                                {lesson.hasQuiz && (
-                                  <span className="flex items-center gap-0.5 text-purple-300">
-                                    <HelpCircle size={10} />
-                                    Quiz
-                                  </span>
-                                )}
-                                {!hasContent && (
-                                  <span className="flex items-center gap-0.5">
-                                    <Lock size={10} />
-                                    {t("student.notAvailable")}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Sidebar - Course Switcher (if multiple courses) */}
-          {allCourses.length > 1 && (
-            <div className={`lg:col-span-1 transition-all duration-300 ${
-              selectedLesson && viewMode === 'video' && !showSidebar 
-                ? 'hidden lg:hidden' 
-                : 'block'
-            }`}>
-              <div className="bg-[#111d30] backdrop-blur-md rounded-xl border border-[#223852] p-3 sticky top-24 shadow-lg">
-                <h3 className="font-bold text-white text-sm mb-3">{t("student.otherCourses")}</h3>
-                <div className="space-y-1">
-                  {allCourses.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setSelectedCourseId(c.id);
-                        setSelectedTag('all');
-                        setSelectedLesson(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${selectedCourseId === c.id
-                          ? 'bg-[#223852]/50 text-[#53cafd] font-medium border border-[#53cafd]/30'
-                          : 'text-white hover:bg-[#223852]/40'
-                        }`}
-                    >
-                      <div className="line-clamp-2">{c.title}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
       )}
 
-      {/* Attention Check Popup (Staff only) */}
+      {introOpen && currentCourse.demoVideoId && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setIntroOpen(false)}>
+          <div className="relative w-full max-w-[760px] rounded-[10px] bg-white p-5" onClick={event => event.stopPropagation()}>
+            <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setIntroOpen(false)}>×</button>
+            <h2 className="mb-3 mr-8 text-[20px] font-bold">{t('student.introVideo')}</h2>
+            <BunnyVideoPlayer videoId={currentCourse.demoVideoId} cdnHostname={CDN_HOSTNAME} className="aspect-video w-full overflow-hidden rounded-md bg-black" />
+          </div>
+        </div>
+      )}
+
+      {certOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(2,15,35,0.65)] p-4" onClick={() => setCertOpen(false)}>
+          <div className="relative w-full max-w-[560px] rounded-[10px] bg-white p-5" onClick={event => event.stopPropagation()}>
+            <button className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded bg-[#f1f4f8]" onClick={() => setCertOpen(false)}>×</button>
+            <h2 className="mb-3 mr-8 text-[20px] font-bold">{t('student.academy.certificate')}</h2>
+            <div className="border-8 border-double border-[#10a972] bg-[#f4fffb] px-4 py-8 text-center">
+              <p className="text-[22px] font-bold text-[#087552]">BioKama Academy</p>
+              <p className="mt-2 text-[12px] tracking-wide text-[#087552]">{t('student.academy.certificateSample')}</p>
+              <h3 className="mt-3 text-[20px] font-bold text-[#111b38]">{currentCourse.title}</h3>
+              <p className="mt-2 text-[13px] text-[#52617c]">{userProfile?.displayName}</p>
+              <p className="mt-2 text-[12px] text-[#52617c]">{t('student.academy.certificateFor')}</p>
+            </div>
+            <p className="mt-3 text-[12px] text-[#52617c]">
+              {percent === 100 ? t('student.academy.certificateReady') : t('student.academy.certificatePending')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {showAttentionCheck && isStaff && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-[#1e1e2d] border border-white/10 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-            <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-500/30">
-              <svg className="w-8 h-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">{t("student.stillWatching")}</h3>
-            <p className="text-white mb-6">
-              {t("student.stillWatchingHint")}
-            </p>
-            <button
-              onClick={handleAttentionCheckContinue}
-              className="w-full px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium text-lg transition-colors shadow-lg shadow-green-500/25"
-            >
-              {t("student.continueWatching")}
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center">
+            <h3 className="mb-2 text-2xl font-bold">{t('student.stillWatching')}</h3>
+            <p className="mb-6 text-[#52617c]">{t('student.stillWatchingHint')}</p>
+            <button onClick={handleAttentionCheckContinue} className="w-full rounded-lg bg-[#12a66d] px-6 py-3 font-medium text-white">
+              {t('student.continueWatching')}
             </button>
-            <p className="text-xs text-white mt-4">
-              {t("student.autoPauseHint")}
-            </p>
           </div>
         </div>
       )}
+
+      {toastMsg && (
+        <div className="fixed bottom-5 right-5 z-[70] rounded-md bg-[#162c47] px-4 py-2.5 text-[12px] text-white shadow-lg">
+          {toastMsg}
+        </div>
+      )}
+
+      <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
     </div>
   );
 };

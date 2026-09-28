@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { BookOpen, CheckCircle2, ClipboardCheck, LogOut, PlayCircle, Sparkles } from 'lucide-react';
-import { Button } from '@/components/Button';
+import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, GraduationCap, Headphones, Home, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
 import { CourseEnrollment } from '@/components/student/CourseEnrollment';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -32,6 +31,9 @@ export default function StudentPage() {
   const router = useRouter();
   const [stats, setStats] = useState<LearningStats>(emptyStats);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [toastMsg, setToastMsg] = useState('');
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -86,9 +88,18 @@ export default function StudentPage() {
     return () => { active = false; };
   }, [userProfile, loading, router]);
 
+  useEffect(() => {
+    if (!accountOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [accountOpen]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#080d19] text-slate-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f8fc] text-[#63708a]">
         {t('common.loading')}
       </div>
     );
@@ -101,70 +112,156 @@ export default function StudentPage() {
     router.push('/');
   };
 
+  const initials = (userProfile.displayName || 'U')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(-2)
+    .map(part => part[0]?.toUpperCase() || '')
+    .join('');
   const statCards = [
-    { label: t('student.videoPoints'), value: stats.points, icon: Sparkles, accent: 'text-cyan-300', iconBg: 'bg-cyan-400/10' },
-    { label: t('student.completedVideos'), value: stats.completedVideos, icon: CheckCircle2, accent: 'text-emerald-300', iconBg: 'bg-emerald-400/10' },
-    { label: t('student.inProgressVideos'), value: stats.inProgressVideos, icon: PlayCircle, accent: 'text-blue-300', iconBg: 'bg-blue-400/10' },
-    { label: t('student.passedQuizzes'), value: stats.passedQuizzes, icon: ClipboardCheck, accent: 'text-violet-300', iconBg: 'bg-violet-400/10' },
+    { label: t('student.videoPoints'), value: stats.points, icon: Sparkles, iconBg: 'bg-[#eff6ff] text-[#0b67d6]' },
+    { label: t('student.completedVideos'), value: stats.completedVideos, icon: CheckCircle2, iconBg: 'bg-[#edfbf8] text-[#07965f]' },
+    { label: t('student.inProgressVideos'), value: stats.inProgressVideos, icon: PlayCircle, iconBg: 'bg-[#eff6ff] text-[#0759e8]' },
+    { label: t('student.passedQuizzes'), value: stats.passedQuizzes, icon: ClipboardCheck, iconBg: 'bg-[#fff6e9] text-[#df8b00]' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#080d19] text-slate-100">
-      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#0a1220]/95 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex min-h-16 items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2.5">
-              <BookOpen className="w-5 h-5 text-cyan-300" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold text-white truncate">{t('student.dashboardTitle')}</h1>
-              <p className="text-xs text-slate-400">{t('student.myLearning')}</p>
-            </div>
+    <div className="flex min-h-screen bg-[#f5f8fc] text-[#111b38] [font-family:Arial,Helvetica,sans-serif]">
+      <aside className="sticky top-0 hidden h-screen w-[204px] shrink-0 flex-col bg-gradient-to-b from-[#061b2b] to-[#0b2035] text-[#eef5ff] lg:flex">
+        <div className="flex h-[72px] items-center justify-center bg-white px-2">
+          <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
+        </div>
+        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2">
+          <div className="flex min-h-[38px] items-center gap-3 rounded bg-[#06488e] px-2.5 text-[12px] text-white shadow-[inset_3px_0_#2885f5]">
+            <Home size={18} />
+            {t('student.academy.overview')}
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <LanguageSwitcher variant="light" />
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-slate-100">{userProfile.displayName}</p>
-              <p className="text-xs text-slate-400">{userProfile.email}</p>
+          <button
+            onClick={() => document.getElementById('course-list')?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]"
+          >
+            <BookOpen size={18} />
+            {t('student.academy.courses')}
+          </button>
+          {[
+            { icon: GraduationCap, label: t('student.academy.navPrograms') },
+            { icon: Users, label: t('student.academy.navStudents') },
+            { icon: FolderKanban, label: t('student.academy.navProjects') },
+            { icon: Building2, label: t('student.academy.navDepartments') },
+            { icon: Award, label: t('student.academy.navPositions') },
+            { icon: ClipboardCheck, label: t('student.academy.navAssessment') },
+            { icon: Folder, label: t('student.academy.navLibrary') },
+            { icon: BarChart3, label: t('student.academy.navReports') },
+            { icon: BadgeCheck, label: t('student.academy.navCertificates') },
+          ].map(item => (
+            <button key={item.label} onClick={() => { setToastMsg(t('student.academy.navSoon')); window.setTimeout(() => setToastMsg(''), 2200); }} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+              <item.icon size={18} />
+              {item.label}
+            </button>
+          ))}
+          <p className="mx-2 mb-1 mt-3 border-t border-white/10 pt-3 text-[11px] text-[#b7c5d2]">{t('student.academy.navSystem')}</p>
+          {[
+            { icon: Users, label: t('student.academy.navUsers'), id: 'users' },
+            { icon: Shield, label: t('student.academy.navPermissions'), id: 'permissions' },
+            { icon: List, label: t('student.academy.navActivity'), id: 'activity' },
+            { icon: Settings, label: t('student.academy.navSettings'), id: 'settings' },
+          ].map(item => (
+            <button key={item.id} onClick={() => { setToastMsg(t('student.academy.navSoon')); window.setTimeout(() => setToastMsg(''), 2200); }} className="flex min-h-[38px] w-full items-center gap-3 rounded px-2.5 text-left text-[12px] text-[#e1eaf4] hover:bg-[#163753]">
+              <item.icon size={18} />
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="border-t border-white/10 px-3 py-4">
+          <div className="rounded-md bg-[#152e47] p-3">
+            <div className="flex items-center gap-2.5">
+              <Headphones size={18} />
+              <span>
+                <b className="block text-[12px]">{t('student.academy.supportTitle')}</b>
+                <small className="block text-[10px] text-[#bdcada]">{t('student.academy.supportHint')}</small>
+              </span>
             </div>
-            <Button onClick={handleSignOut} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700">
-              <LogOut size={16} />
-              <span className="hidden sm:inline">{t('common.logout')}</span>
-            </Button>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <section className="relative overflow-hidden rounded-3xl border border-slate-700/60 bg-gradient-to-br from-[#14243c] via-[#101b2e] to-[#0c1525] p-6 sm:p-8">
-          <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-          <div className="relative">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
-              <Sparkles size={13} /> {t('student.myLearning')}
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white mb-2">
+      <div className="min-w-0 flex-1">
+        <header className="flex h-[54px] shrink-0 items-center gap-3 border-b border-[#ecf0f6] bg-white px-4">
+          <div className="min-w-0">
+            <b className="block truncate text-[13px]">{t('student.dashboardTitle')}</b>
+            <small className="block text-[10px] text-[#66718b]">{t('student.myLearning')}</small>
+          </div>
+          <div className="flex-1" />
+          <LanguageSwitcher className="!h-8 !rounded-md !px-2 !py-0 !text-[11px]" />
+          <div className="relative" ref={accountRef}>
+            <button
+              type="button"
+              onClick={() => setAccountOpen(open => !open)}
+              className="flex h-9 items-center gap-2 rounded-md px-1.5 text-left hover:bg-[#f4f7fb]"
+              aria-expanded={accountOpen}
+              aria-haspopup="menu"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#e8eef8] text-[11px] font-bold text-[#1d3b73]">
+                {initials}
+              </span>
+              <span className="hidden min-w-0 sm:block">
+                <b className="block max-w-[160px] truncate text-[12px] leading-tight text-[#111b38]">{userProfile.displayName}</b>
+                <small className="block text-[10px] leading-tight text-[#66718b]">
+                  {userProfile.role === 'staff' ? t('student.academy.staffRole') : t('student.academy.studentRole')}
+                </small>
+              </span>
+              <ChevronDown size={14} className={`hidden text-[#63708a] sm:block ${accountOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {accountOpen && (
+              <div role="menu" className="absolute right-0 top-[calc(100%+6px)] z-30 w-[240px] rounded-lg border border-[#e7edf5] bg-white p-1.5 shadow-[0_12px_32px_rgba(24,48,93,0.12)]">
+                <div className="border-b border-[#eef2f7] px-2.5 py-2">
+                  <b className="block truncate text-[12px] text-[#111b38]">{userProfile.displayName}</b>
+                  <small className="block truncate text-[11px] text-[#66718b]">{userProfile.email}</small>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleSignOut}
+                  className="mt-1 flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[12px] text-[#9b2c2c] hover:bg-[#fff5f5]"
+                >
+                  <LogOut size={14} />
+                  {t('common.logout')}
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-[1500px] space-y-4 px-4 py-4">
+          <section className="bg-white px-4 py-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+            <h2 className="mb-1 text-[21px] font-bold tracking-tight">
               {t('student.welcomeShort', { name: userProfile.displayName || userProfile.email || '' })}
             </h2>
-            <p className="text-slate-300">{t('student.welcomeSub')}</p>
-            <p className="mt-5 text-sm text-cyan-200">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
+            <p className="text-[12px] text-[#53617b]">{t('student.welcomeSub')}</p>
+            <p className="mt-2 text-[12px] text-[#0759e8]">{t('student.videoPointsRule', { points: VIDEO_POINTS_PER_LESSON })}</p>
+          </section>
+
+          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t('student.learningStats')}>
+            {statCards.map(card => {
+              const Icon = card.icon;
+              return (
+                <div key={card.label} className="bg-white p-4 shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
+                  <div className={`mb-3 inline-flex rounded p-2 ${card.iconBg}`}><Icon className="h-4 w-4" /></div>
+                  <p className="text-[22px] font-bold tabular-nums">{loadingStats ? '—' : card.value}</p>
+                  <p className="mt-1 text-[11px] text-[#63708a]">{card.label}</p>
+                </div>
+              );
+            })}
+          </section>
+
+          <div id="course-list">
+            <CourseEnrollment />
           </div>
-        </section>
-
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label={t('student.learningStats')}>
-          {statCards.map(card => {
-            const Icon = card.icon;
-            return (
-              <div key={card.label} className="rounded-2xl border border-slate-800 bg-[#111b2b] p-4 sm:p-5 shadow-xl shadow-black/10">
-                <div className={`mb-5 inline-flex rounded-xl p-2.5 ${card.iconBg}`}><Icon className={`w-5 h-5 ${card.accent}`} /></div>
-                <p className="text-2xl sm:text-3xl font-semibold tabular-nums text-white">{loadingStats ? '—' : card.value}</p>
-                <p className="mt-1 text-xs sm:text-sm text-slate-400">{card.label}</p>
-              </div>
-            );
-          })}
-        </section>
-
-        <CourseEnrollment />
-      </main>
+        </main>
+      </div>
+      {toastMsg && (
+        <div className="fixed bottom-4 right-4 z-50 rounded-md bg-[#111b38] px-4 py-2 text-[12px] text-white shadow-lg">{toastMsg}</div>
+      )}
     </div>
   );
 }

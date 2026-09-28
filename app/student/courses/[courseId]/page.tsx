@@ -103,10 +103,10 @@ export default function CourseDetailPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#311898]">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f8fc]">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#53cafd] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white/80">{t("common.loading")}</p>
+          <div className="w-12 h-12 border-4 border-[#0759e8] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#63708a]">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -118,12 +118,12 @@ export default function CourseDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#311898]">
-        <div className="text-center bg-[#5e3ed0]/20 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-          <p className="text-red-400 mb-4 text-lg font-medium">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f8fc]">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-[0_4px_16px_rgba(24,48,93,0.06)]">
+          <p className="text-red-500 mb-4 text-lg font-medium">{error}</p>
           <button
             onClick={handleBack}
-            className="px-6 py-2 bg-[#53cafd] text-white rounded-lg hover:bg-[#3db9f5] transition-colors shadow-lg shadow-[#53cafd]/25"
+            className="px-6 py-2 bg-[#0b5ce7] text-white rounded-lg hover:bg-[#0759e8] transition-colors"
           >
             {t("common.backToDashboard")}
           </button>

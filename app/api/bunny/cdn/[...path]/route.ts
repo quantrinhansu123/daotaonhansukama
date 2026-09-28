@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchViaPublicDns } from '@/lib/bunny-dns';
+import { fetchViaPublicDns, streamViaPublicDns } from '@/lib/bunny-dns';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +35,27 @@ export async function GET(
   const objectPath = path.map(encodeURIComponent).join('/');
   const target = `https://${cdn}/${objectPath}`;
 
+  const isPlaylist = objectPath.endsWith('.m3u8');
+
   try {
+    if (!isPlaylist) {
+      const upstream = await streamViaPublicDns(target, {
+        headers: { Accept: request.headers.get('Accept') || '*/*' },
+      });
+      if (!upstream.ok || !upstream.body) {
+        const text = await upstream.text().catch(() => '');
+        console.error('[bunny/cdn]', upstream.status, target, text.slice(0, 200));
+        return new NextResponse(text || 'CDN error', { status: upstream.status });
+      }
+      const headers = new Headers();
+      headers.set('Content-Type', upstream.headers.get('content-type') || 'video/mp2t');
+      const length = upstream.headers.get('content-length');
+      if (length) headers.set('Content-Length', length);
+      headers.set('Cache-Control', 'public, max-age=86400');
+      headers.set('Access-Control-Allow-Origin', '*');
+      return new NextResponse(upstream.body, { status: 200, headers });
+    }
+
     const upstream = await fetchViaPublicDns(target, {
       headers: {
         Accept: request.headers.get('Accept') || '*/*',
@@ -48,30 +68,14 @@ export async function GET(
       return new NextResponse(text || 'CDN error', { status: upstream.status });
     }
 
-    const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
     const buf = Buffer.from(await upstream.arrayBuffer());
-
-    // Rewrite m3u8 so segment URLs stay on our proxy
-    if (contentType.includes('mpegurl') || objectPath.endsWith('.m3u8')) {
-      const base = `/api/bunny/cdn`;
-      // If playlist has absolute CDN URLs, rewrite to proxy. Relative URLs resolve against
-      // /api/bunny/cdn/{videoId}/... which already maps correctly.
-      const text = rewritePlaylist(buf.toString('utf8'), base);
-      return new NextResponse(text, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/vnd.apple.mpegurl',
-          'Cache-Control': 'public, max-age=30',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
-    }
-
-    return new NextResponse(buf, {
+    const base = `/api/bunny/cdn`;
+    const text = rewritePlaylist(buf.toString('utf8'), base);
+    return new NextResponse(text, {
       status: 200,
       headers: {
-        'Content-Type': contentType,
-        'Cache-Control': upstream.headers.get('cache-control') || 'public, max-age=300',
+        'Content-Type': 'application/vnd.apple.mpegurl',
+        'Cache-Control': 'public, max-age=30',
         'Access-Control-Allow-Origin': '*',
       },
     });
