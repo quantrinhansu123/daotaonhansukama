@@ -9,7 +9,7 @@ import { Lesson, QuizResult } from '@/types/lesson';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings, Layers, Signal, UserRound, CheckCircle2, CirclePlay, Square, CheckSquare } from 'lucide-react';
+import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings, Layers, Signal, UserRound, CheckCircle2, CirclePlay, Square, CheckSquare, Upload } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
 import { DemoVideoView } from '@/components/shared/DemoVideoView';
 import { resolveDemoVideo } from '@/lib/demo-video';
@@ -18,6 +18,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { cloudflyVideoUrl } from '@/lib/cloudfly-video';
 import { getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
+import { LessonManagement } from '@/components/teacher/LessonManagement';
 
 interface CourseViewerProps {
   course: Course;
@@ -53,6 +54,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [toastMsg, setToastMsg] = useState('');
   const [lessonQuery, setLessonQuery] = useState('');
   const [showProfile, setShowProfile] = useState(false);
+  const [managingContent, setManagingContent] = useState(false);
   const toastTimer = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastProgressSaveAt = useRef(0);
@@ -62,6 +64,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
+  const canManageContent = userProfile?.role === 'admin';
 
   // Prefer fresh course prop from the page so admin updates (demo video) are not overwritten by a stale allCourses cache.
   const listedCourse = allCourses.find(c => c.id === selectedCourseId);
@@ -320,22 +323,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     }
   };
 
-  const isLessonLocked = (lesson: Lesson, index: number): boolean => {
-    // First lesson is never locked
-    if (index === 0) return false;
-
-    // Get previous lesson
-    const previousLesson = filteredLessons[index - 1];
-    if (!previousLesson) return false;
-
-    // If previous lesson has quiz, check if passed with 70%
-    if (previousLesson.hasQuiz) {
-      const quizResult = quizResults[previousLesson.id];
-      if (!quizResult || quizResult.score < 70) {
-        return true;
-      }
-    }
-
+  const isLessonLocked = (_lesson: Lesson, _index: number): boolean => {
+    // Open every lesson; no sequential quiz lock.
     return false;
   };
 
@@ -652,7 +641,11 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     .map(part => part[0]?.toUpperCase() || '')
     .join('');
   const roleLabel = userProfile?.position
-    || (userProfile?.role === 'staff' ? t('student.academy.staffRole') : t('student.academy.studentRole'));
+    || (userProfile?.role === 'admin'
+      ? t('student.academy.adminRole')
+      : userProfile?.role === 'staff'
+        ? t('student.academy.staffRole')
+        : t('student.academy.studentRole'));
   const levelLabel = currentCourse.level === 'beginner'
     ? t('student.levelBeginner')
     : currentCourse.level === 'intermediate'
@@ -866,10 +859,20 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-3 pb-8">
-          <div className="mb-2 flex items-center gap-1.5 text-[11px] text-[#66758e]">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-[#66758e]">
             <button onClick={onBack} className="text-[#537394]">{`← ${t('student.academy.backToCourses')}`}</button>
             <span>›</span>
             <span className="truncate">{currentCourse.title}</span>
+            {canManageContent && (
+              <button
+                type="button"
+                onClick={() => setManagingContent(true)}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[#18701C] px-3.5 py-1.5 text-[12px] font-bold text-white shadow-[0_6px_14px_rgba(24,112,28,0.25)] hover:bg-[#145616]"
+              >
+                <Upload size={14} />
+                {t('student.academy.manageContent')}
+              </button>
+            )}
           </div>
 
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
@@ -892,6 +895,16 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <Play className="mx-auto mb-2 opacity-60" />
                           <p className="mb-1 text-[14px] font-semibold">{selectedLesson.title}</p>
                           <p>{t('student.noVideoYet')}</p>
+                          {canManageContent && (
+                            <button
+                              type="button"
+                              onClick={() => setManagingContent(true)}
+                              className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#18701C] px-4 py-2 text-[13px] font-bold text-white hover:bg-[#145616]"
+                            >
+                              <Upload size={15} />
+                              {t('student.academy.manageContent')}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1401,6 +1414,20 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       {toastMsg && (
         <div className="fixed bottom-5 right-5 z-[70] rounded-md bg-[#162c47] px-4 py-2.5 text-[12px] text-white shadow-lg">
           {toastMsg}
+        </div>
+      )}
+
+      {managingContent && canManageContent && (
+        <div className="fixed inset-0 z-[80] overflow-y-auto bg-[#0b1424]/70 p-3 sm:p-6">
+          <div className="mx-auto max-w-5xl rounded-2xl bg-slate-950 p-3 shadow-2xl ring-1 ring-white/10 sm:p-5">
+            <LessonManagement
+              course={currentCourse}
+              onBack={() => {
+                setManagingContent(false);
+                void loadLessons();
+              }}
+            />
+          </div>
         </div>
       )}
 

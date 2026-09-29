@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, db } from '@/lib/data-store';
 import { UserProfile } from '@/types/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
@@ -116,7 +115,7 @@ export function StudentLearners() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navStudents')}</h1>
+        <h1 className="m-0 text-[20px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navStudents')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.learners.subtitle')}</p>
       </div>
 
@@ -156,8 +155,8 @@ export function StudentLearners() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-[24px] font-semibold">
-              <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+            <table className="min-w-full text-left text-[13px]">
+              <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                 <tr>
                   <th className="px-3 py-3 font-bold">#</th>
                   <th className="px-3 py-3 font-bold">{t('student.learners.colLearner')}</th>
@@ -186,10 +185,10 @@ export function StudentLearners() {
                           active ? 'bg-[#eff8f0]' : ''
                         }`}
                       >
-                        <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                        <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-3.5">
-                            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[#d7e5db] bg-[#edfbf4] shadow-sm">
+                            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-[#d7e5db] bg-[#edfbf4] shadow-sm">
                               {photo ? (
                                 <img
                                   src={photo}
@@ -200,37 +199,37 @@ export function StudentLearners() {
                                   }}
                                 />
                               ) : (
-                                <span className="grid h-full w-full place-items-center text-[18px] font-bold text-[#18701C]">
+                                <span className="grid h-full w-full place-items-center text-[13px] font-bold text-[#18701C]">
                                   {initials(user.displayName)}
                                 </span>
                               )}
                             </div>
                             <div className="min-w-0">
-                              <b className="block truncate text-[15px] text-[#111b38]">{user.displayName || '—'}</b>
-                              <small className="block truncate text-[18px] text-[#7a869c]">{user.email}</small>
+                              <b className="block truncate text-[13px] font-semibold text-[#111b38]">{user.displayName || '—'}</b>
+                              <small className="block truncate text-[12px] text-[#7a869c]">{user.email}</small>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
-                          <span className="rounded-full bg-[#edfbf4] px-3 py-1.5 text-[16px] font-bold text-[#18701C]">
+                        <td className="whitespace-nowrap px-3 py-3">
+                          <span className="rounded-full bg-[#edfbf4] px-2.5 py-1 text-[11px] font-bold text-[#18701C]">
                             {user.role === 'staff' ? t('student.academy.staffRole') : t('student.academy.studentRole')}
                           </span>
                           {user.position ? (
-                            <small className="mt-1 block text-[16px] text-[#7a869c]">{user.position}</small>
+                            <small className="mt-1 block text-[11px] text-[#7a869c]">{user.position}</small>
                           ) : null}
                         </td>
-                        <td className="px-3 py-3 font-semibold text-[#243552]">
+                        <td className="whitespace-nowrap px-3 py-3 font-semibold text-[#243552]">
                           {departments[user.departmentId || ''] || t('student.general')}
                         </td>
-                        <td className="px-3 py-3 text-[#52617c]">
+                        <td className="px-3 py-3 text-[12px] text-[#52617c]">
                           <div className="space-y-1">
-                            <span className="flex items-center gap-1.5"><Mail size={13} className="text-[#18701C]" />{user.email || '—'}</span>
-                            <span className="flex items-center gap-1.5"><Phone size={13} className="text-[#18701C]" />{user.phoneNumber || user.employment?.phone || '—'}</span>
+                            <span className="flex items-center gap-1.5 truncate"><Mail size={12} className="shrink-0 text-[#18701C]" />{user.email || '—'}</span>
+                            <span className="flex items-center gap-1.5 truncate"><Phone size={12} className="shrink-0 text-[#18701C]" />{user.phoneNumber || user.employment?.phone || '—'}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="whitespace-nowrap px-3 py-3">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[16px] font-bold ${
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                               user.approved === false
                                 ? 'bg-[#fff8e8] text-[#9a6b08]'
                                 : 'bg-[#edfbf4] text-[#14661a]'
@@ -266,7 +265,7 @@ export function StudentLearners() {
                   </span>
                 )}
               </div>
-              <h3 className="mt-4 text-[18px] font-bold text-[#111b38]">{selected.displayName}</h3>
+              <h3 className="mt-4 text-[16px] font-bold text-[#111b38]">{selected.displayName}</h3>
               <p className="mt-1 text-[13px] text-[#63708a]">{selected.email}</p>
               <div className="mt-4 space-y-2 rounded-xl bg-[#f7faf8] p-3 text-left text-[13px]">
                 <p className="m-0 flex justify-between gap-2">

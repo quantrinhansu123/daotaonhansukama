@@ -1,10 +1,7 @@
-import { auth } from '@/lib/firebase';
 import { getSupabaseClient } from '@/lib/supabase-client';
 
 export async function authenticatedFetch(input: string, init: RequestInit = {}) {
-  const token = process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true'
-    ? (await getSupabaseClient().auth.getSession()).data.session?.access_token
-    : await auth.currentUser?.getIdToken();
+  const token = (await getSupabaseClient().auth.getSession()).data.session?.access_token;
   if (!token) throw new Error('Bạn cần đăng nhập lại.');
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${token}`);

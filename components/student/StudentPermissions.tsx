@@ -44,11 +44,11 @@ function roleCrud(role: 'admin' | 'staff' | 'student' | 'teacher' | undefined): 
 
 function Cell({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
   return ok ? (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#edfbf4] px-3 py-1.5 text-[16px] font-bold text-[#14661a]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-[#edfbf4] px-2.5 py-1 text-[11px] font-bold text-[#14661a]">
       <Check size={12} /> {yes}
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1f1] px-3 py-1.5 text-[16px] font-bold text-[#b42318]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[11px] font-bold text-[#b42318]">
       <X size={12} /> {no}
     </span>
   );
@@ -94,7 +94,7 @@ export function StudentPermissions() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold text-[#111b38]">{t('student.academy.navPermissions')}</h1>
+        <h1 className="m-0 text-[20px] font-bold text-[#111b38]">{t('student.academy.navPermissions')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.permissions.subtitle')}</p>
       </div>
 
@@ -123,8 +123,8 @@ export function StudentPermissions() {
           </b>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-[24px] font-semibold">
-            <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+          <table className="min-w-full text-left text-[13px]">
+            <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
               <tr>
                 <th className="px-4 py-4 font-bold">#</th>
                 <th className="px-4 py-4 font-bold">{t('student.permissions.module')}</th>
@@ -136,11 +136,11 @@ export function StudentPermissions() {
             <tbody>
               {modules.map((mod, index) => (
                 <tr key={mod.key} className="border-t border-[#eef2f7]">
-                  <td className="px-4 py-5 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
-                  <td className="px-4 py-5 font-bold text-[#111b38]">{mod.label}</td>
-                  <td className="px-4 py-5"><Cell ok={matrix[mod.key].view} yes={t('student.permissions.yes')} no={t('student.permissions.no')} /></td>
-                  <td className="px-4 py-5"><Cell ok={matrix[mod.key].edit} yes={t('student.permissions.yes')} no={t('student.permissions.no')} /></td>
-                  <td className="px-4 py-5"><Cell ok={matrix[mod.key].remove} yes={t('student.permissions.yes')} no={t('student.permissions.no')} /></td>
+                  <td className="px-4 py-3.5 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
+                  <td className="px-4 py-3.5 font-bold text-[#111b38]">{mod.label}</td>
+                  <td className="px-4 py-3.5"><Cell ok={matrix[mod.key].view} yes={t('student.permissions.yes')} no={t('student.permissions.no')} /></td>
+                  <td className="px-4 py-3.5"><Cell ok={matrix[mod.key].edit} yes={t('student.permissions.yes')} no={t('student.permissions.no')} /></td>
+                  <td className="px-4 py-3.5"><Cell ok={matrix[mod.key].remove} yes={t('student.permissions.yes')} no={t('student.permissions.no')} /></td>
                 </tr>
               ))}
             </tbody>

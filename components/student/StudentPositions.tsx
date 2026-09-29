@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, db } from '@/lib/data-store';
 import { Position, UserProfile } from '@/types/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
@@ -62,7 +61,7 @@ export function StudentPositions() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold text-[#111b38]">{t('student.academy.navPositions')}</h1>
+        <h1 className="m-0 text-[20px] font-bold text-[#111b38]">{t('student.academy.navPositions')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.positions.subtitle')}</p>
       </div>
 
@@ -90,8 +89,8 @@ export function StudentPositions() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-[24px] font-semibold">
-              <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+            <table className="min-w-full text-left text-[13px]">
+              <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                 <tr>
                   <th className="px-3 py-3 font-bold">#</th>
                   <th className="px-3 py-3 font-bold">{t('student.positions.colTitle')}</th>
@@ -102,7 +101,7 @@ export function StudentPositions() {
               <tbody>
                 {rows.map((row, index) => (
                   <tr key={row.position} onClick={() => setSelected(row.position)} className={`cursor-pointer border-t border-[#eef2f7] hover:bg-[#f4faf6] ${selected === row.position ? 'bg-[#eff8f0]' : ''}`}>
-                    <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                    <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-3">
                         <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#edfbf4] text-[#18701C]"><Award size={22} /></span>
@@ -115,12 +114,12 @@ export function StudentPositions() {
                         {row.members.slice(0, 5).map(member => {
                           const photo = proxyBunnyUrl(member.photoURL || member.employment?.avatarURL || '');
                           return (
-                            <span key={member.uid} className="grid h-14 w-14 place-items-center overflow-hidden rounded-full border-2 border-white bg-[#edfbf4] text-[16px] font-bold text-[#18701C]">
+                            <span key={member.uid} className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border-2 border-white bg-[#edfbf4] text-[11px] font-bold text-[#18701C]">
                               {photo ? <img src={photo} alt="" className="h-full w-full object-cover" /> : (member.displayName || 'U').slice(0, 1)}
                             </span>
                           );
                         })}
-                        {row.count > 5 && <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white bg-[#18701C] text-[16px] font-bold text-white">+{row.count - 5}</span>}
+                        {row.count > 5 && <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-[#18701C] text-[11px] font-bold text-white">+{row.count - 5}</span>}
                       </div>
                     </td>
                   </tr>
@@ -135,7 +134,7 @@ export function StudentPositions() {
           {current ? (
             <>
               <div className="grid h-24 place-items-center rounded-2xl bg-gradient-to-br from-[#0a2f12] to-[#18701C] text-white"><Award size={36} /></div>
-              <h3 className="mt-3 text-[18px] font-bold">{current.position}</h3>
+              <h3 className="mt-3 text-[16px] font-bold">{current.position}</h3>
               <p className="mt-1 flex items-center gap-1.5 text-[13px] text-[#63708a]"><Users size={14} />{current.count} {t('student.positions.people')}</p>
               <div className="mt-3 space-y-2">
                 {current.members.slice(0, 8).map(member => {
@@ -147,7 +146,7 @@ export function StudentPositions() {
                       </span>
                       <div className="min-w-0">
                         <b className="block truncate text-[13px]">{member.displayName}</b>
-                        <small className="text-[16px] text-[#7a869c]">{member.email}</small>
+                        <small className="text-[11px] text-[#7a869c]">{member.email}</small>
                       </div>
                     </div>
                   );

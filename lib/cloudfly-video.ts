@@ -1,5 +1,3 @@
-import { auth } from '@/lib/firebase';
-import { getSupabaseClient } from '@/lib/supabase-client';
 import { authenticatedJson } from '@/lib/authenticated-fetch';
 
 export function cloudflyVideoUrl(key: string): string {
@@ -139,37 +137,5 @@ export async function uploadVideoToCloudFly(
   if (file.size > 2 * 1024 * 1024 * 1024) {
     throw new Error('Video vượt quá giới hạn 2 GB.');
   }
-  if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-    return uploadMultipart(file, mime, onProgress, onTransferComplete);
-  }
-  const authenticated = process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true'
-    || process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true';
-  const idToken = process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true'
-    ? (await getSupabaseClient().auth.getSession()).data.session?.access_token
-    : process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' ? await auth.currentUser?.getIdToken() : undefined;
-  if (authenticated && !idToken) {
-    throw new Error('Bạn cần đăng nhập lại trước khi tải video.');
-  }
-  return new Promise<string>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/cloudfly/video/upload');
-    xhr.setRequestHeader('Content-Type', mime);
-    if (idToken) xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
-    xhr.upload.onprogress = event => {
-      if (event.lengthComputable) onProgress?.(Math.min(99, Math.round(event.loaded / event.total * 99)));
-    };
-    xhr.upload.onload = () => onTransferComplete?.();
-    xhr.onerror = () => reject(new Error('Mất kết nối khi tải video lên CloudFly.'));
-    xhr.onload = () => {
-      let result: { key?: string; error?: string } = {};
-      try { result = JSON.parse(xhr.responseText); } catch { /* handled below */ }
-      if (xhr.status >= 200 && xhr.status < 300 && result.key) {
-        onProgress?.(100);
-        resolve(result.key);
-      } else {
-        reject(new Error(result.error || 'Không tải được video lên CloudFly.'));
-      }
-    };
-    xhr.send(file);
-  });
+  return uploadMultipart(file, mime, onProgress, onTransferComplete);
 }

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, db } from '@/lib/data-store';
 import { Project, ProjectPriority, ProjectStatus } from '@/types/project';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
@@ -123,7 +122,7 @@ export function StudentProjects() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navProjects')}</h1>
+        <h1 className="m-0 text-[20px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navProjects')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.projects.subtitle')}</p>
       </div>
 
@@ -164,8 +163,8 @@ export function StudentProjects() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-[24px] font-semibold">
-              <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+            <table className="min-w-full text-left text-[13px]">
+              <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                 <tr>
                   <th className="px-3 py-3 font-bold">#</th>
                   <th className="px-3 py-3 font-bold">{t('student.projects.colName')}</th>
@@ -194,15 +193,15 @@ export function StudentProjects() {
                           active ? 'bg-[#eff8f0]' : ''
                         }`}
                       >
-                        <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                        <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                         <td className="px-3 py-3">
                           <div className="flex items-start gap-3">
                             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#edfbf4] text-[#18701C]">
                               <FolderKanban size={22} />
                             </span>
                             <div className="min-w-0">
-                              <b className="block truncate text-[15px] text-[#111b38]">{project.name}</b>
-                              <small className="mt-0.5 line-clamp-2 block text-[18px] text-[#7a869c]">
+                              <b className="block truncate text-[13px] font-semibold text-[#111b38]">{project.name}</b>
+                              <small className="mt-0.5 line-clamp-2 block text-[12px] text-[#7a869c]">
                                 {project.description || project.departmentName || '—'}
                               </small>
                             </div>
@@ -216,12 +215,12 @@ export function StudentProjects() {
                           </span>
                         </td>
                         <td className="px-3 py-3">
-                          <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${statusTone[project.status]}`}>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone[project.status]}`}>
                             {statusLabel[project.status]}
                           </span>
                         </td>
                         <td className="px-3 py-3">
-                          <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${priorityTone[project.priority]}`}>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${priorityTone[project.priority]}`}>
                             {priorityLabel[project.priority]}
                           </span>
                         </td>
@@ -247,7 +246,7 @@ export function StudentProjects() {
               <div className="grid h-28 place-items-center rounded-2xl bg-gradient-to-br from-[#0a2f12] to-[#18701C] text-white">
                 <FolderKanban size={40} />
               </div>
-              <h3 className="mt-4 text-[18px] font-bold text-[#111b38]">{selected.name}</h3>
+              <h3 className="mt-4 text-[16px] font-bold text-[#111b38]">{selected.name}</h3>
               <p className="mt-1 text-[13px] leading-relaxed text-[#63708a]">
                 {selected.description || t('student.projects.noDescription')}
               </p>
@@ -274,7 +273,7 @@ export function StudentProjects() {
                   <b className="text-[12px] text-[#111b38]">{t('student.projects.team')}</b>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {selected.memberNames.slice(0, 8).map(name => (
-                      <span key={name} className="rounded-full bg-[#edfbf4] px-3 py-1.5 text-[16px] font-semibold text-[#18701C]">
+                      <span key={name} className="rounded-full bg-[#edfbf4] px-2.5 py-1 text-[11px] font-semibold text-[#18701C]">
                         {name}
                       </span>
                     ))}

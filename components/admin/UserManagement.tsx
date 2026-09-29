@@ -336,7 +336,7 @@ export const UserManagement: React.FC = () => {
     setEditingUser(user);
     setFormData({
       email: user.email,
-      password: process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true' ? '' : user.password || '',
+      password: '',
       displayName: user.displayName,
       role: user.role,
       position: user.position || '',
@@ -615,11 +615,7 @@ export const UserManagement: React.FC = () => {
           }
         }
 
-        if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-          await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}`, 'PATCH', finalData);
-        } else {
-          await updateDoc(doc(db, 'users', userDocId), finalData);
-        }
+        await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}`, 'PATCH', finalData);
         alert(t('admin.users.updateSuccess'));
       } else {
         // Check if email exists
@@ -715,11 +711,7 @@ export const UserManagement: React.FC = () => {
           }
         }
 
-        if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-          await authenticatedJson('/api/admin/users', 'POST', finalNewUser);
-        } else {
-          await setDoc(doc(db, 'users', newUserId), finalNewUser);
-        }
+        await authenticatedJson('/api/admin/users', 'POST', finalNewUser);
         alert(t('admin.users.createSuccess'));
       }
 
@@ -770,11 +762,7 @@ export const UserManagement: React.FC = () => {
         return;
       }
 
-      if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-        await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}`, 'DELETE');
-      } else {
-        await deleteDoc(doc(db, 'users', userDocId));
-      }
+      await authenticatedJson(`/api/admin/users/${encodeURIComponent(userDocId)}`, 'DELETE');
       alert(t('admin.users.deleteSuccess'));
       loadUsers();
     } catch (error) {

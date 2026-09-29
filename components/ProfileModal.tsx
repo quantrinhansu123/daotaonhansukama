@@ -129,9 +129,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         photoURL: photoURL || null,
         updatedAt: new Date(),
       };
-      if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED !== 'true' && process.env.NEXT_PUBLIC_SUPABASE_ENABLED !== 'true') {
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      }
+      // Profile lives in Supabase; no legacy localStorage session.
       
       alert(t('profile.updateSuccess'));
       onClose();

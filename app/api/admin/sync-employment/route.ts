@@ -45,69 +45,35 @@ export async function POST(request: NextRequest) {
     let updated = 0;
     let skipped = 0;
 
-    if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-      const client = getSupabaseAdmin();
-      for (const employee of employees) {
-        const email = employee.email?.trim().toLowerCase();
-        if (!email) { skipped++; continue; }
-        const found = await client.from('app_documents').select('id,data')
-          .eq('collection', 'users').eq('data->>email', email).maybeSingle();
-        if (found.error) throw found.error;
-        if (found.data) {
-          const result = await client.from('app_documents').update({
-            data: { ...found.data.data, ...employmentFields(employee) },
-          }).eq('collection', 'users').eq('id', found.data.id);
-          if (result.error) throw result.error;
-          updated++;
-          continue;
-        }
-        if (!employee.password || employee.password.length < 6) { skipped++; continue; }
-        const uid = `staff_${employee.id || randomUUID()}`;
-        const createdUser = await client.auth.admin.createUser({
-          email, password: employee.password, email_confirm: true, user_metadata: { legacy_uid: uid },
-        });
-        if (createdUser.error || !createdUser.data.user) throw createdUser.error || new Error('Cannot create Supabase user');
-        const result = await client.from('app_documents').insert({
-          collection: 'users', id: uid, auth_uid: createdUser.data.user.id,
-          data: { ...employmentFields(employee), uid, email, role: 'staff', approved: true,
-            totalLearningHours: 0, createdAt: new Date() },
-        });
-        if (result.error) {
-          await client.auth.admin.deleteUser(createdUser.data.user.id);
-          throw result.error;
-        }
-        created++;
-      }
-      return NextResponse.json({ created, updated, skipped });
-    }
-
-    const { adminAuth, adminDb } = await import('@/lib/firebase-admin');
-    const db = adminDb();
+    const client = getSupabaseAdmin();
     for (const employee of employees) {
       const email = employee.email?.trim().toLowerCase();
       if (!email) { skipped++; continue; }
-      const existing = await db.collection('users').where('email', '==', email).limit(1).get();
-      if (!existing.empty) {
-        await existing.docs[0].ref.update(employmentFields(employee));
+      const found = await client.from('app_documents').select('id,data')
+        .eq('collection', 'users').eq('data->>email', email).maybeSingle();
+      if (found.error) throw found.error;
+      if (found.data) {
+        const result = await client.from('app_documents').update({
+          data: { ...found.data.data, ...employmentFields(employee) },
+        }).eq('collection', 'users').eq('id', found.data.id);
+        if (result.error) throw result.error;
         updated++;
         continue;
       }
       if (!employee.password || employee.password.length < 6) { skipped++; continue; }
       const uid = `staff_${employee.id || randomUUID()}`;
-      await adminAuth().createUser({ uid, email, password: employee.password, displayName: employee.fullName || email });
-      try {
-        await db.collection('users').doc(uid).set({
-          ...employmentFields(employee),
-          uid,
-          email,
-          role: 'staff',
-          approved: true,
-          totalLearningHours: 0,
-          createdAt: new Date(),
-        });
-      } catch (error) {
-        await adminAuth().deleteUser(uid);
-        throw error;
+      const createdUser = await client.auth.admin.createUser({
+        email, password: employee.password, email_confirm: true, user_metadata: { legacy_uid: uid },
+      });
+      if (createdUser.error || !createdUser.data.user) throw createdUser.error || new Error('Cannot create Supabase user');
+      const result = await client.from('app_documents').insert({
+        collection: 'users', id: uid, auth_uid: createdUser.data.user.id,
+        data: { ...employmentFields(employee), uid, email, role: 'staff', approved: true,
+          totalLearningHours: 0, createdAt: new Date() },
+      });
+      if (result.error) {
+        await client.auth.admin.deleteUser(createdUser.data.user.id);
+        throw result.error;
       }
       created++;
     }

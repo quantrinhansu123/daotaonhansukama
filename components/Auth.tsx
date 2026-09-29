@@ -2,13 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from './Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { UserRole, UserProfile } from '@/types/user';
-import { auth } from '@/lib/firebase';
+import { UserRole } from '@/types/user';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -20,8 +18,7 @@ interface AuthProps {
 
 export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showBackButton = false }) => {
   const { t } = useLanguage();
-  const firebaseLoginOnly = process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true' || process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true';
-  const [mode, setMode] = useState<'login' | 'register'>(firebaseLoginOnly ? 'login' : initialMode);
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode === 'register' ? 'login' : 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,14 +33,8 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
   const router = useRouter();
-
-  const toggleMode = () => {
-    setMode(mode === 'login' ? 'register' : 'login');
-    setError('');
-    setNotice('');
-  };
 
   const handlePasswordReset = async () => {
     if (!email.trim()) {
@@ -53,14 +44,10 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
     setError('');
     setNotice('');
     try {
-      if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-        const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
-      } else {
-        await sendPasswordResetEmail(auth, email.trim().toLowerCase());
-      }
+      const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
       setNotice('Nếu email có tài khoản, hãy kiểm tra hộp thư để đặt lại mật khẩu.');
     } catch {
       setError('Không gửi được email đặt lại mật khẩu. Vui lòng thử lại.');
@@ -70,6 +57,8 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
   const redirectByRole = (userRole: UserRole) => {
     switch (userRole) {
       case 'admin':
+        router.push('/student');
+        break;
       case 'staff':
         router.push('/admin');
         break;
@@ -91,38 +80,8 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
     setLoading(true);
 
     try {
-      if (mode === 'login') {
-        const profile = await signIn(email, password);
-        if (profile) {
-          redirectByRole(profile.role);
-        }
-      } else {
-        if (!displayName.trim()) {
-          setError(t('auth.nameRequired'));
-          setLoading(false);
-          return;
-        }
-
-        const additionalInfo: Partial<UserProfile> = {};
-        if (dateOfBirth) additionalInfo.dateOfBirth = dateOfBirth;
-        if (address) additionalInfo.address = address;
-        if (country) additionalInfo.country = country;
-        if (phoneNumber) additionalInfo.phoneNumber = phoneNumber;
-        if (workLocation) additionalInfo.workLocation = workLocation;
-
-        const profile = await signUp(email, password, displayName, role, additionalInfo);
-
-        if (profile.role === 'admin') {
-          alert(t('auth.registerSuccessAdmin'));
-          redirectByRole(profile.role);
-        } else {
-          alert(t('auth.registerSuccessPending'));
-          setMode('login');
-          setEmail('');
-          setPassword('');
-          setDisplayName('');
-        }
-      }
+      const profile = await signIn(email, password);
+      if (profile) redirectByRole(profile.role);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
@@ -326,7 +285,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <label className="text-sm font-medium text-slate-300">{t('auth.password')}</label>
-                  {mode === 'login' && firebaseLoginOnly && (
+                  {mode === 'login' && (
                     <button type="button" onClick={handlePasswordReset} className="text-sm font-medium text-[#1B7A1E] hover:text-[#156318]">
                       {t('auth.forgotPassword')}
                     </button>
@@ -360,13 +319,6 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'login', onBack, showB
                     : t('auth.registerButton')}
               </Button>
             </form>
-
-            {!firebaseLoginOnly && <p className="text-center text-sm text-slate-400">
-              {mode === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
-              <button onClick={toggleMode} className="font-bold text-[#1B7A1E] hover:text-[#156318] hover:underline">
-                {mode === 'login' ? t('auth.registerNow') : t('auth.loginNow')}
-              </button>
-            </p>}
           </div>
         </div>
       </div>

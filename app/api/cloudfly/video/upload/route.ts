@@ -10,12 +10,8 @@ export const runtime = 'nodejs';
 const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
-  if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true' || process.env.NEXT_PUBLIC_FIREBASE_AUTH_ENABLED === 'true') {
-    const authorized = await authorizeRequest(request, ['admin', 'teacher']);
-    if (authorized instanceof NextResponse) return authorized;
-  } else if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'CloudFly upload tạm khóa cho đến khi chuyển sang Firebase Auth.' }, { status: 503 });
-  }
+  const authorized = await authorizeRequest(request, ['admin', 'teacher']);
+  if (authorized instanceof NextResponse) return authorized;
   const mime = request.headers.get('content-type')?.split(';')[0].toLowerCase();
   const extensions: Record<string, string> = {
     'video/mp4': 'mp4',

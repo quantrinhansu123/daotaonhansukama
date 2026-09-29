@@ -67,7 +67,9 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
         updatedAt: docSnap.data().updatedAt?.toDate(),
       })) as Course[];
 
-      if (userProfile?.departmentId) {
+      if (userProfile?.role === 'admin') {
+        // Admin sees every course for content management.
+      } else if (userProfile?.departmentId) {
         coursesData = coursesData.filter(
           course => course.departmentId === 'all' || course.departmentId === userProfile.departmentId
         );

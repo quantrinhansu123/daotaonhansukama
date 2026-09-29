@@ -20,47 +20,21 @@ export async function POST(request: NextRequest) {
   }
 
   const uid = `user_${randomUUID()}`;
-  if (process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true') {
-    const client = getSupabaseAdmin();
-    const created = await client.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { legacy_uid: uid } });
-    if (created.error || !created.data.user) {
-      return NextResponse.json({ error: 'Không tạo được tài khoản. Email có thể đã được dùng.' }, { status: 502 });
-    }
-    const profile = {
-      ...profileFields(body || {}), uid, email, displayName, role, approved: false,
-      totalLearningHours: 0, createdAt: new Date(), updatedAt: new Date(),
-    };
-    const inserted = await client.from('app_documents').insert({
-      collection: 'users', id: uid, data: profile, auth_uid: created.data.user.id,
-    });
-    if (inserted.error) {
-      await client.auth.admin.deleteUser(created.data.user.id);
-      return NextResponse.json({ error: 'Không lưu được hồ sơ tài khoản.' }, { status: 502 });
-    }
-    return NextResponse.json({ uid }, { status: 201 });
-  }
-  try {
-    const { adminAuth, adminDb } = await import('@/lib/firebase-admin');
-    await adminAuth().createUser({ uid, email, password, displayName });
-    try {
-      await adminDb().collection('users').doc(uid).set({
-        ...profileFields(body || {}),
-        uid,
-        email,
-        displayName,
-        role,
-        approved: false,
-        totalLearningHours: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    } catch (error) {
-      await adminAuth().deleteUser(uid);
-      throw error;
-    }
-    return NextResponse.json({ uid }, { status: 201 });
-  } catch (error) {
-    console.error('[Admin] Create user failed:', error);
+  const client = getSupabaseAdmin();
+  const created = await client.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { legacy_uid: uid } });
+  if (created.error || !created.data.user) {
     return NextResponse.json({ error: 'Không tạo được tài khoản. Email có thể đã được dùng.' }, { status: 502 });
   }
+  const profile = {
+    ...profileFields(body || {}), uid, email, displayName, role, approved: false,
+    totalLearningHours: 0, createdAt: new Date(), updatedAt: new Date(),
+  };
+  const inserted = await client.from('app_documents').insert({
+    collection: 'users', id: uid, data: profile, auth_uid: created.data.user.id,
+  });
+  if (inserted.error) {
+    await client.auth.admin.deleteUser(created.data.user.id);
+    return NextResponse.json({ error: 'Không lưu được hồ sơ tài khoản.' }, { status: 502 });
+  }
+  return NextResponse.json({ uid }, { status: 201 });
 }

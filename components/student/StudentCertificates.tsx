@@ -91,7 +91,7 @@ export function StudentCertificates() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="m-0 text-[24px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navCertificates')}</h1>
+          <h1 className="m-0 text-[20px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navCertificates')}</h1>
           <p className="mt-1 text-[13px] text-[#63708a]">{t('student.certs.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -161,8 +161,8 @@ export function StudentCertificates() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-[24px] font-semibold">
-              <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+            <table className="min-w-full text-left text-[13px]">
+              <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                 <tr>
                   <th className="px-3 py-3 font-bold">#</th>
                   <th className="px-3 py-3 font-bold">{t('student.certs.colStudent')}</th>
@@ -180,7 +180,7 @@ export function StudentCertificates() {
                     onClick={() => setSelectedId(row.id)}
                     className={`cursor-pointer border-t border-[#eef2f7] transition hover:bg-[#f4faf6] ${selectedId === row.id ? 'bg-[#eff8f0]' : ''}`}
                   >
-                    <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                    <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                     <td className="px-3 py-3">
                       <b className="block text-[#111b38]">{row.student}</b>
                       <small className="text-[#7a869c]">{row.role}</small>
@@ -189,7 +189,7 @@ export function StudentCertificates() {
                     <td className="px-3 py-3 text-[#52617c]">{row.completedAt}</td>
                     <td className="px-3 py-3 text-[#52617c]">{row.issuedAt}</td>
                     <td className="px-3 py-3">
-                      <span className={`inline-flex rounded-full px-3 py-1.5 text-[16px] font-bold ring-1 ${statusStyle[row.status]}`}>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${statusStyle[row.status]}`}>
                         {statusLabel[row.status]}
                       </span>
                     </td>
@@ -215,7 +215,7 @@ export function StudentCertificates() {
               <p className="mt-1 text-[11px] font-bold tracking-wide text-[#18701C]">{t('student.academy.certificateSample')}</p>
               <h3 className="mt-3 text-[16px] font-bold text-[#111b38]">{selected.course}</h3>
               <p className="mt-2 text-[13px] font-semibold text-[#52617c]">{selected.student}</p>
-              <p className="mt-1 text-[16px] text-[#7a869c]">{userProfile?.displayName || 'BioKama'}</p>
+              <p className="mt-1 text-[11px] text-[#7a869c]">{userProfile?.displayName || 'BioKama'}</p>
             </div>
             <div className="mt-3 space-y-1.5 text-[12px] text-[#52617c]">
               <p className="m-0 flex items-center gap-2"><Calendar size={13} className="text-[#18701C]" />{t('student.certs.colIssued')}: <b>{selected.issuedAt}</b></p>

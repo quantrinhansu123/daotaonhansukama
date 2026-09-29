@@ -1,18 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Compatibility layer for the current document-shaped UI during the Postgres
-// migration. The Supabase branch preserves legacy document IDs and field names.
-import * as firebase from 'firebase/firestore';
-import { db as firebaseDb } from '@/lib/firebase';
+// Document-shaped compatibility API backed by Supabase `app_documents`.
 import { getSupabaseClient } from '@/lib/supabase-client';
 
-const useSupabase = process.env.NEXT_PUBLIC_SUPABASE_ENABLED === 'true';
 type StoreRef = { kind: 'collection' | 'document' | 'query'; collection: string; id?: string; clauses?: Clause[] };
 type Clause = { kind: 'where' | 'order'; field: string; operator?: string; value?: any; direction?: string };
 type Row = { id: string; data: Record<string, any>; version: number };
 export type DocumentSnapshot = { id: string; ref: any; version: number; exists: () => boolean; data: () => any };
 export type QuerySnapshot = { docs: DocumentSnapshot[]; empty: boolean; size: number };
 
-export const db: any = useSupabase ? { kind: 'supabase' } : firebaseDb;
+export const db: any = { kind: 'supabase' };
 
 class CompatTimestamp extends Date {
   toDate() { return new Date(this.getTime()); }
@@ -42,27 +38,26 @@ function fail(error: { message: string } | null) {
 }
 
 export function collection(_db: any, name: string): any {
-  return useSupabase ? { kind: 'collection', collection: name } as StoreRef : firebase.collection(firebaseDb, name);
+  return { kind: 'collection', collection: name } as StoreRef;
 }
 
 export function doc(_db: any, name: string, id: string): any {
-  return useSupabase ? { kind: 'document', collection: name, id } as StoreRef : firebase.doc(firebaseDb, name, id);
+  return { kind: 'document', collection: name, id } as StoreRef;
 }
 
 export function where(field: string, operator: string, value: any): any {
-  return useSupabase ? { kind: 'where', field, operator, value } as Clause : firebase.where(field, operator as firebase.WhereFilterOp, value);
+  return { kind: 'where', field, operator, value } as Clause;
 }
 
 export function orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): any {
-  return useSupabase ? { kind: 'order', field, direction } as Clause : firebase.orderBy(field, direction);
+  return { kind: 'order', field, direction } as Clause;
 }
 
 export function query(ref: any, ...clauses: any[]): any {
-  return useSupabase ? { kind: 'query', collection: ref.collection, clauses } as StoreRef : firebase.query(ref, ...clauses);
+  return { kind: 'query', collection: ref.collection, clauses } as StoreRef;
 }
 
 export async function getDocs(ref: any): Promise<QuerySnapshot> {
-  if (!useSupabase) return firebase.getDocs(ref) as unknown as Promise<QuerySnapshot>;
   const client = getSupabaseClient();
   const rows: Row[] = [];
   for (let from = 0; ; from += 1000) {
@@ -96,7 +91,6 @@ export async function getDocs(ref: any): Promise<QuerySnapshot> {
 }
 
 export async function getDoc(ref: any): Promise<DocumentSnapshot> {
-  if (!useSupabase) return firebase.getDoc(ref) as unknown as Promise<DocumentSnapshot>;
   const target = ref as StoreRef;
   const result = await getSupabaseClient().from('app_documents')
     .select('id,data,version').eq('collection', target.collection).eq('id', target.id!).maybeSingle();
@@ -150,20 +144,14 @@ async function saveWithRetry(ref: StoreRef, patch: Record<string, any>, merge: b
 }
 
 export async function setDoc(ref: any, data: Record<string, any>, options?: { merge?: boolean }): Promise<void> {
-  if (!useSupabase) {
-    if (options) return firebase.setDoc(ref, data, options);
-    return firebase.setDoc(ref, data);
-  }
   await saveWithRetry(ref, data, Boolean(options?.merge), true);
 }
 
 export async function updateDoc(ref: any, data: Record<string, any>): Promise<void> {
-  if (!useSupabase) return firebase.updateDoc(ref, data);
   await saveWithRetry(ref, data, true, false);
 }
 
 export async function deleteDoc(ref: any): Promise<void> {
-  if (!useSupabase) return firebase.deleteDoc(ref);
   const target = ref as StoreRef;
   const result = await getSupabaseClient().from('app_documents').delete()
     .eq('collection', target.collection).eq('id', target.id!);
@@ -171,23 +159,22 @@ export async function deleteDoc(ref: any): Promise<void> {
 }
 
 export function arrayUnion(...values: any[]): any {
-  return useSupabase ? { __operation: 'union', values } as Sentinel : firebase.arrayUnion(...values);
+  return { __operation: 'union', values } as Sentinel;
 }
 
 export function arrayRemove(...values: any[]): any {
-  return useSupabase ? { __operation: 'remove', values } as Sentinel : firebase.arrayRemove(...values);
+  return { __operation: 'remove', values } as Sentinel;
 }
 
 export function deleteField(): any {
-  return useSupabase ? { __operation: 'delete' } as Sentinel : firebase.deleteField();
+  return { __operation: 'delete' } as Sentinel;
 }
 
 export function serverTimestamp(): any {
-  return useSupabase ? new Date() : firebase.serverTimestamp();
+  return new Date();
 }
 
 export async function runTransaction<T>(_db: any, callback: (transaction: any) => Promise<T>): Promise<T> {
-  if (!useSupabase) return firebase.runTransaction(firebaseDb, callback);
   for (let attempt = 0; attempt < 5; attempt++) {
     const writes: Array<{ ref: StoreRef; data: Record<string, any>; version: number }> = [];
     const reads = new Map<string, number>();

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, db } from '@/lib/data-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ClipboardCheck, Clock, List, PlayCircle, Search } from 'lucide-react';
@@ -115,7 +114,7 @@ export function StudentActivityLog() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold text-[#111b38]">{t('student.academy.navActivity')}</h1>
+        <h1 className="m-0 text-[20px] font-bold text-[#111b38]">{t('student.academy.navActivity')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.activity.subtitle')}</p>
       </div>
 
@@ -128,7 +127,7 @@ export function StudentActivityLog() {
         ].map(stat => (
           <div key={stat.label} className="rounded-2xl border border-[#e7edf5] bg-white p-4 shadow-[0_8px_24px_rgba(24,48,93,0.06)]">
             <span className="mb-3 inline-flex rounded-xl bg-[#edfbf4] p-2.5 text-[#18701C]"><stat.icon size={18} /></span>
-            <p className="m-0 text-[24px] font-bold tabular-nums">{stat.value}</p>
+            <p className="m-0 text-[22px] font-bold tabular-nums">{stat.value}</p>
             <p className="mt-1 text-[12px] font-semibold text-[#63708a]">{stat.label}</p>
           </div>
         ))}
@@ -148,8 +147,8 @@ export function StudentActivityLog() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-[24px] font-semibold">
-            <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+          <table className="min-w-full text-left text-[13px]">
+            <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
               <tr>
                 <th className="px-3 py-3 font-bold">#</th>
                 <th className="px-3 py-3 font-bold">{t('student.activity.colType')}</th>
@@ -165,9 +164,9 @@ export function StudentActivityLog() {
                 <tr><td colSpan={7} className="px-3 py-10 text-center text-[#63708a]">{t('student.activity.empty')}</td></tr>
               ) : filtered.map((item, index) => (
                 <tr key={item.id} className="border-t border-[#eef2f7] hover:bg-[#f4faf6]">
-                  <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                  <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                   <td className="px-3 py-3">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[16px] font-bold ${item.type === 'video' ? 'bg-[#eff6ff] text-[#1B7A1E]' : 'bg-[#edfbf4] text-[#14661a]'}`}>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${item.type === 'video' ? 'bg-[#eff6ff] text-[#1B7A1E]' : 'bg-[#edfbf4] text-[#14661a]'}`}>
                       {item.type === 'video' ? <PlayCircle size={13} /> : <ClipboardCheck size={13} />}
                       {item.type === 'video' ? t('student.activity.typeVideo') : t('student.activity.typeQuiz')}
                     </span>

@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, GraduationCap, Headphones, Home, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
+import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, GraduationCap, Headphones, Home, LayoutDashboard, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
+import Link from 'next/link';
 import { CourseEnrollment } from '@/components/student/CourseEnrollment';
 import { StudentCertificates } from '@/components/student/StudentCertificates';
 import { StudentSettings } from '@/components/student/StudentSettings';
@@ -65,7 +66,7 @@ export default function StudentPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff')) {
+    if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff' && userProfile.role !== 'admin')) {
       router.push('/');
       return;
     }
@@ -149,7 +150,7 @@ export default function StudentPage() {
     );
   }
 
-  if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff')) return null;
+  if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff' && userProfile.role !== 'admin')) return null;
 
   const handleSignOut = async () => {
     await signOut();
@@ -247,6 +248,15 @@ export default function StudentPage() {
             {t('student.academy.navCertificates')}
           </button>
           <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
+          {userProfile.role === 'admin' && (
+            <Link
+              href="/admin"
+              className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(false)}`}
+            >
+              <LayoutDashboard size={22} />
+              {t('student.academy.openAdminConsole')}
+            </Link>
+          )}
           <button type="button" onClick={() => setSection('account')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'account')}`}>
             <Users size={22} />
             {t('student.academy.navUsers')}

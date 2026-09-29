@@ -87,7 +87,7 @@ export function StudentLibrary() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="m-0 text-[24px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navLibrary')}</h1>
+          <h1 className="m-0 text-[20px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navLibrary')}</h1>
           <p className="mt-1 text-[13px] text-[#63708a]">{t('student.library.subtitle')}</p>
         </div>
         <button type="button" className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#18701C] px-5 text-[13px] font-bold text-white shadow-[0_8px_18px_rgba(24,112,28,0.28)] hover:bg-[#145616]">
@@ -161,8 +161,8 @@ export function StudentLibrary() {
 
           <section className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white shadow-[0_8px_24px_rgba(24,48,93,0.06)]">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-[24px] font-semibold">
-                <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+              <table className="min-w-full text-left text-[13px]">
+                <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                   <tr>
                     <th className="px-3 py-3 font-bold">#</th>
                     <th className="px-3 py-3 font-bold">{t('student.library.colName')}</th>
@@ -180,7 +180,7 @@ export function StudentLibrary() {
                     const Icon = typeIcon[doc.type];
                     return (
                       <tr key={doc.id} className="border-t border-[#eef2f7] hover:bg-[#f4faf6]">
-                        <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                        <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                         <td className="px-3 py-3">
                           <div className="flex items-start gap-2">
                             <span className={`mt-0.5 grid h-8 w-8 place-items-center rounded-lg ${typeTone[doc.type]}`}>
@@ -193,11 +193,11 @@ export function StudentLibrary() {
                           </div>
                         </td>
                         <td className="px-3 py-3">
-                          <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${doc.projectTone}`}>{doc.project}</span>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${doc.projectTone}`}>{doc.project}</span>
                         </td>
                         <td className="px-3 py-3 text-[#52617c]">{doc.dept}</td>
                         <td className="px-3 py-3">
-                          <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${typeTone[doc.type]}`}>{doc.type}</span>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${typeTone[doc.type]}`}>{doc.type}</span>
                         </td>
                         <td className="px-3 py-3 text-[#52617c]">{doc.size}</td>
                         <td className="px-3 py-3 text-[#52617c]">{doc.updated}</td>

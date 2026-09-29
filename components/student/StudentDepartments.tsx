@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, db } from '@/lib/data-store';
 import { Department } from '@/types/department';
 import { UserProfile } from '@/types/user';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -109,7 +108,7 @@ export function StudentDepartments() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navDepartments')}</h1>
+        <h1 className="m-0 text-[20px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navDepartments')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.departments.subtitle')}</p>
       </div>
 
@@ -140,8 +139,8 @@ export function StudentDepartments() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-[24px] font-semibold">
-              <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+            <table className="min-w-full text-left text-[13px]">
+              <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                 <tr>
                   <th className="px-3 py-3 font-bold">#</th>
                   <th className="px-3 py-3 font-bold">{t('student.departments.colName')}</th>
@@ -171,15 +170,15 @@ export function StudentDepartments() {
                           active ? 'bg-[#eff8f0]' : ''
                         }`}
                       >
-                        <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                        <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-3">
                             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#edfbf4] text-[#18701C] shadow-sm">
                               <Building2 size={26} />
                             </span>
                             <div className="min-w-0">
-                              <b className="block truncate text-[15px] text-[#111b38]">{dept.name}</b>
-                              <small className="text-[18px] text-[#7a869c]">{dept.id}</small>
+                              <b className="block truncate text-[13px] font-semibold text-[#111b38]">{dept.name}</b>
+                              <small className="text-[12px] text-[#7a869c]">{dept.id}</small>
                             </div>
                           </div>
                         </td>
@@ -226,7 +225,7 @@ export function StudentDepartments() {
               <div className="grid h-28 place-items-center rounded-2xl bg-gradient-to-br from-[#0a2f12] to-[#18701C] text-white">
                 <Building2 size={40} />
               </div>
-              <h3 className="mt-4 text-[18px] font-bold text-[#111b38]">{selected.name}</h3>
+              <h3 className="mt-4 text-[16px] font-bold text-[#111b38]">{selected.name}</h3>
               <p className="mt-1 text-[13px] leading-relaxed text-[#63708a]">
                 {selected.description || t('student.departments.noDescription')}
               </p>
@@ -261,7 +260,7 @@ export function StudentDepartments() {
                           </span>
                           <div className="min-w-0">
                             <b className="block truncate text-[13px] text-[#111b38]">{member.displayName}</b>
-                            <small className="block truncate text-[16px] text-[#7a869c]">{member.email}</small>
+                            <small className="block truncate text-[11px] text-[#7a869c]">{member.email}</small>
                           </div>
                         </div>
                       );

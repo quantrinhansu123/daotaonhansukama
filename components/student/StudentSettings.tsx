@@ -79,7 +79,7 @@ export function StudentSettings() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navSettings')}</h1>
+        <h1 className="m-0 text-[20px] font-bold tracking-tight text-[#111b38]">{t('student.academy.navSettings')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.settings.subtitle')}</p>
       </div>
 

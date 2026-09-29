@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, db } from '@/lib/data-store';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ClipboardCheck, Search } from 'lucide-react';
 
@@ -87,7 +86,7 @@ export function StudentAssessment() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="m-0 text-[24px] font-bold text-[#111b38]">{t('student.academy.navAssessment')}</h1>
+        <h1 className="m-0 text-[20px] font-bold text-[#111b38]">{t('student.academy.navAssessment')}</h1>
         <p className="mt-1 text-[13px] text-[#63708a]">{t('student.assessment.subtitle')}</p>
       </div>
 
@@ -115,8 +114,8 @@ export function StudentAssessment() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-[24px] font-semibold">
-              <thead className="bg-[#f7faf8] text-[18px] font-bold uppercase tracking-wide text-[#63708a]">
+            <table className="min-w-full text-left text-[13px]">
+              <thead className="bg-[#f7faf8] text-[11px] font-bold uppercase tracking-wide text-[#63708a]">
                 <tr>
                   <th className="px-3 py-3 font-bold">#</th>
                   <th className="px-3 py-3 font-bold">{t('student.assessment.colLearner')}</th>
@@ -131,12 +130,12 @@ export function StudentAssessment() {
                   <tr><td colSpan={6} className="px-3 py-10 text-center text-[#63708a]">{t('student.assessment.empty')}</td></tr>
                 ) : filtered.map((row, index) => (
                   <tr key={row.id} onClick={() => setSelectedId(row.id)} className={`cursor-pointer border-t border-[#eef2f7] hover:bg-[#f4faf6] ${selected?.id === row.id ? 'bg-[#eff8f0]' : ''}`}>
-                    <td className="px-3 py-3 text-[16px] font-bold text-[#18701C]">{index + 1}</td>
+                    <td className="px-3 py-3 text-[12px] font-bold text-[#18701C]">{index + 1}</td>
                     <td className="px-3 py-3 font-semibold text-[#111b38]">{row.userName}</td>
                     <td className="px-3 py-3 text-[#243552]">{row.courseTitle}</td>
                     <td className="px-3 py-3 text-[#243552]">{row.lessonTitle}</td>
                     <td className="px-3 py-3">
-                      <span className={`rounded-full px-3 py-1.5 text-[16px] font-bold ${row.score >= 70 ? 'bg-[#edfbf4] text-[#14661a]' : 'bg-[#fff1f1] text-[#b42318]'}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${row.score >= 70 ? 'bg-[#edfbf4] text-[#14661a]' : 'bg-[#fff1f1] text-[#b42318]'}`}>
                         {row.score}% · {row.correctCount}/{row.totalQuestions}
                       </span>
                     </td>

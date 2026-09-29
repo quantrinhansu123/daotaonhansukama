@@ -80,10 +80,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       id: 'learning',
       label: t('admin.menu.learning'),
       icon: GraduationCap,
-      href: '/admin/learning',
+      href: userProfile?.role === 'admin' ? '/student' : '/admin/learning',
       permission: null,
       hideForStaff: false,
-      hideForAdmin: true
+      hideForAdmin: false
     },
     {
       id: 'users',

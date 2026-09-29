@@ -24,7 +24,7 @@ export default function CourseDetailPage() {
     if (!authLoading) {
       if (!userProfile) {
         router.push('/');
-      } else if (userProfile.role !== 'student' && userProfile.role !== 'staff') {
+      } else if (userProfile.role !== 'student' && userProfile.role !== 'staff' && userProfile.role !== 'admin') {
         router.push('/');
       }
     }
@@ -60,7 +60,8 @@ export default function CourseDetailPage() {
         demoVideoId: courseSnap.data().demoVideoId || undefined,
       } as Course;
 
-      if (userProfile?.role !== 'staff' && !courseData.students?.includes(userProfile?.uid || '')) {
+      const canBypassEnrollment = userProfile?.role === 'staff' || userProfile?.role === 'admin';
+      if (!canBypassEnrollment && !courseData.students?.includes(userProfile?.uid || '')) {
         setError(t('student.notEnrolled'));
         return;
       }
@@ -90,7 +91,7 @@ export default function CourseDetailPage() {
     );
   }
 
-  if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff')) {
+  if (!userProfile || (userProfile.role !== 'student' && userProfile.role !== 'staff' && userProfile.role !== 'admin')) {
     return null;
   }
 
