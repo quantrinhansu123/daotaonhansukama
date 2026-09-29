@@ -43,6 +43,11 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
 
+      if (userProfile.role === 'staff' && userProfile.departmentId && ['Trưởng phòng', 'Phó phòng', 'TrÆ°á»Ÿng phÃ²ng', 'PhÃ³ phÃ²ng'].includes(userProfile.position || '')) {
+        setPermissions([...DEFAULT_ROLES.MANAGER.permissions, 'manage_courses']);
+        return;
+      }
+
       // Staff: Load permissions từ phòng ban
       if (userProfile.role === 'staff') {
         // ✅ CÁCH ĐƠN GIẢN: Kiểm tra position trước (không cần query Firestore)

@@ -14,7 +14,7 @@ export default function CoursesPage() {
     <PermissionProvider>
       <AdminLayout>
         {showApprovalPage ? (
-          <ProtectedRoute requiredPermission="manage_courses">
+          <ProtectedRoute allowedRoles={['admin']}>
             <StudentApprovalPage onBack={() => setShowApprovalPage(false)} />
           </ProtectedRoute>
         ) : (

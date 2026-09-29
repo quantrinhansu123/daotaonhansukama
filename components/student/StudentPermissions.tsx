@@ -59,21 +59,24 @@ export function StudentPermissions() {
   const { t } = useLanguage();
   const [roleTab, setRoleTab] = useState<'mine' | 'admin' | 'manager' | 'staff'>('mine');
 
+  const managerCrud: Record<ModuleKey, Crud> = {
+    users: { view: true, edit: false, remove: false },
+    courses: { view: true, edit: true, remove: true },
+    departments: { view: true, edit: true, remove: false },
+    projects: { view: true, edit: true, remove: false },
+    salary: { view: true, edit: false, remove: false },
+    dashboard: { view: true, edit: false, remove: false },
+  };
+
   const matrix = useMemo(() => {
-    if (roleTab === 'mine') return roleCrud(userProfile?.role);
-    if (roleTab === 'admin') return roleCrud('admin');
-    if (roleTab === 'manager') {
-      return {
-        users: { view: true, edit: false, remove: false },
-        courses: { view: true, edit: false, remove: false },
-        departments: { view: true, edit: true, remove: false },
-        projects: { view: true, edit: true, remove: false },
-        salary: { view: true, edit: false, remove: false },
-        dashboard: { view: true, edit: false, remove: false },
-      } as Record<ModuleKey, Crud>;
+    if (roleTab === 'mine') {
+      const isDepartmentLead = userProfile?.role === 'staff' && !!userProfile.departmentId && ['Trưởng phòng', 'Phó phòng', 'TrÆ°á»Ÿng phÃ²ng', 'PhÃ³ phÃ²ng'].includes(userProfile.position || '');
+      return isDepartmentLead ? managerCrud : roleCrud(userProfile?.role);
     }
+    if (roleTab === 'admin') return roleCrud('admin');
+    if (roleTab === 'manager') return managerCrud;
     return roleCrud('staff');
-  }, [roleTab, userProfile?.role]);
+  }, [roleTab, userProfile?.role, userProfile?.position]);
 
   const modules: Array<{ key: ModuleKey; label: string }> = [
     { key: 'dashboard', label: t('student.permissions.modDashboard') },

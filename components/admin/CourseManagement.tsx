@@ -10,6 +10,7 @@ import { CourseDetailPage } from './CourseDetailPage';
 import { BunnyImageUpload } from '@/components/shared/BunnyImageUpload';
 import { CloudFlyVideoUpload } from '@/components/shared/CloudFlyVideoUpload';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
 
@@ -19,6 +20,7 @@ interface CourseManagementProps {
 
 export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const { userProfile: currentUser } = useAuth();
+  const { hasPermission } = usePermissions();
   const { t, dateLocale } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
@@ -50,6 +52,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const canManageCourses = currentUser?.role === 'admin' || hasPermission('manage_courses');
+  const isDepartmentLead = ['Trưởng phòng', 'Phó phòng', 'TrÆ°á»Ÿng phÃ²ng', 'PhÃ³ phÃ²ng'].includes(currentUser?.position || '');
 
   useEffect(() => {
     loadData();
@@ -57,7 +61,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
   useEffect(() => {
     filterCourses();
-  }, [courses, searchTerm, filterLevel, filterCategory, filterProjectId, users]);
+  }, [courses, searchTerm, filterLevel, filterCategory, filterProjectId, users, currentUser?.role, currentUser?.position, currentUser?.departmentId]);
 
   const loadData = async () => {
     try {
@@ -119,8 +123,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
     let filtered = courses;
 
     // Nếu là trưởng phòng (không phải admin), chỉ thấy khóa học có nhân viên phòng mình được add vào
-    if (currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && currentUser?.departmentId) {
+    if (currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId) {
       filtered = filtered.filter(course => {
+        if (course.departmentId === currentUser.departmentId) return true;
         // Kiểm tra xem có nhân viên nào trong phòng được add vào khóa học này không
         if (course.students && course.students.length > 0) {
           return course.students.some(studentId => {
@@ -169,10 +174,11 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   const categories = getCategories();
 
   const handleAdd = () => {
+    if (!canManageCourses) return;
     setEditingCourse(null);
 
     // Nếu là trưởng phòng, mặc định chọn phòng ban của mình
-    const isManager = currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid);
+    const isManager = currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId;
     const defaultDepartmentId = isManager ? currentUser.departmentId : '';
 
     setFormData({
@@ -193,6 +199,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   };
 
   const handleEdit = (course: Course) => {
+    if (!canManageCourses) return;
     setEditingCourse(course);
     setFormData({
       title: course.title || '',
@@ -278,6 +285,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   };
 
   const handleSave = async () => {
+    if (!canManageCourses) return;
     try {
       if (!formData.title || !formData.category) {
         alert(t('admin.courses.fillRequired'));
@@ -386,6 +394,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
   };
 
   const handleDelete = async (course: Course) => {
+    if (!canManageCourses) return;
     if (!confirm(t('admin.courses.confirmDelete', { title: course.title }))) {
       return;
     }
@@ -448,7 +457,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       <CourseDetailPage
         course={detailCourse}
         onBack={() => setDetailCourse(null)}
-        isAdmin={true}
+        isAdmin={canManageCourses}
         onDelete={() => {
           setDetailCourse(null);
           loadData();
@@ -473,14 +482,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <p className="text-sm text-slate-500 max-w-xl">
             {t('admin.courses.pageSubtitle')}
           </p>
-          {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
+          {currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId && (
             <p className="text-sm text-[#1B7A1E] mt-1">
               {t('admin.courses.managerScope')}: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
             </p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
+          {canManageCourses && <button
             type="button"
             onClick={async () => {
               if (!confirm(t('admin.courses.syncStudentsConfirm'))) {
@@ -507,8 +516,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           >
             <Users size={16} />
             {t('admin.courses.syncStudents')}
-          </button>
-          {currentUser?.role === 'admin' && (
+          </button>}
+          {canManageCourses && (
             <button
               type="button"
               onClick={handleAdd}
@@ -742,7 +751,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                         <BookOpen size={14} className="shrink-0" />
                         <span className="whitespace-nowrap">{t('common.details')}</span>
                       </button>
-                      {currentUser?.role === 'admin' && (
+                      {canManageCourses && (
                         <>
                           <button
                             type="button"
@@ -868,7 +877,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   <select
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                    disabled={!!(currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid))}
+                    disabled={!!(currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId)}
                     className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white disabled:opacity-60 disabled:cursor-not-allowed [&>option]:bg-[#0E3A16]"
                   >
                     <option value="">{t('admin.courses.audienceNone')}</option>
@@ -877,7 +886,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       <option key={dept.id} value={dept.id}>{dept.name}</option>
                     ))}
                   </select>
-                  {currentUser?.role !== 'admin' && currentUser?.departmentId && departments.find(d => d.managerId === currentUser.uid) ? (
+                  {currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId ? (
                     <p className="text-xs text-[#1B7A1E] mt-1.5">
                       {t('admin.courses.managerCreateHint')}
                     </p>
