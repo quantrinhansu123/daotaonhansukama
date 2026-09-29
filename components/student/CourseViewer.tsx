@@ -136,20 +136,25 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     };
   }, [selectedLesson?.id, selectedLesson?.videoKey, selectedLesson?.videoId, selectedLesson?.videoUrl, progressLoaded, playerOpen, viewMode, playSession]);
 
-  // Anti-cheat: Detect tab visibility change (staff only)
+  // Pause whenever the browser tab is hidden (all roles).
   useEffect(() => {
-    if (!isStaff) return;
+    const pauseAllVideos = () => {
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+      heroRef.current?.querySelectorAll('video').forEach(video => {
+        if (!video.paused) video.pause();
+      });
+    };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && videoRef.current && !videoRef.current.paused) {
-        videoRef.current.pause();
-        console.log('⚠️ Video paused: Tab switched');
-      }
+      if (document.hidden) pauseAllVideos();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isStaff]);
+  }, []);
 
   // Anti-cheat: Attention check every 30 seconds (staff only)
   useEffect(() => {
