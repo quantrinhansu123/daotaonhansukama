@@ -23,7 +23,7 @@ export function CloudFlyVideoUpload({ label, courseId, currentVideoKey, currentL
   const [error, setError] = useState('');
   const mounted = useRef(false);
   const { jobs, startUpload } = useVideoUploads();
-  const job = jobs.find(item => item.targetId === `course:${courseId}:demo` && ['queued', 'uploading', 'finalizing', 'saving'].includes(item.status));
+  const job = jobs.find(item => item.targetId === `course:${courseId}:demo` && ['queued', 'preparing', 'uploading', 'finalizing', 'saving'].includes(item.status));
   const loading = Boolean(job);
   const dark = variant === 'dark';
 

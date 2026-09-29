@@ -43,7 +43,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   // Check if user can manage lessons (admin or course teacher)
   const canManage = currentUser?.role === 'admin' || currentUser?.uid === course.teacherId;
   const activeLessonJob = (lessonId: string) => jobs.find(job =>
-    job.targetId === `lesson:${lessonId}` && ['queued', 'uploading', 'finalizing', 'saving'].includes(job.status)
+    job.targetId === `lesson:${lessonId}` && ['queued', 'preparing', 'uploading', 'finalizing', 'saving'].includes(job.status)
   );
 
   useEffect(() => {

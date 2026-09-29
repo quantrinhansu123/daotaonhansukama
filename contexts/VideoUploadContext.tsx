@@ -10,7 +10,7 @@ export type VideoUploadJob = {
   label: string;
   fileName: string;
   percent: number;
-  status: 'queued' | 'uploading' | 'finalizing' | 'saving' | 'done' | 'error';
+  status: 'queued' | 'preparing' | 'uploading' | 'finalizing' | 'saving' | 'done' | 'error';
   error?: string;
 };
 
@@ -27,7 +27,7 @@ type VideoUploadContextValue = {
 };
 
 const VideoUploadContext = createContext<VideoUploadContextValue | null>(null);
-const activeStatuses = new Set<VideoUploadJob['status']>(['queued', 'uploading', 'finalizing', 'saving']);
+const activeStatuses = new Set<VideoUploadJob['status']>(['queued', 'preparing', 'uploading', 'finalizing', 'saving']);
 
 export function useVideoUploads() {
   const context = useContext(VideoUploadContext);
@@ -81,11 +81,12 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
 
     const run = async () => {
       try {
-        updateJob(id, { status: 'uploading' });
+        updateJob(id, { status: 'preparing' });
         const key = await uploadVideoToCloudFly(
           file,
           percent => updateJob(id, { percent: Math.min(percent, 99) }),
           () => updateJob(id, { status: 'finalizing', percent: 99 }),
+          () => updateJob(id, { status: 'uploading' }),
         );
         updateJob(id, { status: 'saving', percent: 99 });
         await save(key);
@@ -129,6 +130,7 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
                 <p className="truncate text-xs text-slate-500" title={job.fileName}>{job.fileName}</p>
                 <p className={`mt-1 text-xs ${job.status === 'error' ? 'text-rose-600' : 'text-slate-600'}`}>
                   {job.status === 'queued' && 'Đang chờ lượt tải lên…'}
+                  {job.status === 'preparing' && 'Đang chuẩn bị MP4 để phát nhanh…'}
                   {job.status === 'uploading' && 'Đang tải lên CloudFly. Bạn có thể tiếp tục làm việc.'}
                   {job.status === 'finalizing' && 'Đang hoàn tất lưu tệp trên CloudFly…'}
                   {job.status === 'saving' && 'Đã gửi tệp, đang lưu vào khóa học…'}

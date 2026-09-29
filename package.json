@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:mp4-faststart": "tsx scripts/testMp4Faststart.ts"
   },
   "engines": {
     "node": ">=22.0.0"
