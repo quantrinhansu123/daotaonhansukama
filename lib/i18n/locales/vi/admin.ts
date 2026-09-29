@@ -100,6 +100,8 @@ export const admin = {
     dateOfBirth: 'Ngày sinh',
     workLocation: 'Vị trí làm việc',
     password: 'Mật khẩu',
+    passwordMinLength: 'Mật khẩu phải có ít nhất 6 ký tự',
+    passwordPlaceholder: 'Ít nhất 6 ký tự',
     monthlySalary: 'Lương tháng (VNĐ)',
     approve: 'Duyệt',
     reject: 'Từ chối',

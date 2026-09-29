@@ -100,6 +100,8 @@ export const admin = {
     dateOfBirth: 'Date of birth',
     workLocation: 'Work location',
     password: 'Password',
+    passwordMinLength: 'Password must be at least 6 characters',
+    passwordPlaceholder: 'At least 6 characters',
     monthlySalary: 'Monthly salary (VND)',
     approve: 'Approve',
     reject: 'Reject',

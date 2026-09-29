@@ -513,6 +513,16 @@ export const UserManagement: React.FC = () => {
         return;
       }
 
+      if (!editingUser && formData.password.trim().length < 6) {
+        alert(t('admin.users.passwordMinLength'));
+        return;
+      }
+
+      if (editingUser && formData.password && formData.password.trim().length < 6) {
+        alert(t('admin.users.passwordMinLength'));
+        return;
+      }
+
       if (editingUser) {
         // Update existing user - Use document ID directly if available, otherwise query by uid
         let userDocId: string | null = null;
@@ -540,12 +550,15 @@ export const UserManagement: React.FC = () => {
         }
 
         const updateData: Record<string, any> = {
-          email: String(formData.email || ''),
-          password: String(formData.password || ''),
+          email: String(formData.email || '').trim().toLowerCase(),
           displayName: String(formData.displayName || ''),
           role: String(formData.role || 'staff'),
           updatedAt: new Date()
         };
+
+        if (formData.password.trim()) {
+          updateData.password = formData.password.trim();
+        }
 
         // Preserve/ghi đè photoURL nếu có
         if (formData.photoURL) {
@@ -619,13 +632,14 @@ export const UserManagement: React.FC = () => {
         alert(t('admin.users.updateSuccess'));
       } else {
         // Check if email exists
-        if (!formData.email || formData.email.trim() === '') {
+        const normalizedEmail = formData.email.trim().toLowerCase();
+        if (!normalizedEmail) {
           alert(t('admin.users.emailRequired'));
           return;
         }
 
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', formData.email.trim()));
+        const q = query(usersRef, where('email', '==', normalizedEmail));
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
@@ -637,11 +651,11 @@ export const UserManagement: React.FC = () => {
         const newUserId = `user_${Date.now()}`;
         const newUser: Record<string, any> = {
           uid: newUserId,
-          email: String(formData.email || ''),
+          email: normalizedEmail,
           password: String(formData.password || ''),
           displayName: String(formData.displayName || ''),
           role: String(formData.role || 'staff'),
-          approved: formData.role === 'admin' ? true : false, // Admin tự động duyệt
+          approved: true,
           totalLearningHours: 0, // Mặc định 0 giờ
           createdAt: new Date(),
           updatedAt: new Date()
@@ -719,7 +733,10 @@ export const UserManagement: React.FC = () => {
       loadUsers();
     } catch (error) {
       console.error('Error saving user:', error);
-      alert(t('admin.users.saveError'));
+      const message = error instanceof Error && error.message
+        ? error.message
+        : t('admin.users.saveError');
+      alert(message);
     }
   };
 
@@ -1340,6 +1357,7 @@ export const UserManagement: React.FC = () => {
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      {...(!editingUser ? { minLength: 6, placeholder: t('admin.users.passwordPlaceholder') } : {})}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
                     />
                   </div>
