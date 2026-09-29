@@ -83,7 +83,7 @@ export const ClassDetailManagement: React.FC<ClassDetailManagementProps> = ({
         {/* Content */}
         <div className="p-6">
           {activeTab === 'lessons' ? (
-            <LessonManagement course={course} onBack={() => {}} />
+            <LessonManagement course={course} onBack={onClose} />
           ) : (
             <CourseDetail course={course} onBack={() => {}} />
           )}

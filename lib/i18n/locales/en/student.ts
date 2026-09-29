@@ -354,6 +354,7 @@ export const student = {
   },
   positions: {
     subtitle: 'Positions and people currently assigned to each title.',
+    subtitleQuiz: 'Quiz results aggregated by job position.',
     total: 'Positions',
     assigned: 'Assigned',
     managers: 'Management roles',
@@ -362,8 +363,15 @@ export const student = {
     colTitle: 'Position',
     colCount: 'Count',
     colPeople: 'People',
+    colAttempts: 'Attempts',
+    colAvgScore: 'Avg score',
+    colPassRate: 'Pass rate',
     preview: 'Position detail',
     people: 'people',
+    tookExam: 'took exams',
+    attemptsUnit: 'attempts',
+    noQuizYet: 'No quiz yet',
+    noMembers: 'No people in this position yet.',
   },
   assessment: {
     subtitle: 'Quiz results and learning assessments.',
@@ -457,5 +465,6 @@ export const student = {
     colAction: 'Actions',
     featured: 'Featured documents',
     tags: 'Topic tags',
+    empty: 'No documents yet. Click “Upload document” to add a file.',
   },
 };

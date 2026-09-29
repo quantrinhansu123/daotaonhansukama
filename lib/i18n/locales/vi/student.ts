@@ -354,6 +354,7 @@ export const student = {
   },
   positions: {
     subtitle: 'Danh sách chức danh và nhân sự đang giữ từng vị trí.',
+    subtitleQuiz: 'Tổng hợp kết quả bài kiểm tra theo từng chức danh.',
     total: 'Số chức danh',
     assigned: 'Đã gán chức danh',
     managers: 'Cấp quản lý',
@@ -362,8 +363,15 @@ export const student = {
     colTitle: 'Chức danh',
     colCount: 'Số người',
     colPeople: 'Nhân sự',
+    colAttempts: 'Lượt thi',
+    colAvgScore: 'Điểm TB',
+    colPassRate: 'Tỷ lệ đạt',
     preview: 'Chi tiết chức danh',
     people: 'người',
+    tookExam: 'đã thi',
+    attemptsUnit: 'lượt',
+    noQuizYet: 'Chưa có bài kiểm tra',
+    noMembers: 'Chưa có nhân sự ở chức danh này.',
   },
   assessment: {
     subtitle: 'Kết quả bài kiểm tra và đánh giá học tập.',
@@ -457,5 +465,6 @@ export const student = {
     colAction: 'Thao tác',
     featured: 'Tài liệu nổi bật',
     tags: 'Thẻ chủ đề',
+    empty: 'Chưa có tài liệu. Bấm “Tải tài liệu lên” để thêm file.',
   },
 };

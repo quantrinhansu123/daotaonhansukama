@@ -40,8 +40,10 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   });
   const [tagInput, setTagInput] = useState('');
 
-  // Check if user can manage lessons (admin or course teacher)
-  const canManage = currentUser?.role === 'admin' || currentUser?.uid === course.teacherId;
+  // Only admin/teacher can manage content — staff & students are read-only
+  const canManage =
+    currentUser?.role === 'admin'
+    || (currentUser?.role === 'teacher' && currentUser?.uid === course.teacherId);
   const activeLessonJob = (lessonId: string) => jobs.find(job =>
     job.targetId === `lesson:${lessonId}` && ['queued', 'preparing', 'uploading', 'finalizing', 'saving'].includes(job.status)
   );
@@ -267,18 +269,29 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="bg-[#5e3ed0]/20 rounded-xl shadow-sm border border-white/10 p-6 mb-6 backdrop-blur-md">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <h3 className="text-2xl font-bold text-white mb-1">{t("teacher.manageLessons")}</h3>
               <p className="text-slate-300">{t("teacher.courseLabel")}: <span className="font-medium text-[#1B7A1E]">{course.title}</span></p>
               <p className="text-sm text-slate-400 mt-1">{t("teacher.totalLessonsCount")}: <span className="font-bold text-[#1B7A1E]">{lessons.length}</span></p>
             </div>
-            {canManage && (
-              <Button onClick={handleAdd} className="flex items-center gap-2 shadow-lg bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
-                <Plus size={18} />
-                {t("teacher.addLesson")}
-              </Button>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {canManage && (
+                <Button onClick={handleAdd} className="flex items-center gap-2 shadow-lg bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
+                  <Plus size={18} />
+                  {t("teacher.addLesson")}
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+                title={t('common.close')}
+              >
+                <X size={18} />
+                {t('common.close')}
+              </button>
+            </div>
           </div>
         </div>
 

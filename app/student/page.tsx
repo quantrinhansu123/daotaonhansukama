@@ -18,6 +18,7 @@ import { StudentAssessment } from '@/components/student/StudentAssessment';
 import { StudentAccountUser } from '@/components/student/StudentAccountUser';
 import { StudentPermissions } from '@/components/student/StudentPermissions';
 import { StudentActivityLog } from '@/components/student/StudentActivityLog';
+import { DashboardSimple } from '@/components/admin/DashboardSimple';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { collection, query, where, getDocs } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
@@ -51,6 +52,7 @@ type Section =
   | 'activity'
   | 'certificates'
   | 'library'
+  | 'reports'
   | 'settings';
 
 export default function StudentPage() {
@@ -59,7 +61,6 @@ export default function StudentPage() {
   const router = useRouter();
   const [stats, setStats] = useState<LearningStats>(emptyStats);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [toastMsg, setToastMsg] = useState('');
   const [accountOpen, setAccountOpen] = useState(false);
   const [section, setSection] = useState<Section>('overview');
   const accountRef = useRef<HTMLDivElement>(null);
@@ -144,6 +145,7 @@ export default function StudentPage() {
     if (hash === 'activity') setSection('activity');
     if (hash === 'certificates') setSection('certificates');
     if (hash === 'library') setSection('library');
+    if (hash === 'reports') setSection('reports');
     if (hash === 'settings') setSection('settings');
   }, [userProfile?.role]);
 
@@ -167,11 +169,6 @@ export default function StudentPage() {
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
-  };
-
-  const showSoon = () => {
-    setToastMsg(t('student.academy.navSoon'));
-    window.setTimeout(() => setToastMsg(''), 2200);
   };
 
   const navBtn = (active: boolean) =>
@@ -199,6 +196,7 @@ export default function StudentPage() {
   const headerTitle =
     section === 'certificates' ? t('student.academy.navCertificates')
       : section === 'library' ? t('student.academy.navLibrary')
+        : section === 'reports' ? t('student.academy.navReports')
         : section === 'settings' ? t('student.academy.navSettings')
           : section === 'programs' ? t('student.academy.navPrograms')
             : section === 'learners' ? t('student.academy.navStudents')
@@ -257,7 +255,7 @@ export default function StudentPage() {
                 <Folder className={navIconClass} />
                 {t('student.academy.navLibrary')}
               </button>
-              <button type="button" onClick={showSoon} className={navBtn(false)}>
+              <button type="button" onClick={() => setSection('reports')} className={navBtn(section === 'reports')}>
                 <BarChart3 className={navIconClass} />
                 {t('student.academy.navReports')}
               </button>
@@ -402,12 +400,10 @@ export default function StudentPage() {
           {userProfile.role === 'admin' && section === 'activity' && <StudentActivityLog />}
           {userProfile.role === 'admin' && section === 'certificates' && <StudentCertificates />}
           {userProfile.role === 'admin' && section === 'library' && <StudentLibrary />}
+          {userProfile.role === 'admin' && section === 'reports' && <DashboardSimple />}
           {userProfile.role === 'admin' && section === 'settings' && <StudentSettings />}
         </main>
       </div>
-      {toastMsg && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-md bg-[#111b38] px-4 py-2 text-[12px] text-white shadow-lg">{toastMsg}</div>
-      )}
     </div>
   );
 }

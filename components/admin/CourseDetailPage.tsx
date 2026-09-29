@@ -164,7 +164,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
       {/* Content */}
       <div>
         {activeTab === 'lessons' ? (
-          <LessonManagement course={currentCourse} onBack={() => { }} />
+          <LessonManagement course={currentCourse} onBack={onBack} />
         ) : (
           <CourseDetail 
             key={refreshKey} 

@@ -739,10 +739,13 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                 <Folder size={22} />
                 {t('student.academy.navLibrary')}
               </Link>
-              <button onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
+              <Link
+                href="/student#reports"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
                 <BarChart3 size={22} />
                 {t('student.academy.navReports')}
-              </button>
+              </Link>
               <Link
                 href="/student#certificates"
                 className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
@@ -1429,6 +1432,18 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       {managingContent && canManageContent && (
         <div className="fixed inset-0 z-[80] overflow-y-auto bg-[#0b1424]/70 p-3 sm:p-6">
           <div className="mx-auto max-w-5xl rounded-2xl bg-slate-950 p-3 shadow-2xl ring-1 ring-white/10 sm:p-5">
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setManagingContent(false);
+                  void loadLessons();
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20"
+              >
+                {t('common.close')}
+              </button>
+            </div>
             <LessonManagement
               course={currentCourse}
               onBack={() => {
