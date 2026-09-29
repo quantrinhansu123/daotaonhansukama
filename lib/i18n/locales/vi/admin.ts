@@ -8,6 +8,7 @@ export const admin = {
     departments: 'Quản lý phòng ban',
     projects: 'Quản lý Dự án',
     attendance: 'Quản lý chấm công',
+    salary: 'Quản lý lương',
   },
   systemName: 'BioKama',
   tagline: 'Quản lý & Đào tạo',

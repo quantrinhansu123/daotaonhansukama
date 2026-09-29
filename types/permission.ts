@@ -58,19 +58,8 @@ export const PERMISSIONS: Permission[] = [
 export const DEFAULT_ROLES = {
   ADMIN: {
     name: 'Admin',
-    permissions: [
-      'view_dashboard',
-      'view_users',
-      'manage_users',
-      'view_courses',
-      'manage_courses',
-      'view_departments',
-      'manage_departments',
-      'view_projects',
-      'manage_projects',
-      'view_salary',
-      'manage_salary'
-    ] as PermissionAction[]
+    // Admin có toàn bộ quyền trong hệ thống
+    permissions: PERMISSIONS.map((p) => p.action) as PermissionAction[]
   },
   MANAGER: {
     name: 'Trưởng phòng',

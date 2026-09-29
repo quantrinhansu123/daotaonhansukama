@@ -21,7 +21,8 @@ import {
   GraduationCap,
   Clock,
   Fingerprint,
-  FolderKanban
+  FolderKanban,
+  DollarSign
 } from 'lucide-react';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -64,8 +65,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: '/admin/checkin',
       permission: null,
       hideForStaff: false,
-      hideForAdmin: true,
-      hidden: true
+      hideForAdmin: false,
     },
     {
       id: 'dashboard',
@@ -124,7 +124,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: '/admin/attendance',
       permission: 'view_salary' as const,
       hideForStaff: false,
-      hidden: true
+    },
+    {
+      id: 'salary',
+      label: t('admin.menu.salary'),
+      icon: DollarSign,
+      href: '/admin/salary',
+      permission: 'view_salary' as const,
+      hideForStaff: false,
     },
   ];
 
@@ -174,21 +181,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             const isStaff = userProfile?.role === 'staff';
             const isManager = userProfile?.position === 'Trưởng phòng';
 
-            if (item.hidden) {
+            if ('hidden' in item && item.hidden) {
               return null;
             }
 
-            if (isAdmin && item.hideForAdmin) {
+            if (isAdmin && 'hideForAdmin' in item && item.hideForAdmin) {
               return null;
             }
             if (isStaff && item.hideForStaff) {
               return null;
             }
-            if (isManager && item.hideForManager) {
+            if (isManager && 'hideForManager' in item && item.hideForManager) {
               return null;
             }
 
-            if (item.permission && !hasPermission(item.permission)) {
+            // Admin nhìn hết mọi mục menu
+            if (!isAdmin && item.permission && !hasPermission(item.permission)) {
               return null;
             }
 

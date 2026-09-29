@@ -2,9 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { PermissionAction, DEFAULT_ROLES } from '@/types/permission';
+import { PermissionAction, DEFAULT_ROLES, PERMISSIONS } from '@/types/permission';
 import { collection, getDocs, query, where } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
+
+const ALL_PERMISSIONS = PERMISSIONS.map((p) => p.action);
 
 interface PermissionContextType {
   permissions: PermissionAction[];
@@ -20,6 +22,7 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { userProfile } = useAuth();
   const [permissions, setPermissions] = useState<PermissionAction[]>([]);
   const [loading, setLoading] = useState(true);
+  const isAdmin = userProfile?.role === 'admin';
 
   useEffect(() => {
     loadPermissions();
@@ -34,9 +37,9 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
 
-      // Admin có tất cả quyền
+      // Admin có tất cả quyền — nhìn và thao tác hết mọi mục
       if (userProfile.role === 'admin') {
-        setPermissions(DEFAULT_ROLES.ADMIN.permissions);
+        setPermissions(ALL_PERMISSIONS);
         return;
       }
 
@@ -81,14 +84,17 @@ export const PermissionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const hasPermission = (action: PermissionAction): boolean => {
+    if (isAdmin) return true;
     return permissions.includes(action);
   };
 
   const hasAnyPermission = (actions: PermissionAction[]): boolean => {
+    if (isAdmin) return true;
     return actions.some(action => permissions.includes(action));
   };
 
   const hasAllPermissions = (actions: PermissionAction[]): boolean => {
+    if (isAdmin) return true;
     return actions.every(action => permissions.includes(action));
   };
 

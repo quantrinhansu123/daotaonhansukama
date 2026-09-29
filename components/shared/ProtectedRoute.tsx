@@ -46,9 +46,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Admin luôn được xem và vào mọi trang (trừ khi bị chặn bởi allowedRoles tường minh)
+  const isAdmin = userProfile?.role === 'admin';
+
   // Check allowed roles first (if provided)
   if (allowedRoles && (!userProfile || !allowedRoles.includes(userProfile.role))) {
     return fallback || <NoPermissionFallback />;
+  }
+
+  // Admin bypass permission checks
+  if (isAdmin) {
+    return <>{children}</>;
   }
 
   // Check single permission

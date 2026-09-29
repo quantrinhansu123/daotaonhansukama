@@ -8,6 +8,7 @@ export const admin = {
     departments: 'Department management',
     projects: 'Project management',
     attendance: 'Attendance management',
+    salary: 'Salary management',
   },
   systemName: 'BioKama',
   tagline: 'Management & Training',
