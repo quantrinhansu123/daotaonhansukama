@@ -647,18 +647,11 @@ export const UserManagement: React.FC = () => {
           return;
         }
 
-        // Add new user with uid as custom field
-        const newUserId = `user_${Date.now()}`;
         const newUser: Record<string, any> = {
-          uid: newUserId,
           email: normalizedEmail,
-          password: String(formData.password || ''),
-          displayName: String(formData.displayName || ''),
+          password: formData.password.trim(),
+          displayName: String(formData.displayName || '').trim(),
           role: String(formData.role || 'staff'),
-          approved: true,
-          totalLearningHours: 0, // Mặc định 0 giờ
-          createdAt: new Date(),
-          updatedAt: new Date()
         };
 
         // Only add optional fields if they have values

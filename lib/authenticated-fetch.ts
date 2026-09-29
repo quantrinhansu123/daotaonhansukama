@@ -14,7 +14,12 @@ export async function authenticatedJson(input: string, method: string, body?: un
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || 'Không thực hiện được thao tác.');
+  const payload = await response.json().catch(() => ({})) as { error?: string };
+  if (!response.ok) {
+    const fallback = response.status === 503
+      ? 'Máy chủ chưa cấu hình Supabase (thiếu service role key).'
+      : `Không thực hiện được thao tác (HTTP ${response.status}).`;
+    throw new Error(payload.error || fallback);
+  }
   return payload;
 }
