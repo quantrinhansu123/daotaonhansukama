@@ -127,7 +127,13 @@ export default function StudentPage() {
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
+    const isAdmin = userProfile?.role === 'admin';
     if (hash === 'course-list') setSection('courses');
+    if (hash === 'programs') setSection('programs');
+    if (!isAdmin) {
+      if (hash && !['course-list', 'programs', ''].includes(hash)) setSection('overview');
+      return;
+    }
     if (hash === 'learners' || hash === 'students') setSection('learners');
     if (hash === 'projects') setSection('projects');
     if (hash === 'departments') setSection('departments');
@@ -139,8 +145,14 @@ export default function StudentPage() {
     if (hash === 'certificates') setSection('certificates');
     if (hash === 'library') setSection('library');
     if (hash === 'settings') setSection('settings');
-    if (hash === 'programs') setSection('programs');
-  }, []);
+  }, [userProfile?.role]);
+
+  useEffect(() => {
+    if (!userProfile || userProfile.role === 'admin') return;
+    if (section !== 'overview' && section !== 'courses' && section !== 'programs') {
+      setSection('overview');
+    }
+  }, [userProfile, section]);
 
   if (loading) {
     return (
@@ -215,64 +227,66 @@ export default function StudentPage() {
             <GraduationCap size={22} />
             {t('student.academy.navPrograms')}
           </button>
-          <button type="button" onClick={() => setSection('learners')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'learners')}`}>
-            <Users size={22} />
-            {t('student.academy.navStudents')}
-          </button>
-          <button type="button" onClick={() => setSection('projects')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'projects')}`}>
-            <FolderKanban size={22} />
-            {t('student.academy.navProjects')}
-          </button>
-          <button type="button" onClick={() => setSection('departments')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'departments')}`}>
-            <Building2 size={22} />
-            {t('student.academy.navDepartments')}
-          </button>
-          <button type="button" onClick={() => setSection('positions')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'positions')}`}>
-            <Award size={22} />
-            {t('student.academy.navPositions')}
-          </button>
-          <button type="button" onClick={() => setSection('assessment')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'assessment')}`}>
-            <ClipboardCheck size={22} />
-            {t('student.academy.navAssessment')}
-          </button>
-          <button type="button" onClick={() => setSection('library')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'library')}`}>
-            <Folder size={22} />
-            {t('student.academy.navLibrary')}
-          </button>
-          <button type="button" onClick={showSoon} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
-            <BarChart3 size={22} />
-            {t('student.academy.navReports')}
-          </button>
-          <button type="button" onClick={() => setSection('certificates')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'certificates')}`}>
-            <BadgeCheck size={22} />
-            {t('student.academy.navCertificates')}
-          </button>
-          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
           {userProfile.role === 'admin' && (
-            <Link
-              href="/admin"
-              className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(false)}`}
-            >
-              <LayoutDashboard size={22} />
-              {t('student.academy.openAdminConsole')}
-            </Link>
+            <>
+              <button type="button" onClick={() => setSection('learners')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'learners')}`}>
+                <Users size={22} />
+                {t('student.academy.navStudents')}
+              </button>
+              <button type="button" onClick={() => setSection('projects')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'projects')}`}>
+                <FolderKanban size={22} />
+                {t('student.academy.navProjects')}
+              </button>
+              <button type="button" onClick={() => setSection('departments')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'departments')}`}>
+                <Building2 size={22} />
+                {t('student.academy.navDepartments')}
+              </button>
+              <button type="button" onClick={() => setSection('positions')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'positions')}`}>
+                <Award size={22} />
+                {t('student.academy.navPositions')}
+              </button>
+              <button type="button" onClick={() => setSection('assessment')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'assessment')}`}>
+                <ClipboardCheck size={22} />
+                {t('student.academy.navAssessment')}
+              </button>
+              <button type="button" onClick={() => setSection('library')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'library')}`}>
+                <Folder size={22} />
+                {t('student.academy.navLibrary')}
+              </button>
+              <button type="button" onClick={showSoon} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
+                <BarChart3 size={22} />
+                {t('student.academy.navReports')}
+              </button>
+              <button type="button" onClick={() => setSection('certificates')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'certificates')}`}>
+                <BadgeCheck size={22} />
+                {t('student.academy.navCertificates')}
+              </button>
+              <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
+              <Link
+                href="/admin"
+                className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(false)}`}
+              >
+                <LayoutDashboard size={22} />
+                {t('student.academy.openAdminConsole')}
+              </Link>
+              <button type="button" onClick={() => setSection('account')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'account')}`}>
+                <Users size={22} />
+                {t('student.academy.navUsers')}
+              </button>
+              <button type="button" onClick={() => setSection('permissions')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'permissions')}`}>
+                <Shield size={22} />
+                {t('student.academy.navPermissions')}
+              </button>
+              <button type="button" onClick={() => setSection('activity')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'activity')}`}>
+                <List size={22} />
+                {t('student.academy.navActivity')}
+              </button>
+              <button type="button" onClick={() => setSection('settings')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'settings')}`}>
+                <Settings size={22} />
+                {t('student.academy.navSettings')}
+              </button>
+            </>
           )}
-          <button type="button" onClick={() => setSection('account')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'account')}`}>
-            <Users size={22} />
-            {t('student.academy.navUsers')}
-          </button>
-          <button type="button" onClick={() => setSection('permissions')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'permissions')}`}>
-            <Shield size={22} />
-            {t('student.academy.navPermissions')}
-          </button>
-          <button type="button" onClick={() => setSection('activity')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'activity')}`}>
-            <List size={22} />
-            {t('student.academy.navActivity')}
-          </button>
-          <button type="button" onClick={() => setSection('settings')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'settings')}`}>
-            <Settings size={22} />
-            {t('student.academy.navSettings')}
-          </button>
         </nav>
         <div className="border-t border-white/15 px-3 py-4">
           <div className="rounded-md bg-[#0c3a16]/80 p-3 ring-1 ring-white/10">
@@ -377,17 +391,17 @@ export default function StudentPage() {
             </div>
           )}
 
-          {section === 'learners' && <StudentLearners />}
-          {section === 'projects' && <StudentProjects />}
-          {section === 'departments' && <StudentDepartments />}
-          {section === 'positions' && <StudentPositions />}
-          {section === 'assessment' && <StudentAssessment />}
-          {section === 'account' && <StudentAccountUser />}
-          {section === 'permissions' && <StudentPermissions />}
-          {section === 'activity' && <StudentActivityLog />}
-          {section === 'certificates' && <StudentCertificates />}
-          {section === 'library' && <StudentLibrary />}
-          {section === 'settings' && <StudentSettings />}
+          {userProfile.role === 'admin' && section === 'learners' && <StudentLearners />}
+          {userProfile.role === 'admin' && section === 'projects' && <StudentProjects />}
+          {userProfile.role === 'admin' && section === 'departments' && <StudentDepartments />}
+          {userProfile.role === 'admin' && section === 'positions' && <StudentPositions />}
+          {userProfile.role === 'admin' && section === 'assessment' && <StudentAssessment />}
+          {userProfile.role === 'admin' && section === 'account' && <StudentAccountUser />}
+          {userProfile.role === 'admin' && section === 'permissions' && <StudentPermissions />}
+          {userProfile.role === 'admin' && section === 'activity' && <StudentActivityLog />}
+          {userProfile.role === 'admin' && section === 'certificates' && <StudentCertificates />}
+          {userProfile.role === 'admin' && section === 'library' && <StudentLibrary />}
+          {userProfile.role === 'admin' && section === 'settings' && <StudentSettings />}
         </main>
       </div>
       {toastMsg && (

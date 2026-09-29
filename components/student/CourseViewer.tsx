@@ -695,88 +695,92 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             <GraduationCap size={22} />
             {t('student.academy.navPrograms')}
           </Link>
-          <Link
-            href="/student#learners"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Users size={22} />
-            {t('student.academy.navStudents')}
-          </Link>
-          <Link
-            href="/student#projects"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <FolderKanban size={22} />
-            {t('student.academy.navProjects')}
-          </Link>
-          <Link
-            href="/student#departments"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Building2 size={22} />
-            {t('student.academy.navDepartments')}
-          </Link>
-          <Link
-            href="/student#positions"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Award size={22} />
-            {t('student.academy.navPositions')}
-          </Link>
-          <Link
-            href="/student#assessment"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <ClipboardCheck size={22} />
-            {t('student.academy.navAssessment')}
-          </Link>
-          <Link
-            href="/student#library"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Folder size={22} />
-            {t('student.academy.navLibrary')}
-          </Link>
-          <button onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
-            <BarChart3 size={22} />
-            {t('student.academy.navReports')}
-          </button>
-          <Link
-            href="/student#certificates"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <BadgeCheck size={22} />
-            {t('student.academy.navCertificates')}
-          </Link>
-          <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
-          <Link
-            href="/student#account"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Users size={22} />
-            {t('student.academy.navUsers')}
-          </Link>
-          <Link
-            href="/student#permissions"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Shield size={22} />
-            {t('student.academy.navPermissions')}
-          </Link>
-          <Link
-            href="/student#activity"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <List size={22} />
-            {t('student.academy.navActivity')}
-          </Link>
-          <Link
-            href="/student#settings"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <Settings size={22} />
-            {t('student.academy.navSettings')}
-          </Link>
+          {userProfile?.role === 'admin' && (
+            <>
+              <Link
+                href="/student#learners"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Users size={22} />
+                {t('student.academy.navStudents')}
+              </Link>
+              <Link
+                href="/student#projects"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <FolderKanban size={22} />
+                {t('student.academy.navProjects')}
+              </Link>
+              <Link
+                href="/student#departments"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Building2 size={22} />
+                {t('student.academy.navDepartments')}
+              </Link>
+              <Link
+                href="/student#positions"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Award size={22} />
+                {t('student.academy.navPositions')}
+              </Link>
+              <Link
+                href="/student#assessment"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <ClipboardCheck size={22} />
+                {t('student.academy.navAssessment')}
+              </Link>
+              <Link
+                href="/student#library"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Folder size={22} />
+                {t('student.academy.navLibrary')}
+              </Link>
+              <button onClick={() => showToast(t('student.academy.navSoon'))} className="flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
+                <BarChart3 size={22} />
+                {t('student.academy.navReports')}
+              </button>
+              <Link
+                href="/student#certificates"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <BadgeCheck size={22} />
+                {t('student.academy.navCertificates')}
+              </Link>
+              <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
+              <Link
+                href="/student#account"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Users size={22} />
+                {t('student.academy.navUsers')}
+              </Link>
+              <Link
+                href="/student#permissions"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Shield size={22} />
+                {t('student.academy.navPermissions')}
+              </Link>
+              <Link
+                href="/student#activity"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <List size={22} />
+                {t('student.academy.navActivity')}
+              </Link>
+              <Link
+                href="/student#settings"
+                className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
+              >
+                <Settings size={22} />
+                {t('student.academy.navSettings')}
+              </Link>
+            </>
+          )}
           {allCourses.length > 0 && (
             <div className="pt-3">
               <p className="mx-2 mb-2 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navPrograms')}</p>
