@@ -411,9 +411,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
   const getLevelBadge = (level: string) => {
     const styles = {
-      beginner: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25',
-      intermediate: 'bg-amber-500/15 text-amber-300 border border-amber-500/25',
-      advanced: 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
+      beginner: 'bg-[#edf7ee] text-[#1B7A1E] border border-[#1B7A1E]/30',
+      intermediate: 'bg-amber-100 text-amber-800 border border-amber-200',
+      advanced: 'bg-rose-100 text-rose-700 border border-rose-200'
     };
     const labels = {
       beginner: t('admin.courses.levelBeginner'),
@@ -442,10 +442,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[50vh]">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-2 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-slate-300">{t('common.loading')}</p>
+      <div className="flex min-h-[50vh] items-center justify-center bg-white p-8">
+        <div className="space-y-3 text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#1B7A1E] border-t-transparent" />
+          <p className="text-sm text-[#475569]">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -469,21 +469,21 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
 
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px]">
+    <div className="min-h-screen max-w-[1400px] space-y-6 bg-white p-6 text-[#111b38] lg:p-8">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#1B7A1E]/70">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#1B7A1E]">
             BioKama Learning
           </p>
-          <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-white">
+          <h2 className="text-2xl font-semibold tracking-tight text-[#111b38] lg:text-3xl">
             {t('admin.courses.title')}
           </h2>
-          <p className="text-sm text-slate-500 max-w-xl">
+          <p className="max-w-xl text-sm text-[#475569]">
             {t('admin.courses.pageSubtitle')}
           </p>
           {currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId && (
-            <p className="text-sm text-[#1B7A1E] mt-1">
+            <p className="mt-1 text-sm text-[#1B7A1E]">
               {t('admin.courses.managerScope')}: <strong>{departments.find(d => d.id === currentUser.departmentId)?.name}</strong>
             </p>
           )}
@@ -512,7 +512,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                 setLoading(false);
               }
             }}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-300 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2 text-sm font-medium text-[#1B7A1E] transition-colors hover:bg-[#edf7ee]"
           >
             <Users size={16} />
             {t('admin.courses.syncStudents')}
@@ -521,7 +521,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             <button
               type="button"
               onClick={handleAdd}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-[#0b1b2b] bg-[#1B7A1E] hover:bg-[#156318] transition-colors shadow-[0_0_24px_rgba(83,202,253,0.25)]"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#1B7A1E] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#1B7A1E]/20 transition-colors hover:bg-[#156318]"
             >
               <Plus size={16} />
               {t('admin.courses.addCourse')}
@@ -531,26 +531,25 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: t('admin.courses.totalCourses'), value: courses.length, icon: Layers, tone: 'text-white', ring: 'from-[#1B7A1E]/20' },
-          { label: t('admin.courses.levelBeginner'), value: courses.filter(c => c.level === 'beginner').length, icon: GraduationCap, tone: 'text-emerald-300', ring: 'from-emerald-400/20' },
-          { label: t('admin.courses.levelIntermediate'), value: courses.filter(c => c.level === 'intermediate').length, icon: Signal, tone: 'text-amber-300', ring: 'from-amber-400/20' },
-          { label: t('admin.courses.levelAdvanced'), value: courses.filter(c => c.level === 'advanced').length, icon: BookOpen, tone: 'text-rose-300', ring: 'from-rose-400/20' },
+          { label: t('admin.courses.totalCourses'), value: courses.length, icon: Layers },
+          { label: t('admin.courses.levelBeginner'), value: courses.filter(c => c.level === 'beginner').length, icon: GraduationCap },
+          { label: t('admin.courses.levelIntermediate'), value: courses.filter(c => c.level === 'intermediate').length, icon: Signal },
+          { label: t('admin.courses.levelAdvanced'), value: courses.filter(c => c.level === 'advanced').length, icon: BookOpen },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-black/30 backdrop-blur-md p-4`}
+              className="rounded-xl border border-[#1B7A1E] bg-white p-4 transition-colors hover:bg-[#f3faf4]"
             >
-              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${stat.ring} to-transparent opacity-80`} />
-              <div className="relative flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs text-slate-400 font-medium">{stat.label}</p>
-                  <p className={`mt-2 text-3xl font-semibold tracking-tight ${stat.tone}`}>{stat.value}</p>
+                  <p className="text-xs font-medium text-[#66718b]">{stat.label}</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-[#1B7A1E]">{stat.value}</p>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#1B7A1E]/30 bg-[#edf7ee] text-[#1B7A1E]">
                   <Icon size={18} />
                 </div>
               </div>
@@ -560,24 +559,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="rounded-2xl border border-white/[0.06] bg-black/30 backdrop-blur-md p-3 lg:p-4 space-y-3">
+      <div className="space-y-3 rounded-xl border border-[#1B7A1E] bg-white p-3 lg:p-4">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={18} />
           <input
             type="text"
             placeholder={t('admin.courses.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 focus:border-[#1B7A1E]/30 text-sm text-white placeholder-slate-600"
+            className="w-full rounded-lg border border-[#1B7A1E] bg-white py-2.5 pl-11 pr-4 text-sm text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={14} />
             <select
               value={filterLevel}
               onChange={(e) => setFilterLevel(e.target.value as any)}
-              className="w-full appearance-none pl-9 pr-8 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 [&>option]:bg-[#12101f]"
+              className="w-full appearance-none rounded-lg border border-[#1B7A1E] bg-white py-2.5 pl-9 pr-8 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
               aria-label={t('admin.courses.filterByLevel')}
             >
               <option value="all">{t('admin.courses.allLevels')}</option>
@@ -589,7 +588,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 [&>option]:bg-[#12101f]"
+            className="w-full appearance-none rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
             aria-label={t('admin.courses.filterByCategory')}
           >
             <option value="all">{t('admin.courses.allCategories')}</option>
@@ -600,7 +599,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
           <select
             value={filterProjectId}
             onChange={(e) => setFilterProjectId(e.target.value)}
-            className="w-full appearance-none px-3.5 py-2.5 bg-black/40 border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/30 [&>option]:bg-[#12101f]"
+            className="w-full appearance-none rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
             aria-label={t('admin.courses.filterByProject')}
           >
             <option value="">{t('admin.courses.allProjects')}</option>
@@ -611,13 +610,13 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
             ))}
           </select>
         </div>
-        <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
+        <div className="flex items-center justify-between px-0.5 text-xs text-[#66718b]">
           <span>{t('admin.courses.showingCount', { count: filteredCourses.length, total: courses.length })}</span>
           {hasActiveFilters && (
             <button
               type="button"
               onClick={clearFilters}
-              className="text-[#1B7A1E] hover:text-[#7dd9ff] font-medium transition-colors"
+              className="font-medium text-[#1B7A1E] transition-colors hover:text-[#156318]"
             >
               {t('admin.courses.clearFilters')}
             </button>
@@ -626,43 +625,43 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       </div>
 
       {/* Course list */}
-      <div className="rounded-2xl border border-white/[0.06] bg-black/35 backdrop-blur-md overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-[#1B7A1E] bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px]">
+          <table className="w-full min-w-[1100px] border-collapse bg-white">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-black/25">
-                <th className="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+              <tr className="border-b border-[#1B7A1E] bg-white">
+                <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.courseName')}
                 </th>
-                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.category')}
                 </th>
-                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.level')}
                 </th>
-                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.audience')}
                 </th>
-                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.projectsLabel')}
                 </th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+                <th className="px-4 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.students')}
                 </th>
-                <th className="px-4 py-3.5 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em]">
+                <th className="px-4 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('admin.courses.durationLabel')}
                 </th>
-                <th className="px-5 py-3.5 text-right text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] w-[1%] whitespace-nowrap">
+                <th className="w-[1%] whitespace-nowrap px-5 py-3.5 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1B7A1E]">
                   {t('common.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody>
               {filteredCourses.map((course) => (
-                <tr key={course.id} className="group hover:bg-white/[0.03] transition-colors">
+                <tr key={course.id} className="border-b border-[#d8ecd9] bg-white transition-colors hover:bg-[#f3faf4]">
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-11 w-11 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl border border-[#1B7A1E]/30 bg-[#edf7ee]">
                         {course.thumbnail ? (
                           <img
                             src={proxyBunnyUrl(course.thumbnail)}
@@ -676,35 +675,35 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                           />
                         ) : null}
                         <div
-                          className="h-full w-full items-center justify-center text-[#1B7A1E]/70"
+                          className="h-full w-full items-center justify-center text-[#1B7A1E]"
                           style={{ display: course.thumbnail ? 'none' : 'flex' }}
                         >
                           <BookOpen size={18} />
                         </div>
                       </div>
                       <div className="min-w-0">
-                        <div className="font-medium text-white truncate">{course.title}</div>
-                        <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">{course.description}</div>
+                        <div className="truncate font-medium text-[#111b38]">{course.title}</div>
+                        <div className="mt-0.5 line-clamp-1 text-xs text-[#94a3b8]">{course.description}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-200">
-                    {course.category || <span className="text-slate-500">—</span>}
+                  <td className="px-4 py-4 text-sm text-[#475569]">
+                    {course.category || <span className="text-[#94a3b8]">—</span>}
                   </td>
                   <td className="px-4 py-4">
                     {getLevelBadge(course.level)}
                   </td>
                   <td className="px-4 py-4">
                     {course.departmentId === 'all' ? (
-                      <span className="inline-flex px-2.5 py-1 bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 rounded-md text-xs font-medium">
+                      <span className="inline-flex rounded-md border border-[#1B7A1E]/30 bg-[#edf7ee] px-2.5 py-1 text-xs font-medium text-[#1B7A1E]">
                         {t('admin.courses.audienceAllShort')}
                       </span>
                     ) : course.departmentId ? (
-                      <span className="inline-flex px-2.5 py-1 bg-violet-500/15 text-violet-300 border border-violet-500/25 rounded-md text-xs font-medium">
+                      <span className="inline-flex rounded-md border border-[#1B7A1E]/30 bg-[#edf7ee] px-2.5 py-1 text-xs font-medium text-[#1B7A1E]">
                         {departments.find(d => d.id === course.departmentId)?.name || 'N/A'}
                       </span>
                     ) : (
-                      <span className="inline-flex px-2.5 py-1 bg-white/5 text-slate-400 border border-white/10 rounded-md text-xs font-medium">
+                      <span className="inline-flex rounded-md border border-[#d8ecd9] bg-[#f5f8fc] px-2.5 py-1 text-xs font-medium text-[#66718b]">
                         {t('admin.courses.draft')}
                       </span>
                     )}
@@ -715,37 +714,37 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                         {course.projectNames.slice(0, 2).map((projectName, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center px-2 py-0.5 bg-white/5 text-slate-300 border border-white/10 rounded-md text-[11px] font-medium"
+                            className="inline-flex items-center rounded-md border border-[#1B7A1E]/30 bg-[#edf7ee] px-2 py-0.5 text-[11px] font-medium text-[#1B7A1E]"
                           >
                             {projectName}
                           </span>
                         ))}
                         {course.projectNames.length > 2 && (
-                          <span className="text-[11px] text-slate-500">+{course.projectNames.length - 2}</span>
+                          <span className="text-[11px] text-[#94a3b8]">+{course.projectNames.length - 2}</span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-slate-500 text-sm">—</span>
+                      <span className="text-sm text-[#94a3b8]">—</span>
                     )}
                   </td>
                   <td className="px-4 py-4 text-center">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-200">
-                      <Users size={14} className="text-slate-500" />
+                    <span className="inline-flex items-center gap-1.5 text-sm text-[#1B7A1E]">
+                      <Users size={14} className="text-[#94a3b8]" />
                       {course.students?.length || 0}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-center">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-200">
-                      <Clock size={14} className="text-slate-500" />
+                    <span className="inline-flex items-center gap-1.5 text-sm text-[#475569]">
+                      <Clock size={14} className="text-[#94a3b8]" />
                       {course.duration}h
                     </span>
                   </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    <div className="inline-flex items-center justify-end gap-1.5 flex-nowrap">
+                  <td className="whitespace-nowrap px-5 py-4">
+                    <div className="inline-flex flex-nowrap items-center justify-end gap-1.5">
                       <button
                         type="button"
                         onClick={() => setDetailCourse(course)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 bg-[#1B7A1E]/90 text-[#061018] hover:bg-[#1B7A1E] transition-colors"
+                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[#1B7A1E] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#156318]"
                         title={t('admin.courses.classDetail')}
                       >
                         <BookOpen size={14} className="shrink-0" />
@@ -756,7 +755,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                           <button
                             type="button"
                             onClick={() => handleEdit(course)}
-                            className="inline-flex p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                            className="inline-flex shrink-0 rounded-lg p-2 text-[#1B7A1E] transition-colors hover:bg-[#edf7ee]"
                             title={t('common.edit')}
                           >
                             <Edit2 size={15} />
@@ -764,7 +763,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                           <button
                             type="button"
                             onClick={() => handleDelete(course)}
-                            className="inline-flex p-2 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors shrink-0"
+                            className="inline-flex shrink-0 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50"
                             title={t('common.delete')}
                           >
                             <Trash2 size={15} />
@@ -780,16 +779,16 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
         </div>
 
         {filteredCourses.length === 0 && (
-          <div className="text-center py-16 px-6">
-            <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <BookOpen className="w-7 h-7 text-slate-400" />
+          <div className="px-6 py-16 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#1B7A1E]/30 bg-[#edf7ee]">
+              <BookOpen className="h-7 w-7 text-[#1B7A1E]" />
             </div>
-            <p className="text-white font-medium mb-1">
+            <p className="mb-1 font-medium text-[#111b38]">
               {searchTerm || filterProjectId || filterCategory !== 'all' || filterLevel !== 'all'
                 ? t('admin.courses.noMatchFilter')
                 : t('admin.courses.notFound')}
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[#475569]">
               {currentUser?.role === 'admin' ? t('admin.courses.emptyHint') : t('admin.courses.emptyHintStaff')}
             </p>
           </div>
@@ -797,61 +796,61 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0e0c1a]/98 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex justify-between items-center gap-3 px-6 py-4 border-b border-white/[0.06] shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#1B7A1E] bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#1B7A1E] px-6 py-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.12em] text-[#1B7A1E]/80 font-medium">Bunny Stream</p>
-                <h3 className="text-lg font-semibold text-white">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#1B7A1E]">Bunny Stream</p>
+                <h3 className="text-lg font-semibold text-[#111b38]">
                   {editingCourse ? t('admin.courses.editCourse') : t('admin.courses.addCourseNew')}
                 </h3>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10">
+              <button onClick={() => setShowModal(false)} className="rounded-lg p-2 text-[#66718b] hover:bg-[#edf7ee] hover:text-[#111b38]">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-6 p-6 overflow-y-auto flex-1">
+            <div className="flex-1 space-y-6 overflow-y-auto p-6">
               <section className="space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">{t('admin.courses.formSectionBasic')}</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-[#66718b]">{t('admin.courses.formSectionBasic')}</h4>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.courseName')} *</label>
+                  <label className="mb-1.5 block text-sm font-medium text-[#475569]">{t('admin.courses.courseName')} *</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 focus:border-[#1B7A1E]/40 text-sm text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.description')}</label>
+                  <label className="mb-1.5 block text-sm font-medium text-[#475569]">{t('admin.courses.description')}</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 focus:border-[#1B7A1E]/40 text-sm text-white resize-none"
+                    className="w-full resize-none rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.category')} *</label>
+                  <label className="mb-1.5 block text-sm font-medium text-[#475569]">{t('admin.courses.category')} *</label>
                   <input
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     placeholder={t('admin.courses.categoryPlaceholder')}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 focus:border-[#1B7A1E]/40 text-sm text-white placeholder-slate-500"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.level')}</label>
+                    <label className="mb-1.5 block text-sm font-medium text-[#475569]">{t('admin.courses.level')}</label>
                     <select
                       value={formData.level}
                       onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
-                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white [&>option]:bg-[#0E3A16]"
+                      className="w-full rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                     >
                       <option value="beginner">{t('admin.courses.levelBeginner')}</option>
                       <option value="intermediate">{t('admin.courses.levelIntermediate')}</option>
@@ -859,26 +858,26 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.durationHours')}</label>
+                    <label className="mb-1.5 block text-sm font-medium text-[#475569]">{t('admin.courses.durationHours')}</label>
                     <input
                       type="number"
                       value={formData.duration}
                       onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white"
+                      className="w-full rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                     />
                   </div>
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">{t('admin.courses.formSectionAudience')}</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-[#66718b]">{t('admin.courses.formSectionAudience')}</h4>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('admin.courses.audience')} *</label>
+                  <label className="mb-1.5 block text-sm font-medium text-[#475569]">{t('admin.courses.audience')} *</label>
                   <select
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                     disabled={!!(currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId)}
-                    className="w-full px-3.5 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]/40 text-sm text-white disabled:opacity-60 disabled:cursor-not-allowed [&>option]:bg-[#0E3A16]"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-3.5 py-2.5 text-sm text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] disabled:cursor-not-allowed disabled:opacity-60 [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="">{t('admin.courses.audienceNone')}</option>
                     <option value="all">{t('admin.courses.audienceAll')}</option>
@@ -887,18 +886,18 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     ))}
                   </select>
                   {currentUser?.role !== 'admin' && isDepartmentLead && currentUser?.departmentId ? (
-                    <p className="text-xs text-[#1B7A1E] mt-1.5">
+                    <p className="mt-1.5 text-xs text-[#1B7A1E]">
                       {t('admin.courses.managerCreateHint')}
                     </p>
                   ) : (
-                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    <p className="mt-1.5 text-xs leading-relaxed text-[#66718b]">
                       {t('admin.courses.audienceHintAll')} · {t('admin.courses.audienceHintDept')} · {t('admin.courses.audienceHintNone')}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">
                     {t('admin.courses.projectsLabel')}
                     {formData.projects.length > 0 && (
                       <span className="ml-2 text-xs text-[#1B7A1E]">
@@ -906,19 +905,19 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       </span>
                     )}
                   </label>
-                  <div className="space-y-1.5 max-h-44 overflow-y-auto border border-white/10 rounded-xl p-2 bg-black/20">
+                  <div className="max-h-44 space-y-1.5 overflow-y-auto rounded-lg border border-[#1B7A1E] bg-white p-2">
                     {projects.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-4">{t('admin.courses.noProjectsYet')}</p>
+                      <p className="py-4 text-center text-xs text-[#94a3b8]">{t('admin.courses.noProjectsYet')}</p>
                     ) : (
                       projects.map(project => {
                         const isChecked = formData.projects.includes(project.id);
                         return (
                           <label
                             key={project.id}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                            className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition-colors ${
                               isChecked
-                                ? 'bg-[#1B7A1E]/15 border border-[#1B7A1E]/30'
-                                : 'hover:bg-white/5 border border-transparent'
+                                ? 'border border-[#1B7A1E]/30 bg-[#edf7ee]'
+                                : 'border border-transparent hover:bg-[#f3faf4]'
                             }`}
                           >
                             <input
@@ -937,9 +936,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                                   });
                                 }
                               }}
-                              className="w-4 h-4 text-[#1B7A1E] bg-white/5 border-white/20 rounded focus:ring-[#1B7A1E] focus:ring-2"
+                              className="h-4 w-4 rounded border-[#1B7A1E] text-[#1B7A1E] focus:ring-[#1B7A1E]"
                             />
-                            <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
+                            <span className={`flex-1 text-sm ${isChecked ? 'font-medium text-[#1B7A1E]' : 'text-[#475569]'}`}>
                               {project.name}
                             </span>
                           </label>
@@ -954,7 +953,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                         return project ? (
                           <span
                             key={projectId}
-                            className="inline-flex items-center px-2 py-1 bg-[#1B7A1E]/15 text-[#1B7A1E] border border-[#1B7A1E]/25 rounded-md text-xs font-medium"
+                            className="inline-flex items-center rounded-md border border-[#1B7A1E]/25 bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]"
                           >
                             {project.name}
                           </span>
@@ -966,7 +965,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
               </section>
 
               <section className="space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">{t('admin.courses.formSectionMedia')}</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-[#66718b]">{t('admin.courses.formSectionMedia')}</h4>
                 <BunnyImageUpload
                   label={t('admin.courses.thumbnailLabel')}
                   currentImage={formData.thumbnail}
@@ -974,7 +973,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                   onUploadEnd={() => setUploadingThumbnail(false)}
                   onUploadComplete={(url) => setFormData(prev => ({ ...prev, thumbnail: url }))}
                   folder="courses/thumbnails"
-                  variant="dark"
+                  variant="light"
                 />
 
                 <div>
@@ -985,24 +984,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                     onUploadEnd={() => setUploadingBanner(false)}
                     onUploadComplete={(url) => setFormData(prev => ({ ...prev, banner: url }))}
                     folder="courses/banners"
-                    variant="dark"
+                    variant="light"
                   />
-                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  <p className="mt-1.5 text-xs leading-relaxed text-[#66718b]">
                     {t('admin.courses.bannerRecommend')} · {t('admin.courses.bannerMaxSize')} · {t('admin.courses.bannerFormats')}
                   </p>
                   {uploadingBanner && (
-                    <div className="mt-2 px-3 py-2 bg-[#1B7A1E]/10 border border-[#1B7A1E]/25 rounded-xl">
-                      <p className="text-xs text-[#1B7A1E] font-medium">{t('admin.courses.bannerUploading')}</p>
+                    <div className="mt-2 rounded-xl border border-[#1B7A1E]/25 bg-[#edf7ee] px-3 py-2">
+                      <p className="text-xs font-medium text-[#1B7A1E]">{t('admin.courses.bannerUploading')}</p>
                     </div>
                   )}
                   {!uploadingBanner && formData.banner && (
-                    <div className="mt-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
-                      <p className="text-xs text-emerald-300 font-medium">{t('admin.courses.bannerUploaded')}</p>
+                    <div className="mt-2 rounded-xl border border-[#1B7A1E]/25 bg-[#edf7ee] px-3 py-2">
+                      <p className="text-xs font-medium text-[#1B7A1E]">{t('admin.courses.bannerUploaded')}</p>
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                <div className="rounded-xl border border-[#1B7A1E] bg-white p-4">
                   {editingCourse ? (
                     <CloudFlyVideoUpload
                       key={editingCourse.id}
@@ -1014,34 +1013,34 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
                       onSaved={(key) => setCourses(previous => previous.map(item => item.id === editingCourse.id
                         ? { ...item, demoVideoKey: key || undefined, demoVideoId: undefined }
                         : item))}
-                      variant="dark"
+                      variant="light"
                     />
                   ) : (
-                    <p className="text-sm text-slate-300">Lưu khóa học trước, sau đó mở lại để tải video giới thiệu lên CloudFly.</p>
+                    <p className="text-sm text-[#475569]">Lưu khóa học trước, sau đó mở lại để tải video giới thiệu lên CloudFly.</p>
                   )}
                 </div>
               </section>
             </div>
 
-            <div className="shrink-0 border-t border-white/[0.06] px-6 py-4 space-y-2 bg-[#0e0c1a]">
+            <div className="shrink-0 space-y-2 border-t border-[#1B7A1E] bg-white px-6 py-4">
               <div className="flex gap-3">
                 <Button
                   onClick={handleSave}
                   disabled={uploadingThumbnail || uploadingBanner}
-                  className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex flex-1 items-center justify-center gap-2 border-none bg-[#1B7A1E] text-white hover:bg-[#156318] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save size={18} />
                   {uploadingThumbnail || uploadingBanner ? t('admin.courses.uploadingImages') : t('common.save')}
                 </Button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-white/10 rounded-xl hover:bg-white/10 text-sm font-medium text-white disabled:opacity-50 transition-colors"
+                  className="flex-1 rounded-xl border border-[#1B7A1E] px-4 py-2.5 text-sm font-medium text-[#1B7A1E] transition-colors hover:bg-[#edf7ee] disabled:opacity-50"
                 >
                   {t('common.cancel')}
                 </button>
               </div>
               {(uploadingThumbnail || uploadingBanner) && (
-                <p className="text-xs text-amber-300/90 text-center">
+                <p className="text-center text-xs text-amber-700">
                   {t('admin.courses.waitUploadBeforeSave')}
                 </p>
               )}

@@ -16,7 +16,7 @@ const App: React.FC = () => {
       // Đã đăng nhập -> chuyển hướng theo role
       switch (userProfile.role) {
         case 'admin':
-          router.push('/admin');
+          router.push('/student');
           break;
         case 'staff':
           router.push('/student');

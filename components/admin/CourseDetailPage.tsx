@@ -82,7 +82,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 backdrop-blur-md">
+      <div className="bg-white rounded-xl border border-[#1B7A1E]">
         <div className="p-6">
           <button
             onClick={onBack}
@@ -94,9 +94,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">{currentCourse.title}</h2>
-              <p className="text-slate-300">{currentCourse.description}</p>
-              <div className="flex items-center gap-3 mt-2 text-sm text-slate-400">
+              <h2 className="text-2xl font-bold text-[#111b38] mb-1">{currentCourse.title}</h2>
+              <p className="text-[#66718b]">{currentCourse.description}</p>
+              <div className="flex items-center gap-3 mt-2 text-sm text-[#66718b]">
                 <span>{t('admin.courseDetail.category', { name: currentCourse.category })}</span>
                 <span>•</span>
                 <span>{t('admin.courseDetail.duration', { hours: currentCourse.duration })}</span>
@@ -107,12 +107,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
             <div className="flex items-center gap-3">
               {isAdmin && (
                 <>
-                  <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full border border-red-500/30">
+                  <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full border border-red-200">
                     {t('admin.courseDetail.adminMode')}
                   </span>
                   <button
                     onClick={handleDeleteCourse}
-                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-all flex items-center gap-2 font-medium"
+                    className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 rounded-lg transition-all flex items-center gap-2 font-medium"
                     title={t('admin.courses.deleteCourse')}
                   >
                     <Trash2 size={18} />
@@ -124,12 +124,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
           </div>
         </div>
 
-        <div className="flex border-t border-white/10">
+        <div className="flex border-t border-[#1B7A1E]/30">
           <button
             onClick={() => setActiveTab('lessons')}
             className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'lessons'
-                ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#1B7A1E]/10'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#edf7ee]'
+                : 'text-[#66718b] hover:text-[#111b38] hover:bg-[#f3faf4]'
               }`}
           >
             <PlayCircle size={20} />
@@ -138,8 +138,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
           <button
             onClick={() => setActiveTab('students')}
             className={`flex-1 px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'students'
-                ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#1B7A1E]/10'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'text-[#1B7A1E] border-b-2 border-[#1B7A1E] bg-[#edf7ee]'
+                : 'text-[#66718b] hover:text-[#111b38] hover:bg-[#f3faf4]'
               }`}
           >
             <Users size={20} />
@@ -153,7 +153,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         <div className="flex justify-end">
           <button
             onClick={() => setShowStudentManagement(true)}
-            className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
+            className="px-4 py-2 bg-[#1B7A1E] text-white rounded-lg hover:bg-[#156318] transition-all shadow-md flex items-center gap-2 font-medium"
           >
             <UserPlus size={18} />
             {t('admin.courseDetail.manageStudents')}

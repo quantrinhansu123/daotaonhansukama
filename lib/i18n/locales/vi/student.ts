@@ -206,7 +206,7 @@ export const student = {
     adminRole: 'Quản trị viên',
     manageContent: 'Up video & nội dung bài',
     openAdminConsole: 'Bảng quản trị',
-    navPrograms: 'Chương trình đào tạo',
+    navPrograms: 'Chương trình',
     navStudents: 'Học viên',
     navProjects: 'Dự án',
     navDepartments: 'Phòng ban',

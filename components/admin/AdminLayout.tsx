@@ -11,18 +11,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { useRouter } from 'next/navigation';
 import {
-  LayoutDashboard,
   Users,
   BookOpen,
   Building2,
   LogOut,
-  Menu,
-  X,
   GraduationCap,
-  Clock,
-  Fingerprint,
   FolderKanban,
-  DollarSign
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -38,18 +34,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [departments, setDepartments] = useState<Array<{ id: string, managerId?: string }>>([]);
+  const [departments, setDepartments] = useState<Array<{ id: string; managerId?: string }>>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     const loadDepartments = async () => {
       const snapshot = await getDocs(collection(db, 'departments'));
-      setDepartments(snapshot.docs.map(doc => ({ id: doc.id, managerId: doc.data().managerId })));
+      setDepartments(snapshot.docs.map((docSnap) => ({ id: docSnap.id, managerId: docSnap.data().managerId })));
     };
-    loadDepartments();
+    void loadDepartments();
   }, []);
 
-  const isManager = departments.some(d => d.managerId === userProfile?.uid);
+  const isManager = departments.some((d) => d.managerId === userProfile?.uid);
   void isManager;
 
   const handleSignOut = async () => {
@@ -59,31 +55,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const menuItems = [
     {
-      id: 'checkin',
-      label: t('admin.menu.checkin'),
-      icon: Fingerprint,
-      href: '/admin/checkin',
-      permission: null,
-      hideForStaff: false,
-      hideForAdmin: false,
-    },
-    {
-      id: 'dashboard',
-      label: t('admin.menu.dashboard'),
-      icon: LayoutDashboard,
-      href: '/admin',
-      permission: 'view_dashboard' as const,
-      hideForStaff: false,
-      hideForManager: true
-    },
-    {
       id: 'learning',
       label: t('admin.menu.learning'),
       icon: GraduationCap,
       href: '/student',
       permission: null,
       hideForStaff: false,
-      hideForAdmin: false
+      hideForAdmin: false,
     },
     {
       id: 'users',
@@ -91,7 +69,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: Users,
       href: '/admin/users',
       permission: 'view_users' as const,
-      hideForStaff: false
+      hideForStaff: false,
     },
     {
       id: 'courses',
@@ -99,7 +77,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: BookOpen,
       href: '/admin/courses',
       permission: 'view_courses' as const,
-      hideForStaff: false
+      hideForStaff: false,
     },
     {
       id: 'departments',
@@ -107,7 +85,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: Building2,
       href: '/admin/departments',
       permission: 'view_departments' as const,
-      hideForStaff: false
+      hideForStaff: false,
     },
     {
       id: 'projects',
@@ -115,22 +93,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: FolderKanban,
       href: '/admin/projects',
       permission: 'view_projects' as const,
-      hideForStaff: false
-    },
-    {
-      id: 'attendance',
-      label: t('admin.menu.attendance'),
-      icon: Clock,
-      href: '/admin/attendance',
-      permission: 'view_salary' as const,
-      hideForStaff: false,
-    },
-    {
-      id: 'salary',
-      label: t('admin.menu.salary'),
-      icon: DollarSign,
-      href: '/admin/salary',
-      permission: 'view_salary' as const,
       hideForStaff: false,
     },
   ];
@@ -148,155 +110,134 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return map[position] || position;
   };
 
+  const navClass = (active: boolean) =>
+    `flex min-h-[44px] w-full items-center gap-2.5 whitespace-nowrap rounded-md px-2.5 text-left text-[15px] font-extrabold leading-none transition-colors ${
+      active
+        ? 'bg-[#18701C] text-white shadow-[inset_3px_0_#EDB409]'
+        : 'text-[#e4f5e8] hover:bg-[#18701C]/45'
+    }`;
+
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside className={`transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'} flex flex-col fixed h-screen z-50 bg-[#0a0814]/85 backdrop-blur-xl border-r border-white/[0.06]`}>
-        {/* Logo */}
-        <div className="p-4 flex items-center justify-between">
+    <div className="flex min-h-screen bg-white font-sans text-[#111b38]">
+      <aside
+        className={`fixed z-50 flex h-screen flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] transition-all duration-300 ${
+          sidebarOpen ? 'w-[268px]' : 'w-20'
+        }`}
+      >
+        <div className="relative flex h-[72px] shrink-0 items-center justify-center bg-white px-2">
           {sidebarOpen ? (
-            <>
-              <div className="flex min-w-0 flex-1 items-center">
-                <div className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-xl bg-white px-2 shadow-lg border border-white/20">
-                  <img src="/logo.png" alt="BioKama" className="h-8 w-auto max-w-full object-contain" />
-                </div>
-              </div>
-              <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-slate-300">
-                <X size={20} />
-              </button>
-            </>
+            <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
           ) : (
-            <button onClick={() => setSidebarOpen(true)} className="p-1 hover:bg-white/10 rounded-xl mx-auto transition-colors flex items-center justify-center">
-              <div className="h-10 w-14 bg-white rounded-xl flex items-center justify-center px-1 shadow-md">
-                <img src="/logo.png" alt="BioKama" className="h-7 w-auto max-w-full object-contain object-left" />
-              </div>
-            </button>
+            <img src="/logo.png" alt="BioKama" className="h-8 w-auto max-w-[52px] object-contain" />
           )}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((open) => !open)}
+            className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-[#0f3d18] hover:bg-[#e8f5ea]"
+            title={sidebarOpen ? 'Thu gọn' : 'Mở rộng'}
+          >
+            {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </button>
         </div>
 
-        {/* Menu Items */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2.5 py-2">
           {menuItems.map((item) => {
             const isAdmin = userProfile?.role === 'admin';
             const isStaff = userProfile?.role === 'staff';
-            const isManager = userProfile?.position === 'Trưởng phòng';
+            const isDeptManager = userProfile?.position === 'Trưởng phòng';
 
-            if ('hidden' in item && item.hidden) {
-              return null;
-            }
-
-            if (isAdmin && 'hideForAdmin' in item && item.hideForAdmin) {
-              return null;
-            }
-            if (isStaff && item.hideForStaff) {
-              return null;
-            }
-            if (isManager && 'hideForManager' in item && item.hideForManager) {
-              return null;
-            }
-
-            // Admin nhìn hết mọi mục menu
-            if (!isAdmin && item.permission && !hasPermission(item.permission)) {
-              return null;
-            }
+            if ('hidden' in item && item.hidden) return null;
+            if (isAdmin && 'hideForAdmin' in item && item.hideForAdmin) return null;
+            if (isStaff && item.hideForStaff) return null;
+            if (isDeptManager && 'hideForManager' in item && item.hideForManager) return null;
+            if (!isAdmin && item.permission && !hasPermission(item.permission)) return null;
 
             const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href === '/admin' && pathname === '/admin');
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.id}
                 href={item.href}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
-                  ? 'bg-[#1B7A1E] text-white shadow-lg shadow-[#1B7A1E]/20'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-                  }`}
-                title={!sidebarOpen ? item.label : ''}
+                className={navClass(isActive)}
+                title={!sidebarOpen ? item.label : undefined}
               >
-                <Icon size={20} className={`flex-shrink-0 transition-transform ${isActive ? '' : 'group-hover:scale-110'}`} />
-                {sidebarOpen && <span className="font-medium text-sm">{item.label}</span>}
-                {isActive && sidebarOpen && (
-                  <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                )}
+                <Icon size={18} className="shrink-0" />
+                {sidebarOpen && <span>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        {/* User Info */}
-        <div className="p-3">
+        <div className="border-t border-white/15 px-2.5 py-3">
           {sidebarOpen ? (
             <button
+              type="button"
               onClick={() => setShowProfileModal(true)}
-              className="w-full mb-3 p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+              className="mb-2 w-full rounded-md bg-[#0c3a16]/80 p-3 text-left ring-1 ring-white/10 transition hover:bg-[#0c3a16]"
             >
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-2.5">
                 {userProfile?.photoURL ? (
                   <img
                     src={proxyBunnyUrl(userProfile.photoURL)}
                     alt={userProfile.displayName}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-md group-hover:border-brand-400 transition-all"
+                    className="h-9 w-9 rounded-full object-cover ring-2 ring-[#1B7A1E]"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-brand-400 to-brand-600 rounded-full flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform">
+                  <div className="grid h-9 w-9 place-items-center rounded-full bg-[#1B7A1E] text-sm font-bold text-white">
                     {userProfile?.displayName?.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-white truncate group-hover:text-brand-300 transition-colors">{userProfile?.displayName}</p>
-                  <p className="text-xs text-slate-400 truncate">{userProfile?.email}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-bold text-white">{userProfile?.displayName}</p>
+                  <p className="truncate text-[11px] text-[#c5e6cc]">{userProfile?.email}</p>
                 </div>
               </div>
               {userProfile?.position && (
-                <div className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors">
-                  <p className="text-xs text-brand-300 text-center font-medium">{positionLabel(userProfile.position)}</p>
-                </div>
+                <p className="mt-2 rounded bg-white/10 px-2 py-1 text-center text-[11px] font-semibold text-[#c5e6cc]">
+                  {positionLabel(userProfile.position)}
+                </p>
               )}
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => setShowProfileModal(true)}
-              className="mb-3 flex justify-center w-full hover:scale-105 transition-transform"
+              className="mb-2 flex w-full justify-center"
             >
               {userProfile?.photoURL ? (
                 <img
                   src={proxyBunnyUrl(userProfile.photoURL)}
                   alt={userProfile.displayName}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-md"
+                  className="h-9 w-9 rounded-full object-cover ring-2 ring-[#1B7A1E]"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-brand-400 to-brand-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                <div className="grid h-9 w-9 place-items-center rounded-full bg-[#1B7A1E] text-sm font-bold text-white">
                   {userProfile?.displayName?.charAt(0).toUpperCase()}
                 </div>
               )}
             </button>
           )}
-          {sidebarOpen && (
-            <div className="mb-3 flex justify-center">
-              <LanguageSwitcher variant="sidebar" className="w-full justify-center" />
-            </div>
-          )}
-          {!sidebarOpen && (
-            <div className="mb-3 flex justify-center">
-              <LanguageSwitcher variant="sidebar" className="!px-2" />
-            </div>
-          )}
+
+          <div className={`mb-2 flex ${sidebarOpen ? 'justify-stretch' : 'justify-center'}`}>
+            <LanguageSwitcher variant="sidebar" className={sidebarOpen ? 'w-full justify-center' : '!px-2'} />
+          </div>
+
           <button
+            type="button"
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-500/10 border border-transparent transition-all group"
-            title={!sidebarOpen ? t('admin.logout') : ''}
+            className={navClass(false).replace('hover:bg-[#18701C]/45', 'hover:bg-red-500/20 hover:text-red-200')}
+            title={!sidebarOpen ? t('admin.logout') : undefined}
           >
-            <LogOut size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
-            {sidebarOpen && <span className="font-medium text-sm">{t('admin.logout')}</span>}
+            <LogOut size={18} className="shrink-0" />
+            {sidebarOpen && <span>{t('admin.logout')}</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <main className={`min-w-0 flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-[268px]' : 'ml-20'}`}>
         {children}
       </main>
 
-      {/* Profile Modal */}
       <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
     </div>
   );

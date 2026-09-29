@@ -185,39 +185,39 @@ export const DepartmentManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen space-y-6 bg-white p-8 text-[#111b38]">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">{t('admin.departments.title')}</h1>
-          <p className="text-slate-300">{t('admin.departments.subtitleAlt')}</p>
+          <h1 className="mb-2 text-3xl font-bold text-[#111b38]">{t('admin.departments.title')}</h1>
+          <p className="text-[#475569]">{t('admin.departments.subtitleAlt')}</p>
         </div>
-        <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
+        <Button onClick={handleAdd} className="flex items-center gap-2 border-none bg-[#1B7A1E] text-white shadow-[#1B7A1E]/25 hover:bg-[#156318]">
           <Plus size={20} />
           {t('admin.departments.addDepartment')}
         </Button>
       </div>
 
       {/* Search */}
-      <div className="mb-6">
+      <div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={20} />
           <input
             type="text"
             placeholder={t('admin.departments.searchPlaceholderAlt')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
+            className="w-full rounded-lg border border-[#1B7A1E] bg-white py-2 pl-10 pr-4 text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
           />
         </div>
       </div>
 
       {/* Filters */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.filterByProject')}</label>
+      <div>
+        <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.departments.filterByProject')}</label>
         <select
           value={filterProjectId}
           onChange={(e) => setFilterProjectId(e.target.value)}
-          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+          className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
         >
           <option value="">{t('admin.departments.allProjects')}</option>
           {projects.map(project => (
@@ -229,31 +229,31 @@ export const DepartmentManagement: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.departments.totalDepartments')}</p>
-          <p className="text-2xl font-bold text-white">{departments.length}</p>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-xl border border-[#1B7A1E] bg-white p-4">
+          <p className="text-sm text-[#66718b]">{t('admin.departments.totalDepartments')}</p>
+          <p className="text-2xl font-bold text-[#1B7A1E]">{departments.length}</p>
         </div>
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.departments.withManager')}</p>
+        <div className="rounded-xl border border-[#1B7A1E] bg-white p-4">
+          <p className="text-sm text-[#66718b]">{t('admin.departments.withManager')}</p>
           <p className="text-2xl font-bold text-[#1B7A1E]">
             {departments.filter(d => d.managerId).length}
           </p>
         </div>
-        <div className="bg-[#5e3ed0]/20 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <p className="text-sm text-slate-300">{t('admin.departments.totalStaff')}</p>
-          <p className="text-2xl font-bold text-pink-400">
+        <div className="rounded-xl border border-[#1B7A1E] bg-white p-4">
+          <p className="text-sm text-[#66718b]">{t('admin.departments.totalStaff')}</p>
+          <p className="text-2xl font-bold text-[#1B7A1E]">
             {users.length}
           </p>
         </div>
       </div>
 
       {/* Departments Table */}
-      <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
+      <div className="overflow-hidden rounded-xl border border-[#1B7A1E] bg-white">
         {filteredDepartments.length === 0 ? (
-          <div className="text-center py-12">
-            <Building2 className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-300">
+          <div className="py-12 text-center">
+            <Building2 className="mx-auto mb-4 h-16 w-16 text-[#94a3b8]" />
+            <p className="text-[#475569]">
               {searchTerm || filterProjectId 
                 ? t('admin.departments.noMatchFilter')
                 : t('admin.departments.noneYet')}
@@ -261,56 +261,56 @@ export const DepartmentManagement: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
+            <table className="w-full border-collapse bg-white">
+              <thead className="border-b border-[#1B7A1E] bg-white">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.departments.name')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.departments.description')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.departments.manager')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.departments.projects')}
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.departments.staffCount')}
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('common.actions')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10">
+              <tbody>
                 {filteredDepartments.map((dept) => (
-                  <tr key={dept.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={dept.id} className="border-b border-[#d8ecd9] bg-white transition-colors hover:bg-[#f3faf4]">
+                    <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="bg-purple-500/20 p-2 rounded-lg">
-                          <Building2 className="w-5 h-5 text-purple-300" />
+                        <div className="rounded-lg bg-[#edf7ee] p-2">
+                          <Building2 className="h-5 w-5 text-[#1B7A1E]" />
                         </div>
                         <div>
-                          <p className="font-semibold text-white">{dept.name}</p>
-                          <p className="text-xs text-slate-400">ID: {dept.id}</p>
+                          <p className="font-semibold text-[#111b38]">{dept.name}</p>
+                          <p className="text-xs text-[#94a3b8]">ID: {dept.id}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-300 max-w-md line-clamp-2">
+                      <p className="max-w-md line-clamp-2 text-sm text-[#475569]">
                         {dept.description || '-'}
                       </p>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       {dept.managerName ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-full text-sm font-medium">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#edf7ee] px-3 py-1 text-sm font-medium text-[#1B7A1E]">
                           <Shield size={14} />
                           {dept.managerName}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm font-medium">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700">
                           ⚠️ {t('admin.departments.noManagerYet')}
                         </span>
                       )}
@@ -321,20 +321,20 @@ export const DepartmentManagement: React.FC = () => {
                           {dept.projectNames.map((projectName, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
+                              className="inline-flex items-center rounded-md bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]"
                             >
                               {projectName}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-sm">-</span>
+                        <span className="text-sm text-[#94a3b8]">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => setViewStaffDept(dept)}
-                        className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#edf7ee] px-3 py-1 text-sm font-medium text-[#1B7A1E] transition-colors hover:bg-[#d8ecd9]"
                       >
                         <Users size={16} />
                         <span>{getStaffCount(dept.id)}</span>
@@ -344,14 +344,14 @@ export const DepartmentManagement: React.FC = () => {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(dept)}
-                          className="p-2 text-[#1B7A1E] hover:bg-white/10 rounded-lg transition-colors"
+                          className="rounded-lg p-2 text-[#1B7A1E] transition-colors hover:bg-[#edf7ee]"
                           title={t('common.edit')}
                         >
                           <Edit2 size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(dept)}
-                          className="p-2 text-pink-500 hover:bg-white/10 rounded-lg transition-colors"
+                          className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50"
                           title={t('common.delete')}
                         >
                           <Trash2 size={18} />
@@ -368,43 +368,43 @@ export const DepartmentManagement: React.FC = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0E3A16]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[#1B7A1E] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#1B7A1E] p-6">
+              <h3 className="text-xl font-bold text-[#111b38]">
                 {editingDept ? t('admin.departments.editDepartment') : t('admin.departments.addDepartmentNew')}
               </h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-lg text-white">
+              <button onClick={() => setShowModal(false)} className="rounded-lg p-2 text-[#66718b] hover:bg-[#edf7ee]">
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="space-y-4 p-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.name')}</label>
+                <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.departments.name')}</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder={t('admin.departments.namePlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.description')}</label>
+                <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.departments.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   rows={3}
                   placeholder={t('admin.departments.descriptionPlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.departments.manager')}</label>
+                <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.departments.manager')}</label>
                 <select
                   value={formData.managerId}
                   onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                 >
                   <option value="">{t('admin.departments.selectManager')}</option>
                   {editingDept && getUsersInDepartment(editingDept.id).map(user => (
@@ -413,14 +413,14 @@ export const DepartmentManagement: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="mt-1 text-xs text-[#94a3b8]">
                   {editingDept
                     ? t('admin.departments.selectFromStaff', { count: getUsersInDepartment(editingDept.id).length })
                     : t('admin.departments.saveFirstHint')}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="mb-2 block text-sm font-medium text-[#475569]">
                   {t('admin.departments.projects')}
                   {formData.projects.length > 0 && (
                     <span className="ml-2 text-xs text-[#1B7A1E]">
@@ -428,19 +428,19 @@ export const DepartmentManagement: React.FC = () => {
                     </span>
                   )}
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[#1B7A1E] bg-white p-2">
                   {projects.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4">{t('admin.departments.noProjectsYet')}</p>
+                    <p className="py-4 text-center text-xs text-[#94a3b8]">{t('admin.departments.noProjectsYet')}</p>
                   ) : (
                     projects.map(project => {
                       const isChecked = formData.projects.includes(project.id);
                       return (
                         <label
                           key={project.id}
-                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                          className={`flex cursor-pointer items-center gap-2 rounded-lg p-2 transition-colors ${
                             isChecked 
-                              ? 'bg-[#1B7A1E]/20 border border-[#1B7A1E]/30' 
-                              : 'hover:bg-white/10 border border-transparent'
+                              ? 'border border-[#1B7A1E]/30 bg-[#edf7ee]' 
+                              : 'border border-transparent hover:bg-[#f3faf4]'
                           }`}
                         >
                           <input
@@ -459,9 +459,9 @@ export const DepartmentManagement: React.FC = () => {
                                 });
                               }
                             }}
-                            className="w-4 h-4 text-[#1B7A1E] bg-white/5 border-white/20 rounded focus:ring-[#1B7A1E] focus:ring-2"
+                            className="h-4 w-4 rounded border-[#1B7A1E] text-[#1B7A1E] focus:ring-2 focus:ring-[#1B7A1E]"
                           />
-                          <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
+                          <span className={`flex-1 text-sm ${isChecked ? 'font-medium text-[#1B7A1E]' : 'text-[#475569]'}`}>
                             {project.name}
                           </span>
                           {isChecked && (
@@ -479,7 +479,7 @@ export const DepartmentManagement: React.FC = () => {
                       return project ? (
                         <span
                           key={projectId}
-                          className="inline-flex items-center px-2 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-md text-xs font-medium"
+                          className="inline-flex items-center rounded-md bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]"
                         >
                           {project.name}
                         </span>
@@ -489,11 +489,11 @@ export const DepartmentManagement: React.FC = () => {
                 )}
               </div>
             </div>
-            <div className="p-6 border-t border-white/10 flex gap-3">
-              <Button onClick={() => setShowModal(false)} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
+            <div className="flex gap-3 border-t border-[#1B7A1E] p-6">
+              <Button onClick={() => setShowModal(false)} className="flex-1 border border-[#1B7A1E] bg-white text-[#1B7A1E] hover:bg-[#edf7ee]">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
+              <Button onClick={handleSave} className="flex flex-1 items-center justify-center gap-2 border-none bg-[#1B7A1E] text-white shadow-[#1B7A1E]/25 hover:bg-[#156318]">
                 <Save size={18} />
                 {t('common.save')}
               </Button>
@@ -506,16 +506,16 @@ export const DepartmentManagement: React.FC = () => {
 
       {/* View Staff Modal */}
       {viewStaffDept && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0E3A16]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#5e3ed0]/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#1B7A1E] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#1B7A1E] bg-[#f3faf4] p-6">
               <div>
-                <h3 className="text-xl font-bold text-white">{t('admin.departments.staffListTitle')}</h3>
-                <p className="text-sm text-slate-300 mt-1">{viewStaffDept.name}</p>
+                <h3 className="text-xl font-bold text-[#111b38]">{t('admin.departments.staffListTitle')}</h3>
+                <p className="mt-1 text-sm text-[#475569]">{viewStaffDept.name}</p>
               </div>
               <button
                 onClick={() => setViewStaffDept(null)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+                className="rounded-lg p-2 text-[#66718b] transition-colors hover:bg-[#edf7ee]"
               >
                 <X size={20} />
               </button>
@@ -523,15 +523,15 @@ export const DepartmentManagement: React.FC = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
               {users.filter(u => u.departmentId === viewStaffDept.id && u.approved).length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-                  <p className="text-slate-300">
+                <div className="py-12 text-center">
+                  <Users className="mx-auto mb-4 h-16 w-16 text-[#94a3b8]" />
+                  <p className="text-[#475569]">
                     {users.filter(u => u.departmentId === viewStaffDept.id).length === 0
                       ? t('admin.departments.noStaffInDept')
                       : t('admin.departments.noApprovedStaffInDept')}
                   </p>
                   {users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length > 0 && (
-                    <p className="text-xs text-slate-400 mt-2">
+                    <p className="mt-2 text-xs text-[#94a3b8]">
                       {t('admin.departments.pendingStaffCount', { count: users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length })}
                     </p>
                   )}
@@ -543,26 +543,26 @@ export const DepartmentManagement: React.FC = () => {
                     .map((user) => (
                       <div
                         key={user.uid}
-                        className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10"
+                        className="flex items-center justify-between rounded-xl border border-[#1B7A1E] bg-white p-4 transition-colors hover:bg-[#f3faf4]"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-[#1B7A1E] to-[#5e3ed0] rounded-full flex items-center justify-center text-white font-bold text-lg">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1B7A1E] text-lg font-bold text-white">
                             {user.displayName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <h4 className="font-semibold text-white">{user.displayName}</h4>
-                            <p className="text-sm text-slate-300">{user.email}</p>
+                            <h4 className="font-semibold text-[#111b38]">{user.displayName}</h4>
+                            <p className="text-sm text-[#475569]">{user.email}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           {user.uid === viewStaffDept.managerId && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-full text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#edf7ee] px-3 py-1 text-xs font-medium text-[#1B7A1E]">
                               <Shield size={12} />
                               {t('admin.users.positions.manager')}
                             </span>
                           )}
                           {user.monthlySalary && (
-                            <p className="text-sm text-slate-300 mt-1">
+                            <p className="mt-1 text-sm text-[#475569]">
                               {t('admin.departments.salaryPerMonth', { amount: user.monthlySalary.toLocaleString(dateLocale) })}
                             </p>
                           )}
@@ -573,17 +573,17 @@ export const DepartmentManagement: React.FC = () => {
               )}
             </div>
 
-            <div className="p-6 border-t border-white/10 bg-[#5e3ed0]/20">
-              <div className="flex items-center justify-between text-sm text-slate-300">
+            <div className="border-t border-[#1B7A1E] bg-[#f3faf4] p-6">
+              <div className="flex items-center justify-between text-sm text-[#475569]">
                 <div>
                   <span>{t('admin.departments.totalApprovedStaff', { count: users.filter(u => u.departmentId === viewStaffDept.id && u.approved).length })}</span>
                   {users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length > 0 && (
-                    <span className="ml-4 text-orange-300">
+                    <span className="ml-4 text-orange-700">
                       {t('admin.departments.pendingApprovalShort', { count: users.filter(u => u.departmentId === viewStaffDept.id && !u.approved).length })}
                     </span>
                   )}
                 </div>
-                <Button onClick={() => setViewStaffDept(null)} className="bg-white/10 hover:bg-white/20 text-white border-none">
+                <Button onClick={() => setViewStaffDept(null)} className="border border-[#1B7A1E] bg-white text-[#1B7A1E] hover:bg-[#edf7ee]">
                   {t('common.close')}
                 </Button>
               </div>

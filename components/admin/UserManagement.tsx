@@ -842,17 +842,17 @@ export const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-8 space-y-6 min-h-screen">
+    <div className="min-h-screen space-y-6 bg-white p-8 text-[#111b38]">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white">{t('admin.users.title')}</h2>
+          <h2 className="text-2xl font-bold text-[#111b38]">{t('admin.users.title')}</h2>
           {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' ? (
-            <p className="text-sm text-[#1B7A1E] mt-1">
+            <p className="mt-1 text-sm text-[#1B7A1E]">
               🏢 {t('admin.users.viewingDepartmentStaff', { department: departments.find(d => d.id === currentUser.departmentId)?.name ?? '' })}
             </p>
           ) : (
-            <p className="text-sm text-slate-300 mt-1">
+            <p className="mt-1 text-sm text-[#66718b]">
               {t('admin.users.learningTimeHint')}
             </p>
           )}
@@ -865,11 +865,11 @@ export const UserManagement: React.FC = () => {
                 variant="outline"
                 onClick={handleSyncEmployment}
                 disabled={syncingEmployment}
-                className="flex items-center gap-2 border-white/10 text-white hover:bg-white/10"
+                className="flex items-center gap-2 border-[#1B7A1E] text-[#1B7A1E] hover:bg-[#edf7ee]"
               >
                 {syncingEmployment ? t('admin.users.syncing') : t('admin.users.syncEmployment')}
               </Button>
-              <Button onClick={handleAdd} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] text-white border-none shadow-lg shadow-[#1B7A1E]/20">
+              <Button onClick={handleAdd} className="flex items-center gap-2 border-none bg-[#1B7A1E] text-white shadow-lg shadow-[#1B7A1E]/20 hover:bg-[#156318]">
                 <Plus size={18} />
                 {t('admin.users.addUser')}
               </Button>
@@ -880,20 +880,20 @@ export const UserManagement: React.FC = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={20} />
           <input
             type="text"
             placeholder={t('admin.users.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
+            className="w-full rounded-lg border border-[#1B7A1E] bg-white py-2 pl-10 pr-4 text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
           />
         </div>
         <select
           value={filterPosition}
           onChange={(e) => setFilterPosition(e.target.value as Position | 'all' | 'none')}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+          className="rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
         >
           <option value="all">{t('admin.users.allPositions')}</option>
           <option value="none">{t('admin.users.noPosition')}</option>
@@ -904,7 +904,7 @@ export const UserManagement: React.FC = () => {
         <select
           value={filterDepartment}
           onChange={(e) => setFilterDepartment(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+          className="rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
         >
           <option value="all">{t('admin.users.allDepartments')}</option>
           <option value="none">{t('admin.users.noDepartment')}</option>
@@ -915,7 +915,7 @@ export const UserManagement: React.FC = () => {
         <select
           value={filterBranch}
           onChange={(e) => setFilterBranch(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+          className="rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
         >
           <option value="all">{t('admin.users.allBranches')}</option>
           {Array.from(
@@ -931,7 +931,7 @@ export const UserManagement: React.FC = () => {
         <select
           value={filterProjectId}
           onChange={(e) => setFilterProjectId(e.target.value)}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+          className="rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
         >
           <option value="">{t('admin.users.allProjects')}</option>
           {projects.map(project => (
@@ -1003,8 +1003,8 @@ export const UserManagement: React.FC = () => {
                               {user.displayName}
                               {isToday && <span className="text-xs bg-pink-500 text-white px-2 py-0.5 rounded-full">{t('admin.users.today')}</span>}
                             </p>
-                            <p className="text-xs text-slate-500">{dept?.name || t('admin.users.noDepartment')}</p>
-                            <p className="text-xs text-slate-400">{getPositionLabel(user.position)}</p>
+                            <p className="text-xs text-[#94a3b8]">{dept?.name || t('admin.users.noDepartment')}</p>
+                            <p className="text-xs text-[#66718b]">{getPositionLabel(user.position)}</p>
                           </div>
                         </div>
                       </div>
@@ -1018,21 +1018,13 @@ export const UserManagement: React.FC = () => {
       })()}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {POSITIONS.map((position, index) => {
-          const colors = [
-            'text-purple-600',
-            'text-blue-600',
-            'text-indigo-600',
-            'text-cyan-600',
-            'text-emerald-600',
-            'text-green-600'
-          ];
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        {POSITIONS.map((position) => {
           const count = users.filter(u => (u.role === 'admin' || u.approved) && u.position === position).length;
           return (
-            <div key={position} className="bg-[#5e3ed0]/20 backdrop-blur-md p-4 rounded-xl border border-white/10 hover:bg-[#5e3ed0]/30 transition-colors">
-              <p className="text-sm text-slate-300">{getPositionLabel(position)}</p>
-              <p className={`text-2xl font-bold ${colors[index]}`}>{count}</p>
+            <div key={position} className="rounded-xl border border-[#1B7A1E] bg-white p-4 transition-colors hover:bg-[#f3faf4]">
+              <p className="text-sm text-[#66718b]">{getPositionLabel(position)}</p>
+              <p className="text-2xl font-bold text-[#1B7A1E]">{count}</p>
             </div>
           );
         })}
@@ -1063,26 +1055,26 @@ export const UserManagement: React.FC = () => {
 
           {showPendingUsers && (
             <div className="p-4 pt-0">
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <div className="overflow-hidden rounded-xl border border-[#1B7A1E] bg-white">
                 <table className="w-full">
-                  <thead className="bg-orange-500/20 border-b border-white/10">
+                  <thead className="border-b border-[#1B7A1E]/30 bg-[#edf7ee]">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">{t('admin.users.name')}</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">{t('admin.users.role')}</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-orange-200 uppercase">{t('admin.users.registeredDate')}</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-orange-200 uppercase">{t('admin.users.actions')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.name')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.role')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.registeredDate')}</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.actions')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/10">
+                  <tbody className="divide-y divide-[#d8ecd9]">
                     {pendingUsers.map((user) => (
-                      <tr key={user.uid} className="hover:bg-white/5">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-white">{user.displayName}</div>
+                      <tr key={user.uid} className="bg-white hover:bg-[#f3faf4]">
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <div className="font-medium text-[#111b38]">{user.displayName}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-slate-300">{user.email}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-[#475569]">{user.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-slate-300">
+                        <td className="whitespace-nowrap px-6 py-4 text-[#475569]">
                           {user.createdAt?.toLocaleDateString(dateLocale)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -1115,25 +1107,24 @@ export const UserManagement: React.FC = () => {
 
       {/* Approved Users Table */}
       <div>
-        <h3 className="text-lg font-bold text-white mb-4">{t('admin.users.userList')}</h3>
-        <div className="bg-[#5e3ed0]/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
-          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-            <table className="w-full">
-              <thead className="bg-[#5e3ed0]/40 border-b border-white/10 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase sticky left-0 bg-[#0E3A16]">{t('admin.users.name')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.role')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.position')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.department')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.project')}</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase">{t('admin.users.learningHours')}</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase">{t('admin.users.salary')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase">{t('admin.users.createdDate')}</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase sticky right-0 bg-[#0E3A16]">{t('admin.users.actions')}</th>
+        <h3 className="mb-4 text-lg font-bold text-[#111b38]">{t('admin.users.userList')}</h3>
+        <div className="overflow-hidden rounded-xl border border-[#1B7A1E] bg-white">
+          <div className="max-h-[600px] overflow-auto">
+            <table className="w-full min-w-[980px] border-collapse bg-white">
+              <thead className="sticky top-0 z-10 bg-white">
+                <tr className="border-b border-[#1B7A1E]">
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.name')}</th>
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">Email</th>
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.role')}</th>
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.position')}</th>
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.department')}</th>
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.project')}</th>
+                  <th className="bg-white px-4 py-3 text-center text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.learningHours')}</th>
+                  <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.createdDate')}</th>
+                  <th className="bg-white px-4 py-3 text-right text-xs font-semibold uppercase text-[#1B7A1E]">{t('admin.users.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10">
+              <tbody>
                 {filteredUsers
                   .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
                   .map((user) => (
@@ -1144,65 +1135,61 @@ export const UserManagement: React.FC = () => {
                         setShowDetailModal(true);
                         loadUserLearningStats(user.uid);
                       }}
-                      className="hover:bg-white/5 cursor-pointer transition-colors"
+                      className="cursor-pointer border-b border-[#d8ecd9] bg-white transition-colors hover:bg-[#f3faf4]"
                     >
-                      <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-[#0E3A16]">
+                      <td className="whitespace-nowrap bg-white px-4 py-4">
                         <div className="font-medium text-[#1B7A1E]">{user.displayName}</div>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">{user.email}</td>
-                      <td className="px-4 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap bg-white px-4 py-4 text-sm text-[#475569]">{user.email}</td>
+                      <td className="whitespace-nowrap bg-white px-4 py-4">{getRoleBadge(user.role)}</td>
+                      <td className="whitespace-nowrap bg-white px-4 py-4">
                         {user.position ? (
                           <div className="flex items-center gap-1">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                            <span className="rounded-full bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]">
                               {getPositionLabel(user.position)}
                             </span>
                             {user.departmentId && departments.find(d => d.managerId === user.uid) && (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium flex items-center gap-1">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]">
                                 <Users size={12} />
                                 {t('admin.users.managerBadge')}
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-slate-400">-</span>
+                          <span className="text-[#94a3b8]">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">
+                      <td className="whitespace-nowrap bg-white px-4 py-4 text-sm text-[#475569]">
                         {getDepartmentName(user.departmentId)}
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="bg-white px-4 py-4">
                         {user.projectNames && user.projectNames.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {user.projectNames.map((projectName, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium"
+                                className="inline-flex items-center rounded-md bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]"
                               >
                                 {projectName}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-sm">-</span>
+                          <span className="text-sm text-[#94a3b8]">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                      <td className="whitespace-nowrap bg-white px-4 py-4 text-center">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]">
                           {(user.totalLearningHours || 0).toFixed(1)}h
                         </span>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right text-white font-medium text-sm">
-                        {user.monthlySalary ? `${(user.monthlySalary / 1000000).toFixed(1)}tr` : '-'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-slate-300 text-sm">
+                      <td className="whitespace-nowrap bg-white px-4 py-4 text-sm text-[#475569]">
                         {user.createdAt?.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right sticky right-0 bg-[#0E3A16]" onClick={(e) => e.stopPropagation()}>
+                      <td className="whitespace-nowrap bg-white px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         {currentUser?.role === 'admin' ? (
-                          // Admin có thể sửa/xóa
                           user.role === 'admin' ? (
-                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-lg text-sm">
+                            <div className="inline-flex items-center gap-1 rounded-lg bg-[#edf7ee] px-3 py-1 text-sm text-[#1B7A1E]">
                               <Shield size={14} />
                               <span className="font-medium">{t('admin.users.protected')}</span>
                             </div>
@@ -1213,7 +1200,7 @@ export const UserManagement: React.FC = () => {
                                   e.stopPropagation();
                                   handleEdit(user);
                                 }}
-                                className="text-blue-600 hover:text-blue-800 mr-3"
+                                className="mr-3 text-[#1B7A1E] hover:text-[#156318]"
                                 title={t('common.edit')}
                               >
                                 <Edit2 size={18} />
@@ -1231,8 +1218,7 @@ export const UserManagement: React.FC = () => {
                             </>
                           )
                         ) : (
-                          // Trưởng phòng chỉ xem
-                          <span className="text-slate-400 text-sm">{t('admin.users.viewOnly')}</span>
+                          <span className="text-sm text-[#94a3b8]">{t('admin.users.viewOnly')}</span>
                         )}
                       </td>
                     </tr>
@@ -1308,12 +1294,12 @@ export const UserManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-[#0E3A16]/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
-            <div className="flex justify-between items-center p-6 border-b border-white/10 bg-[#5e3ed0]/20">
-              <h3 className="text-xl font-bold text-white">
+          <div className="bg-white border border-[#1B7A1E] rounded-2xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-[#1B7A1E]/30 bg-[#edf7ee]">
+              <h3 className="text-xl font-bold text-[#111b38]">
                 {editingUser ? t('admin.users.editUser') : t('admin.users.addUserNew')}
               </h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white">
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#edf7ee] rounded-lg transition-colors text-[#66718b]">
                 <X size={24} />
               </button>
             </div>
@@ -1322,45 +1308,45 @@ export const UserManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Left Column */}
                 <div className="space-y-4 md:col-span-1">
-                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">{t('admin.users.accountInfo')}</h4>
+                  <h4 className="text-sm font-semibold text-[#1B7A1E] border-b border-[#1B7A1E]/30 pb-2">{t('admin.users.accountInfo')}</h4>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.fullName')} *</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.fullName')} *</label>
                     <input
                       type="text"
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Email *</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">Email *</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.password')}{editingUser ? ' (để trống nếu không đổi)' : ' *'}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.password')}{editingUser ? ' (để trống nếu không đổi)' : ' *'}</label>
                     <input
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       {...(!editingUser ? { minLength: 6, placeholder: t('admin.users.passwordPlaceholder') } : {})}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.role')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.role')}</label>
                     <select
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16]"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38] [&>option]:bg-white [&>option]:text-[#111b38]"
                     >
                       <option value="staff">{t('admin.users.roles.staff')}</option>
                       <option value="teacher">{t('admin.users.roles.teacherAlt')}</option>
@@ -1369,11 +1355,11 @@ export const UserManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.position')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.position')}</label>
                     <select
                       value={formData.position}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value as Position | '' })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16]"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38] [&>option]:bg-white [&>option]:text-[#111b38]"
                     >
                       <option value="">{t('admin.users.selectPosition')}</option>
                       {POSITIONS.map(pos => (
@@ -1385,11 +1371,11 @@ export const UserManagement: React.FC = () => {
                   {formData.role === 'staff' && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.department')}</label>
+                        <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.department')}</label>
                         <select
                           value={formData.departmentId}
                           onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16]"
+                          className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38] [&>option]:bg-white [&>option]:text-[#111b38]"
                         >
                           <option value="">{t('admin.users.selectDepartment')}</option>
                           {departments.map(dept => (
@@ -1399,12 +1385,12 @@ export const UserManagement: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.monthlySalary')}</label>
+                        <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.monthlySalary')}</label>
                         <input
                           type="number"
                           value={formData.monthlySalary}
                           onChange={(e) => setFormData({ ...formData, monthlySalary: Number(e.target.value) })}
-                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                          className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                           placeholder={t('admin.users.salaryPlaceholder')}
                         />
                       </div>
@@ -1414,7 +1400,7 @@ export const UserManagement: React.FC = () => {
 
                 {/* Right Column - Thông tin cá nhân & avatar */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">{t('admin.users.personalInfo')}</h4>
+                  <h4 className="text-sm font-semibold text-[#1B7A1E] border-b border-[#1B7A1E]/30 pb-2">{t('admin.users.personalInfo')}</h4>
 
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
@@ -1425,73 +1411,73 @@ export const UserManagement: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-slate-500 text-sm">
+                        <span className="text-[#94a3b8] text-sm">
                           {formData.displayName ? formData.displayName.charAt(0).toUpperCase() : '?'}
                         </span>
                       )}
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Avatar URL</label>
+                      <label className="block text-sm font-medium text-[#475569] mb-1">Avatar URL</label>
                       <input
                         type="text"
                         value={formData.photoURL}
                         onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white text-xs"
+                        className="w-full px-3 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38] text-xs"
                         placeholder="https://..."
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.dateOfBirth')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.dateOfBirth')}</label>
                     <input
                       type="date"
                       value={formData.dateOfBirth}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.phone')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.phone')}</label>
                     <input
                       type="tel"
                       value={formData.phoneNumber}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder="0123456789"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.address')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.address')}</label>
                     <input
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.addressPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.country')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.country')}</label>
                     <input
                       type="text"
                       value={formData.country}
                       onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.countryPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.workLocation')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.workLocation')}</label>
                     <input
                       type="text"
                       value={formData.workLocation}
                       onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.workLocationPlaceholder')}
                     />
                   </div>
@@ -1499,70 +1485,70 @@ export const UserManagement: React.FC = () => {
 
                 {/* Third Column - Thông tin nhân sự */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-300 border-b border-white/10 pb-2">{t('admin.users.employmentInfo')}</h4>
+                  <h4 className="text-sm font-semibold text-[#1B7A1E] border-b border-[#1B7A1E]/30 pb-2">{t('admin.users.employmentInfo')}</h4>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.employmentStatus')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.employmentStatus')}</label>
                     <input
                       type="text"
                       value={formData.employmentStatus}
                       onChange={(e) => setFormData({ ...formData, employmentStatus: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.employmentStatusPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.employmentStartDate')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.employmentStartDate')}</label>
                     <input
                       type="date"
                       value={formData.employmentStartDate}
                       onChange={(e) => setFormData({ ...formData, employmentStartDate: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.maritalStatus')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.maritalStatus')}</label>
                     <input
                       type="text"
                       value={formData.employmentMaritalStatus}
                       onChange={(e) => setFormData({ ...formData, employmentMaritalStatus: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.maritalStatusPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.branch')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.branch')}</label>
                     <input
                       type="text"
                       value={formData.employmentBranch}
                       onChange={(e) => setFormData({ ...formData, employmentBranch: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.branchPlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.team')}</label>
+                    <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.team')}</label>
                     <input
                       type="text"
                       value={formData.employmentTeam}
                       onChange={(e) => setFormData({ ...formData, employmentTeam: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                      className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                       placeholder={t('admin.users.teamPlaceholder')}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1">{t('admin.users.salaryPercentage')}</label>
+                      <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.salaryPercentage')}</label>
                       <input
                         type="number"
                         value={formData.employmentSalaryPercentage}
                         onChange={(e) => setFormData({ ...formData, employmentSalaryPercentage: Number(e.target.value) })}
-                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                        className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
                         placeholder={t('admin.users.salaryPercentExample')}
                       />
                     </div>
@@ -1574,17 +1560,17 @@ export const UserManagement: React.FC = () => {
                         onChange={(e) => setFormData({ ...formData, employmentActive: e.target.checked })}
                         className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
                       />
-                      <label htmlFor="employmentActive" className="text-sm text-slate-300">
+                      <label htmlFor="employmentActive" className="text-sm text-[#475569]">
                         {t('admin.users.employmentActiveInHrSystem')}
                       </label>
                     </div>
                   </div>
 
                   {/* Projects Section */}
-                  <div className="mt-6 pt-6 border-t border-white/10">
-                    <h4 className="text-sm font-semibold text-slate-300 mb-4">{t('admin.users.projects')}</h4>
+                  <div className="mt-6 pt-6 border-t border-[#1B7A1E]/30">
+                    <h4 className="text-sm font-semibold text-[#475569] mb-4">{t('admin.users.projects')}</h4>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-[#475569] mb-2">
                         {t('admin.users.selectProjects')}
                         {formData.projects.length > 0 && (
                           <span className="ml-2 text-xs text-[#1B7A1E]">
@@ -1592,9 +1578,9 @@ export const UserManagement: React.FC = () => {
                           </span>
                         )}
                       </label>
-                      <div className="space-y-2 max-h-48 overflow-y-auto border border-white/10 rounded-lg p-2 bg-white/5">
+                      <div className="space-y-2 max-h-48 overflow-y-auto border border-[#1B7A1E] rounded-lg p-2 bg-white">
                         {projects.length === 0 ? (
-                          <p className="text-xs text-slate-400 text-center py-4">{t('admin.courses.noProjectsYet')}</p>
+                          <p className="text-xs text-[#94a3b8] text-center py-4">{t('admin.courses.noProjectsYet')}</p>
                         ) : (
                           projects.map(project => {
                             const isChecked = formData.projects.includes(project.id);
@@ -1603,8 +1589,8 @@ export const UserManagement: React.FC = () => {
                                 key={project.id}
                                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
                                   isChecked 
-                                    ? 'bg-[#1B7A1E]/20 border border-[#1B7A1E]/30' 
-                                    : 'hover:bg-white/10 border border-transparent'
+                                    ? 'bg-[#edf7ee] border border-[#1B7A1E]/30' 
+                                    : 'hover:bg-[#f3faf4] border border-transparent'
                                 }`}
                               >
                                 <input
@@ -1623,9 +1609,9 @@ export const UserManagement: React.FC = () => {
                                       });
                                     }
                                   }}
-                                  className="w-4 h-4 text-[#1B7A1E] bg-white/5 border-white/20 rounded focus:ring-[#1B7A1E] focus:ring-2"
+                                  className="w-4 h-4 text-[#1B7A1E] bg-white border-[#1B7A1E] rounded focus:ring-[#1B7A1E] focus:ring-2"
                                 />
-                                <span className={`text-sm flex-1 ${isChecked ? 'text-white font-medium' : 'text-slate-300'}`}>
+                                <span className={`text-sm flex-1 ${isChecked ? 'text-[#1B7A1E] font-medium' : 'text-[#475569]'}`}>
                                   {project.name}
                                 </span>
                                 {isChecked && (
@@ -1657,14 +1643,14 @@ export const UserManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 border-t border-white/10 bg-[#5e3ed0]/20">
+            <div className="flex gap-3 p-6 border-t border-[#1B7A1E]/30 bg-[#edf7ee]">
               <Button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] text-white border-none shadow-lg shadow-[#1B7A1E]/20">
                 <Save size={18} />
                 {editingUser ? t('common.update') : t('common.create')}
               </Button>
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 border border-white/10 rounded-lg hover:bg-white/10 bg-white/5 text-white"
+                className="flex-1 px-4 py-2 border border-[#1B7A1E] rounded-lg hover:bg-[#edf7ee] bg-white text-[#1B7A1E]"
               >
                 {t('common.cancel')}
               </button>
@@ -1676,9 +1662,9 @@ export const UserManagement: React.FC = () => {
       {/* User Detail Modal */}
       {showDetailModal && viewingUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0E3A16]/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
+          <div className="bg-white border border-[#1B7A1E] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="p-6 border-b border-white/10 bg-[#5e3ed0]/20">
+            <div className="p-6 border-b border-[#1B7A1E]/30 bg-[#edf7ee]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   {viewingUser.photoURL ? (
@@ -1693,13 +1679,13 @@ export const UserManagement: React.FC = () => {
                     </div>
                   )}
                   <div>
-                    <h3 className="text-2xl font-bold text-white">{viewingUser.displayName}</h3>
-                    <p className="text-slate-300">{viewingUser.email}</p>
+                    <h3 className="text-2xl font-bold text-[#111b38]">{viewingUser.displayName}</h3>
+                    <p className="text-[#475569]">{viewingUser.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+                  className="p-2 hover:bg-[#edf7ee] rounded-lg transition-colors text-[#66718b]"
                 >
                   <X size={20} />
                 </button>
@@ -1710,17 +1696,17 @@ export const UserManagement: React.FC = () => {
             <div className="p-6 space-y-6">
               {/* Basic Info */}
               <div>
-                <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <h4 className="text-lg font-bold text-[#111b38] mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-[#1B7A1E]" />
                   {t('admin.users.basicInfo')}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.role')}</p>
+                  <div className="bg-white p-4 rounded-xl border border-[#1B7A1E]">
+                    <p className="text-sm text-[#475569] mb-1">{t('admin.users.role')}</p>
                     <div>{getRoleBadge(viewingUser.role)}</div>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.position')}</p>
+                  <div className="bg-white p-4 rounded-xl border border-[#1B7A1E]">
+                    <p className="text-sm text-[#475569] mb-1">{t('admin.users.position')}</p>
                     {viewingUser.position ? (
                       <div className="flex flex-col gap-2">
                         <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium inline-block w-fit">
@@ -1734,15 +1720,15 @@ export const UserManagement: React.FC = () => {
                         )}
                       </div>
                     ) : (
-                      <p className="text-slate-400">{t('admin.dashboard.noneYet')}</p>
+                      <p className="text-[#66718b]">{t('admin.dashboard.noneYet')}</p>
                     )}
                   </div>
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.department')}</p>
-                    <p className="font-medium text-white">{getDepartmentName(viewingUser.departmentId)}</p>
+                  <div className="bg-white p-4 rounded-xl border border-[#1B7A1E]">
+                    <p className="text-sm text-[#475569] mb-1">{t('admin.users.department')}</p>
+                    <p className="font-medium text-[#111b38]">{getDepartmentName(viewingUser.departmentId)}</p>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-sm text-slate-300 mb-1">{t('admin.users.status')}</p>
+                  <div className="bg-white p-4 rounded-xl border border-[#1B7A1E]">
+                    <p className="text-sm text-[#475569] mb-1">{t('admin.users.status')}</p>
                     {viewingUser.role === 'admin' ? (
                       <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
                         {t('admin.users.roles.admin')}
@@ -1762,41 +1748,41 @@ export const UserManagement: React.FC = () => {
 
               {/* Learning Stats */}
               <div>
-                <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <h4 className="text-lg font-bold text-[#111b38] mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-[#1B7A1E]" />
                   {t('admin.users.learningStats')}
                 </h4>
                 {loadingStats ? (
                   <div className="text-center py-8">
                     <div className="w-12 h-12 border-4 border-[#1B7A1E] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                    <p className="text-slate-300 mt-2">{t('common.loading')}</p>
+                    <p className="text-[#475569] mt-2">{t('common.loading')}</p>
                   </div>
                 ) : userLearningStats ? (
                   <div className="space-y-4">
                     {/* Stats Cards */}
                     <div className="grid grid-cols-4 gap-3">
-                      <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">{t('admin.dashboard.totalCourses')}</p>
-                        <p className="text-2xl font-bold text-white">{userLearningStats.totalCourses}</p>
+                      <div className="bg-[#edf7ee] p-4 rounded-xl border border-[#1B7A1E]">
+                        <p className="text-xs text-[#475569] mb-1">{t('admin.dashboard.totalCourses')}</p>
+                        <p className="text-2xl font-bold text-[#1B7A1E]">{userLearningStats.totalCourses}</p>
                       </div>
-                      <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">{t('admin.dashboard.completed')}</p>
-                        <p className="text-2xl font-bold text-white">{userLearningStats.completedCourses}</p>
+                      <div className="bg-[#edf7ee] p-4 rounded-xl border border-[#1B7A1E]">
+                        <p className="text-xs text-[#475569] mb-1">{t('admin.dashboard.completed')}</p>
+                        <p className="text-2xl font-bold text-[#1B7A1E]">{userLearningStats.completedCourses}</p>
                       </div>
-                      <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">{t('admin.users.inProgress')}</p>
-                        <p className="text-2xl font-bold text-white">{userLearningStats.inProgressCourses}</p>
+                      <div className="bg-[#edf7ee] p-4 rounded-xl border border-[#1B7A1E]">
+                        <p className="text-xs text-[#475569] mb-1">{t('admin.users.inProgress')}</p>
+                        <p className="text-2xl font-bold text-[#1B7A1E]">{userLearningStats.inProgressCourses}</p>
                       </div>
-                      <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
-                        <p className="text-xs text-slate-300 mb-1">{t('admin.dashboard.avgProgress')}</p>
-                        <p className="text-2xl font-bold text-white">{userLearningStats.averageProgress.toFixed(0)}%</p>
+                      <div className="bg-[#edf7ee] p-4 rounded-xl border border-[#1B7A1E]">
+                        <p className="text-xs text-[#475569] mb-1">{t('admin.dashboard.avgProgress')}</p>
+                        <p className="text-2xl font-bold text-[#1B7A1E]">{userLearningStats.averageProgress.toFixed(0)}%</p>
                       </div>
                     </div>
 
                     {/* Learning Time & Salary */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-[#5e3ed0]/20 p-6 rounded-xl border border-white/10">
-                        <p className="text-sm text-slate-300 mb-2">{t('admin.users.totalLearningTime')}</p>
+                      <div className="bg-[#edf7ee] p-6 rounded-xl border border-[#1B7A1E]">
+                        <p className="text-sm text-[#475569] mb-2">{t('admin.users.totalLearningTime')}</p>
                         {(() => {
                           const totalHours = viewingUser.totalLearningHours || 0;
                           const hours = Math.floor(totalHours);
@@ -1804,17 +1790,17 @@ export const UserManagement: React.FC = () => {
 
                           return (
                             <div className="flex items-baseline gap-2">
-                              <p className="text-3xl font-bold text-white">{hours}</p>
-                              <span className="text-base font-semibold text-slate-300">{t('common.hours')}</span>
-                              <p className="text-2xl font-bold text-white">{minutes}</p>
-                              <span className="text-base font-semibold text-slate-300">{t('common.minutes')}</span>
+                              <p className="text-3xl font-bold text-[#1B7A1E]">{hours}</p>
+                              <span className="text-base font-semibold text-[#475569]">{t('common.hours')}</span>
+                              <p className="text-2xl font-bold text-[#1B7A1E]">{minutes}</p>
+                              <span className="text-base font-semibold text-[#475569]">{t('common.minutes')}</span>
                             </div>
                           );
                         })()}
                       </div>
-                      <div className="bg-[#5e3ed0]/20 p-6 rounded-xl border border-white/10">
-                        <p className="text-sm text-slate-300 mb-2">{t('admin.users.salary')}</p>
-                        <p className="text-2xl font-bold text-white">
+                      <div className="bg-[#edf7ee] p-6 rounded-xl border border-[#1B7A1E]">
+                        <p className="text-sm text-[#475569] mb-2">{t('admin.users.salary')}</p>
+                        <p className="text-2xl font-bold text-[#1B7A1E]">
                           {viewingUser.monthlySalary ? `${viewingUser.monthlySalary.toLocaleString(dateLocale)}đ` : t('admin.dashboard.noneYet')}
                         </p>
                       </div>
@@ -1822,15 +1808,15 @@ export const UserManagement: React.FC = () => {
 
                     {/* Quiz Stats */}
                     {userLearningStats.totalQuizzes > 0 && (
-                      <div className="bg-[#5e3ed0]/20 p-4 rounded-xl border border-white/10">
+                      <div className="bg-[#edf7ee] p-4 rounded-xl border border-[#1B7A1E]">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-slate-300 mb-1">{t('admin.users.quizTests')}</p>
-                            <p className="text-xl font-bold text-white">{userLearningStats.totalQuizzes} {t('admin.users.quizUnit')}</p>
+                            <p className="text-sm text-[#475569] mb-1">{t('admin.users.quizTests')}</p>
+                            <p className="text-xl font-bold text-[#111b38]">{userLearningStats.totalQuizzes} {t('admin.users.quizUnit')}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm text-slate-300 mb-1">{t('admin.users.averageScore')}</p>
-                            <p className="text-xl font-bold text-white">{userLearningStats.averageQuizScore.toFixed(1)}/100</p>
+                            <p className="text-sm text-[#475569] mb-1">{t('admin.users.averageScore')}</p>
+                            <p className="text-xl font-bold text-[#111b38]">{userLearningStats.averageQuizScore.toFixed(1)}/100</p>
                           </div>
                         </div>
                       </div>
@@ -1839,15 +1825,15 @@ export const UserManagement: React.FC = () => {
                     {/* Recent Courses */}
                     {userLearningStats.recentCourses.length > 0 && (
                       <div>
-                        <h5 className="text-sm font-bold text-slate-300 mb-3">{t('admin.users.recentCourses')}</h5>
+                        <h5 className="text-sm font-bold text-[#475569] mb-3">{t('admin.users.recentCourses')}</h5>
                         <div className="space-y-2">
                           {userLearningStats.recentCourses.map((course, index) => (
-                            <div key={course.courseId || `course-${index}`} className="bg-white/5 p-3 rounded-lg border border-white/10">
+                            <div key={course.courseId || `course-${index}`} className="bg-white p-3 rounded-lg border border-[#1B7A1E]">
                               <div className="flex items-center justify-between mb-2">
-                                <p className="text-sm font-medium text-white line-clamp-1">{course.title}</p>
+                                <p className="text-sm font-medium text-[#111b38] line-clamp-1">{course.title}</p>
                                 <span className="text-sm font-bold text-[#1B7A1E]">{course.progress.toFixed(0)}%</span>
                               </div>
-                              <div className="w-full bg-white/10 rounded-full h-2">
+                              <div className="w-full bg-[#d8ecd9] rounded-full h-2">
                                 <div
                                   className="bg-[#1B7A1E] h-2 rounded-full transition-all"
                                   style={{ width: `${course.progress}%` }}
@@ -1860,21 +1846,21 @@ export const UserManagement: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-8 bg-white/5 rounded-xl border border-white/10">
-                    <p className="text-slate-300">{t('admin.users.noLearningData')}</p>
+                  <div className="text-center py-8 bg-white rounded-xl border border-[#1B7A1E]">
+                    <p className="text-[#475569]">{t('admin.users.noLearningData')}</p>
                   </div>
                 )}
               </div>
 
               {/* Timeline */}
               <div>
-                <h4 className="text-lg font-bold text-white mb-4">{t('common.time')}</h4>
+                <h4 className="text-lg font-bold text-[#111b38] mb-4">{t('common.time')}</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[#1B7A1E]">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{t('admin.users.createdDate')}</p>
-                      <p className="text-sm text-slate-300">
+                      <p className="text-sm font-medium text-[#111b38]">{t('admin.users.createdDate')}</p>
+                      <p className="text-sm text-[#475569]">
                         {viewingUser.createdAt?.toLocaleDateString(dateLocale, {
                           year: 'numeric',
                           month: 'long',
@@ -1885,11 +1871,11 @@ export const UserManagement: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[#1B7A1E]">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{t('admin.users.lastUpdated')}</p>
-                      <p className="text-sm text-slate-300">
+                      <p className="text-sm font-medium text-[#111b38]">{t('admin.users.lastUpdated')}</p>
+                      <p className="text-sm text-[#475569]">
                         {viewingUser.updatedAt?.toLocaleDateString(dateLocale, {
                           year: 'numeric',
                           month: 'long',
@@ -1905,7 +1891,7 @@ export const UserManagement: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-white/10 bg-[#5e3ed0]/20 flex gap-3">
+            <div className="p-6 border-t border-[#1B7A1E]/30 bg-[#edf7ee] flex gap-3">
               {viewingUser.role !== 'admin' && (
                 <Button
                   onClick={() => {
@@ -1919,7 +1905,7 @@ export const UserManagement: React.FC = () => {
               )}
               <Button
                 onClick={() => setShowDetailModal(false)}
-                className="flex-1 bg-white/10 hover:bg-white/20 border-none text-white"
+                className="flex-1 bg-white hover:bg-[#edf7ee] border border-[#1B7A1E] text-[#1B7A1E]"
               >
                 {t('common.close')}
               </Button>

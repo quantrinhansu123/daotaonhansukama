@@ -216,22 +216,22 @@ export const ProjectManagement: React.FC = () => {
 
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
-      case 'planning': return 'bg-blue-500/20 text-blue-300';
-      case 'in_progress': return 'bg-yellow-500/20 text-yellow-300';
-      case 'completed': return 'bg-green-500/20 text-green-300';
-      case 'on_hold': return 'bg-gray-500/20 text-gray-300';
-      case 'cancelled': return 'bg-red-500/20 text-red-300';
-      default: return 'bg-gray-500/20 text-gray-300';
+      case 'planning': return 'bg-blue-100 text-blue-700';
+      case 'in_progress': return 'bg-amber-100 text-amber-700';
+      case 'completed': return 'bg-[#edf7ee] text-[#1B7A1E]';
+      case 'on_hold': return 'bg-slate-100 text-slate-600';
+      case 'cancelled': return 'bg-red-100 text-red-700';
+      default: return 'bg-slate-100 text-slate-600';
     }
   };
 
   const getPriorityColor = (priority: ProjectPriority) => {
     switch (priority) {
-      case 'low': return 'bg-gray-500/20 text-gray-300';
-      case 'medium': return 'bg-blue-500/20 text-blue-300';
-      case 'high': return 'bg-orange-500/20 text-orange-300';
-      case 'urgent': return 'bg-red-500/20 text-red-300';
-      default: return 'bg-gray-500/20 text-gray-300';
+      case 'low': return 'bg-slate-100 text-slate-600';
+      case 'medium': return 'bg-blue-100 text-blue-700';
+      case 'high': return 'bg-orange-100 text-orange-700';
+      case 'urgent': return 'bg-red-100 text-red-700';
+      default: return 'bg-slate-100 text-slate-600';
     }
   };
 
@@ -261,40 +261,40 @@ export const ProjectManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen space-y-6 bg-white p-8 text-[#111b38]">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">{t('admin.projects.titleAlt')}</h1>
-          <p className="text-slate-300">{t('admin.projects.subtitleAlt')}</p>
+          <h1 className="mb-2 text-3xl font-bold text-[#111b38]">{t('admin.projects.titleAlt')}</h1>
+          <p className="text-[#475569]">{t('admin.projects.subtitleAlt')}</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
+        <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 border-none bg-[#1B7A1E] text-white shadow-[#1B7A1E]/25 hover:bg-[#156318]">
           <Plus size={20} />
           {t('admin.projects.addProjectAlt')}
         </Button>
       </div>
 
       {/* Search */}
-      <div className="mb-6">
+      <div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={20} />
           <input
             type="text"
             placeholder={t('admin.projects.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white placeholder-slate-400"
+            className="w-full rounded-lg border border-[#1B7A1E] bg-white py-2 pl-10 pr-4 text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
           />
         </div>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.filterByStatus')}</label>
+          <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.filterByStatus')}</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | 'all')}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+            className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
           >
             <option value="all">{t('admin.projects.allStatuses')}</option>
             <option value="planning">{t('admin.projects.statusPlanning')}</option>
@@ -305,11 +305,11 @@ export const ProjectManagement: React.FC = () => {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.filterByPriority')}</label>
+          <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.filterByPriority')}</label>
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value as ProjectPriority | 'all')}
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+            className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
           >
             <option value="all">{t('admin.projects.allPriorities')}</option>
             <option value="low">{t('admin.projects.priorityLow')}</option>
@@ -321,117 +321,117 @@ export const ProjectManagement: React.FC = () => {
       </div>
 
       {/* Projects Table */}
-      <div className="bg-[#5e3ed0]/20 rounded-xl border border-white/10 overflow-hidden backdrop-blur-md">
+      <div className="overflow-hidden rounded-xl border border-[#1B7A1E] bg-white">
         {filteredProjects.length === 0 ? (
-          <div className="text-center py-12">
-            <FolderKanban className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-300">
+          <div className="py-12 text-center">
+            <FolderKanban className="mx-auto mb-4 h-16 w-16 text-[#94a3b8]" />
+            <p className="text-[#475569]">
               {searchTerm ? t('admin.projects.notFound') : t('admin.projects.noProjectsAlt')}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#5e3ed0]/40 border-b border-white/10">
+            <table className="w-full border-collapse bg-white">
+              <thead className="border-b border-[#1B7A1E] bg-white">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.nameAlt')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.status')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.priority')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.manager')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.department')}
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.members')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.budget')}
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('common.actions')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10">
+              <tbody>
                 {filteredProjects.map((project) => (
-                  <tr key={project.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={project.id} className="border-b border-[#d8ecd9] bg-white transition-colors hover:bg-[#f3faf4]">
+                    <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="bg-purple-500/20 p-2 rounded-lg">
-                          <FolderKanban className="w-5 h-5 text-purple-300" />
+                        <div className="rounded-lg bg-[#edf7ee] p-2">
+                          <FolderKanban className="h-5 w-5 text-[#1B7A1E]" />
                         </div>
                         <div>
-                          <p className="font-semibold text-white">{project.name}</p>
+                          <p className="font-semibold text-[#111b38]">{project.name}</p>
                           {project.description && (
-                            <p className="text-xs text-slate-400 max-w-md line-clamp-1">{project.description}</p>
+                            <p className="max-w-md line-clamp-1 text-xs text-[#94a3b8]">{project.description}</p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(project.status)}`}>
                         {getStatusLabel(project.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(project.priority)}`}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${getPriorityColor(project.priority)}`}>
                         {getPriorityLabel(project.priority)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       {project.managerName ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-full text-sm font-medium">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#edf7ee] px-3 py-1 text-sm font-medium text-[#1B7A1E]">
                           {project.managerName}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-sm">-</span>
+                        <span className="text-sm text-[#94a3b8]">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       {project.departmentName ? (
-                        <span className="inline-flex items-center px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md text-xs font-medium">
+                        <span className="inline-flex items-center rounded-md bg-[#edf7ee] px-2 py-1 text-xs font-medium text-[#1B7A1E]">
                           {project.departmentName}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-sm">-</span>
+                        <span className="text-sm text-[#94a3b8]">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-white rounded-lg text-sm font-medium">
+                    <td className="whitespace-nowrap px-6 py-4 text-center">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-[#edf7ee] px-3 py-1 text-sm font-medium text-[#1B7A1E]">
                         <Users size={16} />
                         <span>{project.memberNames?.length || 0}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       {project.budget ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm font-medium">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#edf7ee] px-3 py-1 text-sm font-medium text-[#1B7A1E]">
                           <DollarSign size={14} />
                           {project.budget.toLocaleString(dateLocale)} đ
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-sm">-</span>
+                        <span className="text-sm text-[#94a3b8]">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(project)}
-                          className="p-2 text-[#1B7A1E] hover:bg-white/10 rounded-lg transition-colors"
+                          className="rounded-lg p-2 text-[#1B7A1E] transition-colors hover:bg-[#edf7ee]"
                           title={t('common.edit')}
                         >
                           <Edit2 size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(project.id)}
-                          className="p-2 text-pink-500 hover:bg-white/10 rounded-lg transition-colors"
+                          className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50"
                           title={t('common.delete')}
                         >
                           <Trash2 size={18} />
@@ -448,47 +448,47 @@ export const ProjectManagement: React.FC = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0E3A16]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#1B7A1E] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#1B7A1E] p-6">
+              <h3 className="text-xl font-bold text-[#111b38]">
                 {editingProject ? t('admin.projects.editProject') : t('admin.projects.addProjectNew')}
               </h3>
-              <button onClick={() => { setShowModal(false); resetForm(); }} className="p-2 hover:bg-white/10 rounded-lg text-white">
+              <button onClick={() => { setShowModal(false); resetForm(); }} className="rounded-lg p-2 text-[#66718b] hover:bg-[#edf7ee]">
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 p-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.nameAlt')} *</label>
+                <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.nameAlt')} *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder={t('admin.projects.namePlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.description')}</label>
+                <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder={t('admin.projects.descriptionPlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.status')}</label>
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.status')}</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="planning">{t('admin.projects.statusPlanning')}</option>
                     <option value="in_progress">{t('admin.projects.statusInProgress')}</option>
@@ -499,11 +499,11 @@ export const ProjectManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.priorityFull')}</label>
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.priorityFull')}</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as ProjectPriority })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="low">{t('admin.projects.priorityLow')}</option>
                     <option value="medium">{t('admin.projects.priorityMedium')}</option>
@@ -515,33 +515,33 @@ export const ProjectManagement: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.startDate')}</label>
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.startDate')}</label>
                   <input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.endDate')}</label>
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.endDate')}</label>
                   <input
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.manager')}</label>
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.manager')}</label>
                   <select
                     value={formData.managerId}
                     onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="">{t('admin.projects.selectManager')}</option>
                     {users.map(user => (
@@ -551,11 +551,11 @@ export const ProjectManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.department')}</label>
+                  <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.department')}</label>
                   <select
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white [&>option]:bg-[#0E3A16] [&>option]:text-white"
+                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="">{t('admin.users.selectDepartment')}</option>
                     {departments.map(dept => (
@@ -566,22 +566,22 @@ export const ProjectManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">{t('admin.projects.budgetVnd')}</label>
+                <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.budgetVnd')}</label>
                 <input
                   type="number"
                   min="0"
                   value={formData.budget}
                   onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-white"
+                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder="0"
                 />
               </div>
 
-              <div className="p-6 border-t border-white/10 flex gap-3">
-                <Button onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
+              <div className="flex gap-3 border-t border-[#1B7A1E] p-6">
+                <Button onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 border border-[#1B7A1E] bg-white text-[#1B7A1E] hover:bg-[#edf7ee]">
                   {t('common.cancel')}
                 </Button>
-                <Button type="submit" className="flex-1 flex items-center justify-center gap-2 bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
+                <Button type="submit" className="flex flex-1 items-center justify-center gap-2 border-none bg-[#1B7A1E] text-white shadow-[#1B7A1E]/25 hover:bg-[#156318]">
                   <Save size={18} />
                   {t('common.save')}
                 </Button>

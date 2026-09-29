@@ -376,18 +376,18 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#0E3A16] border border-white/10 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white border border-[#1B7A1E] rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-2xl font-bold text-white">{currentCourse.title}</h3>
-            <p className="text-slate-300">{t('admin.courseStudents.manageStaff')}</p>
+            <h3 className="text-2xl font-bold text-[#111b38]">{currentCourse.title}</h3>
+            <p className="text-[#66718b]">{t('admin.courseStudents.manageStaff')}</p>
             {currentUser?.role !== 'admin' && currentUser?.position === 'Trưởng phòng' && (
               <p className="text-sm text-[#1B7A1E] mt-1">
                 🏢 {t('admin.courseStudents.managerScope')}
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className="text-[#66718b] hover:text-[#111b38] hover:bg-[#edf7ee] rounded-lg p-1">
             <X size={24} />
           </button>
         </div>
@@ -395,29 +395,29 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
         {/* Pending Approvals */}
         {pendingStudents.length > 0 && (
           <div className="mb-6">
-            <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-              <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-sm border border-yellow-500/30">
+            <h4 className="font-semibold text-[#111b38] mb-3 flex items-center gap-2">
+              <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-sm border border-yellow-300">
                 {pendingStudents.length}
               </span>
               {t('admin.courseStudents.pendingApproval')}
             </h4>
             <div className="space-y-2">
               {pendingStudents.map((student) => (
-                <div key={student.uid} className="flex items-center justify-between p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <div key={student.uid} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold">
                       {student.displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-white">{student.displayName}</p>
-                      <p className="text-sm text-slate-400">{student.email}</p>
+                      <p className="font-medium text-[#111b38]">{student.displayName}</p>
+                      <p className="text-sm text-[#66718b]">{student.email}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApprove(student.uid)}
                       disabled={processing === student.uid}
-                      className="px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/50 rounded-lg hover:bg-green-500/30 disabled:opacity-50 flex items-center gap-1 text-sm"
+                      className="px-3 py-1.5 bg-[#edf7ee] text-[#1B7A1E] border border-[#1B7A1E] rounded-lg hover:bg-[#d8ecd9] disabled:opacity-50 flex items-center gap-1 text-sm"
                     >
                       <UserCheck size={14} />
                       {t('admin.users.approve')}
@@ -425,7 +425,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
                     <button
                       onClick={() => handleReject(student.uid)}
                       disabled={processing === student.uid}
-                      className="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 disabled:opacity-50 flex items-center gap-1 text-sm"
+                      className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-300 rounded-lg hover:bg-red-100 disabled:opacity-50 flex items-center gap-1 text-sm"
                     >
                       <UserX size={14} />
                       {t('admin.users.reject')}
@@ -439,31 +439,31 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
         {/* Enrolled Students */}
         <div className="mb-6">
-          <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-            <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-sm border border-green-500/30">
+          <h4 className="font-semibold text-[#111b38] mb-3 flex items-center gap-2">
+            <span className="bg-[#edf7ee] text-[#1B7A1E] px-2 py-1 rounded-full text-sm border border-[#1B7A1E]/30">
               {enrolledStudents.length}
             </span>
             {t('admin.courseStudents.enrolled')}
           </h4>
           {enrolledStudents.length === 0 ? (
-            <p className="text-slate-400 text-center py-4">{t('admin.courseStudents.noStaff')}</p>
+            <p className="text-[#94a3b8] text-center py-4">{t('admin.courseStudents.noStaff')}</p>
           ) : (
             <div className="space-y-2">
               {enrolledStudents.map((student) => (
-                <div key={student.uid} className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <div key={student.uid} className="flex items-center justify-between p-3 bg-[#edf7ee] border border-[#1B7A1E]/30 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 bg-[#1B7A1E] rounded-full flex items-center justify-center text-white font-bold">
                       {student.displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-white">{student.displayName}</p>
-                      <p className="text-sm text-slate-400">{student.email}</p>
+                      <p className="font-medium text-[#111b38]">{student.displayName}</p>
+                      <p className="text-sm text-[#66718b]">{student.email}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => handleRemove(student.uid)}
                     disabled={processing === student.uid}
-                    className="px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 disabled:opacity-50 flex items-center gap-1 text-sm"
+                    className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-300 rounded-lg hover:bg-red-100 disabled:opacity-50 flex items-center gap-1 text-sm"
                   >
                     <UserX size={14} />
                     {t('common.delete')}
@@ -476,25 +476,25 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
 
         {/* Available Students */}
         <div>
-          <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-            <span className="bg-[#1B7A1E]/20 text-[#1B7A1E] px-2 py-1 rounded-full text-sm border border-[#1B7A1E]/30">
+          <h4 className="font-semibold text-[#111b38] mb-3 flex items-center gap-2">
+            <span className="bg-[#edf7ee] text-[#1B7A1E] px-2 py-1 rounded-full text-sm border border-[#1B7A1E]/30">
               {availableStudents.length}
             </span>
             {t('admin.courseStudents.addStaff')}
           </h4>
           {availableStudents.length === 0 ? (
-            <p className="text-slate-400 text-center py-4">{t('admin.courseStudents.noMoreStaff')}</p>
+            <p className="text-[#94a3b8] text-center py-4">{t('admin.courseStudents.noMoreStaff')}</p>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {availableStudents.map((student) => (
-                <div key={student.uid} className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-lg">
+                <div key={student.uid} className="flex items-center justify-between p-3 bg-white border border-[#1B7A1E] rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-600 rounded-full flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 bg-[#1B7A1E] rounded-full flex items-center justify-center text-white font-bold">
                       {student.displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-white">{student.displayName}</p>
-                      <p className="text-sm text-slate-400">{student.email}</p>
+                      <p className="font-medium text-[#111b38]">{student.displayName}</p>
+                      <p className="text-sm text-[#66718b]">{student.email}</p>
                     </div>
                   </div>
                   <button
@@ -511,7 +511,7 @@ export const CourseStudents: React.FC<CourseStudentsProps> = ({ course, onClose,
           )}
         </div>
 
-        <div className="mt-6 pt-6 border-t border-white/10">
+        <div className="mt-6 pt-6 border-t border-[#1B7A1E]/30">
           <Button onClick={onClose} className="w-full bg-[#1B7A1E] hover:bg-[#156318] border-none text-white shadow-[#1B7A1E]/25">
             {t('common.close')}
           </Button>

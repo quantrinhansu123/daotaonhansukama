@@ -206,7 +206,7 @@ export const student = {
     adminRole: 'Administrator',
     manageContent: 'Upload video & lesson content',
     openAdminConsole: 'Admin console',
-    navPrograms: 'Training programs',
+    navPrograms: 'Programs',
     navStudents: 'Learners',
     navProjects: 'Projects',
     navDepartments: 'Departments',
