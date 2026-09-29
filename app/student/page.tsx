@@ -227,6 +227,15 @@ export default function StudentPage() {
             <GraduationCap size={22} />
             {t('student.academy.navPrograms')}
           </button>
+          {userProfile.role === 'staff' && (
+            <Link
+              href="/admin"
+              className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(false)}`}
+            >
+              <LayoutDashboard size={22} />
+              {t('student.academy.openAdminConsole')}
+            </Link>
+          )}
           {userProfile.role === 'admin' && (
             <>
               <button type="button" onClick={() => setSection('learners')} className={`flex min-h-[48px] w-full items-center gap-3 rounded-md px-3 text-left text-[18px] font-extrabold leading-snug ${navBtn(section === 'learners')}`}>

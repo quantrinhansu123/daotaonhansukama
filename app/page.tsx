@@ -19,7 +19,7 @@ const App: React.FC = () => {
           router.push('/admin');
           break;
         case 'staff':
-          router.push('/admin');
+          router.push('/student');
           break;
         case 'teacher':
           router.push('/teacher');

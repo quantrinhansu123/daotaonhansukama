@@ -16,12 +16,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!loading && userProfile) {
-      // Redirect staff to learning page, admin to dashboard
-      if (userProfile.role === 'staff') {
-        router.replace('/admin/learning');
-      } else if (userProfile.role === 'admin') {
-        // Already on dashboard, no redirect needed
-      } else {
+      if (userProfile.role !== 'admin' && userProfile.role !== 'staff') {
         router.push('/');
       }
     } else if (!loading && !userProfile) {
