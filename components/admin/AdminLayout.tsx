@@ -124,16 +124,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           sidebarOpen ? 'w-[268px]' : 'w-20'
         }`}
       >
-        <div className="relative flex h-[72px] shrink-0 items-center justify-center bg-white px-2">
-          {sidebarOpen ? (
-            <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
-          ) : (
-            <img src="/logo.png" alt="BioKama" className="h-8 w-auto max-w-[52px] object-contain" />
-          )}
+        <div className={`flex h-12 shrink-0 items-center px-2 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
           <button
             type="button"
             onClick={() => setSidebarOpen((open) => !open)}
-            className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-[#0f3d18] hover:bg-[#e8f5ea]"
+            className="grid h-8 w-8 place-items-center rounded-md text-[#eef8ef] hover:bg-[#18701C]/45"
             title={sidebarOpen ? 'Thu gọn' : 'Mở rộng'}
           >
             {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}

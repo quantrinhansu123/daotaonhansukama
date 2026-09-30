@@ -676,10 +676,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       )}
 
       <aside className={`fixed top-0 z-40 flex h-screen w-[248px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] transition-transform lg:sticky ${mobileNav ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex h-[72px] items-center justify-center bg-white px-2">
-          <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
-        </div>
-        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2" aria-label={t('student.academy.courses')}>
+        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-3" aria-label={t('student.academy.courses')}>
           <Link href="/student" className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45">
             <Home size={22} />
             {t('student.academy.overview')}
@@ -688,13 +685,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
             <BookOpen size={22} />
             {t('student.academy.courses')}
           </div>
-          <Link
-            href="/student#course-list"
-            className="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-[18px] font-extrabold leading-snug text-[#e4f5e8] hover:bg-[#18701C]/45"
-          >
-            <GraduationCap size={22} />
-            {t('student.academy.navPrograms')}
-          </Link>
           {userProfile?.role === 'admin' && (
             <>
               <Link

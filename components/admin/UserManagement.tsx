@@ -159,10 +159,12 @@ export const UserManagement: React.FC = () => {
 
       // Load projects first
       const projectsSnapshot = await getDocs(collection(db, 'projects'));
-      const projectsData = projectsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name || '',
-      }));
+      const projectsData = projectsSnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          name: String(doc.data().name || doc.data().title || doc.id),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
       setProjects(projectsData);
 
       // Calculate learning time for each user
@@ -1383,19 +1385,60 @@ export const UserManagement: React.FC = () => {
                           ))}
                         </select>
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.monthlySalary')}</label>
-                        <input
-                          type="number"
-                          value={formData.monthlySalary}
-                          onChange={(e) => setFormData({ ...formData, monthlySalary: Number(e.target.value) })}
-                          className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
-                          placeholder={t('admin.users.salaryPlaceholder')}
-                        />
-                      </div>
                     </>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#475569] mb-2">
+                      {t('admin.users.selectProjects')}
+                      {formData.projects.length > 0 && (
+                        <span className="ml-2 text-xs text-[#1B7A1E]">
+                          ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
+                        </span>
+                      )}
+                    </label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto border border-[#1B7A1E] rounded-lg p-2 bg-white">
+                      {projects.length === 0 ? (
+                        <p className="text-xs text-[#94a3b8] text-center py-4">{t('admin.courses.noProjectsYet')}</p>
+                      ) : (
+                        projects.map(project => {
+                          const isChecked = formData.projects.includes(project.id);
+                          return (
+                            <label
+                              key={project.id}
+                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                                isChecked
+                                  ? 'bg-[#edf7ee] border border-[#1B7A1E]/30'
+                                  : 'hover:bg-[#f3faf4] border border-transparent'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData({
+                                      ...formData,
+                                      projects: [...formData.projects, project.id],
+                                    });
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      projects: formData.projects.filter(id => id !== project.id),
+                                    });
+                                  }
+                                }}
+                                className="w-4 h-4 text-[#1B7A1E] bg-white border-[#1B7A1E] rounded focus:ring-[#1B7A1E] focus:ring-2"
+                              />
+                              <span className={`text-sm flex-1 ${isChecked ? 'text-[#1B7A1E] font-medium' : 'text-[#475569]'}`}>
+                                {project.name}
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Right Column - Thông tin cá nhân & avatar */}
@@ -1541,103 +1584,17 @@ export const UserManagement: React.FC = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#475569] mb-1">{t('admin.users.salaryPercentage')}</label>
-                      <input
-                        type="number"
-                        value={formData.employmentSalaryPercentage}
-                        onChange={(e) => setFormData({ ...formData, employmentSalaryPercentage: Number(e.target.value) })}
-                        className="w-full px-4 py-2 bg-white border border-[#1B7A1E] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] text-[#111b38]"
-                        placeholder={t('admin.users.salaryPercentExample')}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 mt-6">
-                      <input
-                        id="employmentActive"
-                        type="checkbox"
-                        checked={formData.employmentActive}
-                        onChange={(e) => setFormData({ ...formData, employmentActive: e.target.checked })}
-                        className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
-                      />
-                      <label htmlFor="employmentActive" className="text-sm text-[#475569]">
-                        {t('admin.users.employmentActiveInHrSystem')}
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Projects Section */}
-                  <div className="mt-6 pt-6 border-t border-[#1B7A1E]/30">
-                    <h4 className="text-sm font-semibold text-[#475569] mb-4">{t('admin.users.projects')}</h4>
-                    <div>
-                      <label className="block text-sm font-medium text-[#475569] mb-2">
-                        {t('admin.users.selectProjects')}
-                        {formData.projects.length > 0 && (
-                          <span className="ml-2 text-xs text-[#1B7A1E]">
-                            ({t('admin.courses.selectedProjectsCount', { count: formData.projects.length })})
-                          </span>
-                        )}
-                      </label>
-                      <div className="space-y-2 max-h-48 overflow-y-auto border border-[#1B7A1E] rounded-lg p-2 bg-white">
-                        {projects.length === 0 ? (
-                          <p className="text-xs text-[#94a3b8] text-center py-4">{t('admin.courses.noProjectsYet')}</p>
-                        ) : (
-                          projects.map(project => {
-                            const isChecked = formData.projects.includes(project.id);
-                            return (
-                              <label
-                                key={project.id}
-                                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                                  isChecked 
-                                    ? 'bg-[#edf7ee] border border-[#1B7A1E]/30' 
-                                    : 'hover:bg-[#f3faf4] border border-transparent'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setFormData({
-                                        ...formData,
-                                        projects: [...formData.projects, project.id],
-                                      });
-                                    } else {
-                                      setFormData({
-                                        ...formData,
-                                        projects: formData.projects.filter(id => id !== project.id),
-                                      });
-                                    }
-                                  }}
-                                  className="w-4 h-4 text-[#1B7A1E] bg-white border-[#1B7A1E] rounded focus:ring-[#1B7A1E] focus:ring-2"
-                                />
-                                <span className={`text-sm flex-1 ${isChecked ? 'text-[#1B7A1E] font-medium' : 'text-[#475569]'}`}>
-                                  {project.name}
-                                </span>
-                                {isChecked && (
-                                  <span className="text-xs text-[#1B7A1E]">✓</span>
-                                )}
-                              </label>
-                            );
-                          })
-                        )}
-                      </div>
-                      {formData.projects.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {formData.projects.map(projectId => {
-                            const project = projects.find(p => p.id === projectId);
-                            return project ? (
-                              <span
-                                key={projectId}
-                                className="inline-flex items-center px-2 py-1 bg-[#1B7A1E]/20 text-[#1B7A1E] rounded-md text-xs font-medium"
-                              >
-                                {project.name}
-                              </span>
-                            ) : null;
-                          })}
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="employmentActive"
+                      type="checkbox"
+                      checked={formData.employmentActive}
+                      onChange={(e) => setFormData({ ...formData, employmentActive: e.target.checked })}
+                      className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                    />
+                    <label htmlFor="employmentActive" className="text-sm text-[#475569]">
+                      {t('admin.users.employmentActiveInHrSystem')}
+                    </label>
                   </div>
                 </div>
               </div>

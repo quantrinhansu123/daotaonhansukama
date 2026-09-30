@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, GraduationCap, Headphones, Home, LayoutDashboard, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
+import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, Headphones, Home, LayoutDashboard, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { CourseEnrollment } from '@/components/student/CourseEnrollment';
 import { StudentCertificates } from '@/components/student/StudentCertificates';
@@ -41,7 +41,6 @@ const emptyStats: LearningStats = {
 type Section =
   | 'overview'
   | 'courses'
-  | 'programs'
   | 'learners'
   | 'projects'
   | 'departments'
@@ -130,9 +129,8 @@ export default function StudentPage() {
     const hash = window.location.hash.replace('#', '');
     const isAdmin = userProfile?.role === 'admin';
     if (hash === 'course-list') setSection('courses');
-    if (hash === 'programs') setSection('programs');
     if (!isAdmin) {
-      if (hash && !['course-list', 'programs', ''].includes(hash)) setSection('overview');
+      if (hash && !['course-list', ''].includes(hash)) setSection('overview');
       return;
     }
     if (hash === 'learners' || hash === 'students') setSection('learners');
@@ -151,7 +149,7 @@ export default function StudentPage() {
 
   useEffect(() => {
     if (!userProfile || userProfile.role === 'admin') return;
-    if (section !== 'overview' && section !== 'courses' && section !== 'programs') {
+    if (section !== 'overview' && section !== 'courses') {
       setSection('overview');
     }
   }, [userProfile, section]);
@@ -198,8 +196,7 @@ export default function StudentPage() {
       : section === 'library' ? t('student.academy.navLibrary')
         : section === 'reports' ? t('student.academy.navReports')
         : section === 'settings' ? t('student.academy.navSettings')
-          : section === 'programs' ? t('student.academy.navPrograms')
-            : section === 'learners' ? t('student.academy.navStudents')
+          : section === 'learners' ? t('student.academy.navStudents')
               : section === 'projects' ? t('student.academy.navProjects')
                 : section === 'departments' ? t('student.academy.navDepartments')
                   : section === 'positions' ? t('student.academy.navPositions')
@@ -213,10 +210,7 @@ export default function StudentPage() {
   return (
     <div className="flex min-h-screen bg-[#f5f8fc] font-sans text-[#111b38]">
       <aside className="sticky top-0 hidden h-screen w-[268px] shrink-0 flex-col bg-gradient-to-b from-[#0a2f12] via-[#0f3d18] to-[#145616] text-[#eef8ef] lg:flex">
-        <div className="flex h-[72px] items-center justify-center bg-white px-2">
-          <img src="/logo.png" alt="BioKama" className="h-12 w-auto max-w-[168px] object-contain" />
-        </div>
-        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-2">
+        <nav className="flex-1 space-y-1 overflow-auto px-2.5 py-3">
           <button type="button" onClick={() => setSection('overview')} className={navBtn(section === 'overview')}>
             <Home className={navIconClass} />
             {t('student.academy.overview')}
@@ -224,10 +218,6 @@ export default function StudentPage() {
           <button type="button" onClick={() => setSection('courses')} className={navBtn(section === 'courses')}>
             <BookOpen className={navIconClass} />
             {t('student.academy.courses')}
-          </button>
-          <button type="button" onClick={() => setSection('programs')} className={navBtn(section === 'programs')}>
-            <GraduationCap className={navIconClass} />
-            {t('student.academy.navPrograms')}
           </button>
           {userProfile.role === 'admin' && (
             <>
@@ -377,16 +367,9 @@ export default function StudentPage() {
             </>
           )}
 
-          {(section === 'courses' || section === 'programs') && (
+          {section === 'courses' && (
             <div id="course-list">
-              <CourseEnrollment
-                showHero
-                heading={
-                  section === 'programs'
-                    ? t('student.academy.navPrograms').toUpperCase()
-                    : undefined
-                }
-              />
+              <CourseEnrollment showHero />
             </div>
           )}
 
