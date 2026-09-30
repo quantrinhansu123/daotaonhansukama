@@ -40,8 +40,8 @@ with sync_playwright() as playwright:
         ring.wait_for(timeout=15000)
         print(f"Browser upload ring: {ring.get_attribute('aria-valuenow')}%", flush=True)
 
-        page.locator('a[href="/admin/users"]').first.click()
-        page.wait_for_url(re.compile(r'/admin/users'), timeout=20000)
+        page.locator('a[href="/student"]').first.click()
+        page.wait_for_url(re.compile(r'/student(?:$|[?#])'), timeout=20000)
         ring = page.get_by_role('progressbar').first
         ring.wait_for(timeout=10000)
         print(f"Browser navigated while upload continued: {ring.get_attribute('aria-valuenow')}%", flush=True)

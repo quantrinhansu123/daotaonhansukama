@@ -11,7 +11,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { useRouter } from 'next/navigation';
 import {
-  Users,
   BookOpen,
   Building2,
   LogOut,
@@ -62,14 +61,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       permission: null,
       hideForStaff: false,
       hideForAdmin: false,
-    },
-    {
-      id: 'users',
-      label: t('admin.menu.users'),
-      icon: Users,
-      href: '/admin/users',
-      permission: 'view_users' as const,
-      hideForStaff: false,
     },
     {
       id: 'courses',

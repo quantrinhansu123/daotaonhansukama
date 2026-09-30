@@ -257,24 +257,23 @@ export const ProjectManagement: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="p-8 text-center">{t('common.loading')}</div>;
+    return <div className="min-h-full bg-[#f5f8fc] p-8 text-center text-[#63708a]">{t('common.loading')}</div>;
   }
 
   return (
-    <div className="min-h-screen space-y-6 bg-white p-8 text-[#111b38]">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen space-y-5 bg-[#f5f8fc] p-5 text-[#111b38] sm:p-6 lg:p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="mb-2 text-3xl font-bold text-[#111b38]">{t('admin.projects.titleAlt')}</h1>
+          <h1 className="mb-1 text-2xl font-bold text-[#111b38]">{t('admin.projects.titleAlt')}</h1>
           <p className="text-[#475569]">{t('admin.projects.subtitleAlt')}</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 border-none bg-[#1B7A1E] text-white shadow-[#1B7A1E]/25 hover:bg-[#156318]">
+        <Button onClick={() => { resetForm(); setShowModal(true); }} className="flex items-center gap-2 self-start rounded-full border-none bg-[#1B7A1E] px-5 text-white shadow-[#1B7A1E]/20 hover:bg-[#156318] sm:self-auto">
           <Plus size={20} />
           {t('admin.projects.addProjectAlt')}
         </Button>
       </div>
 
-      {/* Search */}
-      <div>
+      <div className="grid grid-cols-1 gap-3 rounded-2xl border border-[#e5eaf0] bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,1fr)_220px_220px] lg:items-end">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={20} />
           <input
@@ -282,19 +281,15 @@ export const ProjectManagement: React.FC = () => {
             placeholder={t('admin.projects.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-[#1B7A1E] bg-white py-2 pl-10 pr-4 text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
+            className="h-11 w-full rounded-xl border border-[#dbe5e0] bg-white py-2 pl-10 pr-4 text-[#111b38] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
           />
         </div>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.filterByStatus')}</label>
+          <label className="mb-1.5 block text-xs font-semibold text-[#63708a]">{t('admin.projects.filterByStatus')}</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | 'all')}
-            className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
+            className="h-11 w-full rounded-xl border border-[#dbe5e0] bg-white px-4 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
           >
             <option value="all">{t('admin.projects.allStatuses')}</option>
             <option value="planning">{t('admin.projects.statusPlanning')}</option>
@@ -305,11 +300,11 @@ export const ProjectManagement: React.FC = () => {
           </select>
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-[#475569]">{t('admin.projects.filterByPriority')}</label>
+          <label className="mb-1.5 block text-xs font-semibold text-[#63708a]">{t('admin.projects.filterByPriority')}</label>
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value as ProjectPriority | 'all')}
-            className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
+            className="h-11 w-full rounded-xl border border-[#dbe5e0] bg-white px-4 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
           >
             <option value="all">{t('admin.projects.allPriorities')}</option>
             <option value="low">{t('admin.projects.priorityLow')}</option>
@@ -321,7 +316,7 @@ export const ProjectManagement: React.FC = () => {
       </div>
 
       {/* Projects Table */}
-      <div className="overflow-hidden rounded-xl border border-[#1B7A1E] bg-white">
+      <div className="overflow-hidden rounded-2xl border border-[#e5eaf0] bg-white shadow-sm">
         {filteredProjects.length === 0 ? (
           <div className="py-12 text-center">
             <FolderKanban className="mx-auto mb-4 h-16 w-16 text-[#94a3b8]" />
@@ -332,7 +327,7 @@ export const ProjectManagement: React.FC = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse bg-white">
-              <thead className="border-b border-[#1B7A1E] bg-white">
+              <thead className="border-b border-[#e5eaf0] bg-[#f8fafc]">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#1B7A1E]">
                     {t('admin.projects.nameAlt')}
@@ -362,7 +357,7 @@ export const ProjectManagement: React.FC = () => {
               </thead>
               <tbody>
                 {filteredProjects.map((project) => (
-                  <tr key={project.id} className="border-b border-[#d8ecd9] bg-white transition-colors hover:bg-[#f3faf4]">
+                  <tr key={project.id} className="border-b border-[#e5eaf0] bg-white transition-colors hover:bg-[#f3faf4]">
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-[#edf7ee] p-2">
@@ -449,8 +444,8 @@ export const ProjectManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#1B7A1E] bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1B7A1E] p-6">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#dbe5e0] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#dbe5e0] p-6">
               <h3 className="text-xl font-bold text-[#111b38]">
                 {editingProject ? t('admin.projects.editProject') : t('admin.projects.addProjectNew')}
               </h3>
@@ -466,7 +461,7 @@ export const ProjectManagement: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
+                  className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder={t('admin.projects.namePlaceholder')}
                 />
               </div>
@@ -477,7 +472,7 @@ export const ProjectManagement: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
+                  className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder={t('admin.projects.descriptionPlaceholder')}
                 />
               </div>
@@ -488,7 +483,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
-                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
+                    className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="planning">{t('admin.projects.statusPlanning')}</option>
                     <option value="in_progress">{t('admin.projects.statusInProgress')}</option>
@@ -503,7 +498,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as ProjectPriority })}
-                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
+                    className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="low">{t('admin.projects.priorityLow')}</option>
                     <option value="medium">{t('admin.projects.priorityMedium')}</option>
@@ -520,7 +515,7 @@ export const ProjectManagement: React.FC = () => {
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
+                    className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
 
@@ -530,7 +525,7 @@ export const ProjectManagement: React.FC = () => {
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
+                    className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   />
                 </div>
               </div>
@@ -541,7 +536,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.managerId}
                     onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
-                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
+                    className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="">{t('admin.projects.selectManager')}</option>
                     {users.map(user => (
@@ -555,7 +550,7 @@ export const ProjectManagement: React.FC = () => {
                   <select
                     value={formData.departmentId}
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                    className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
+                    className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E] [&>option]:bg-white [&>option]:text-[#111b38]"
                   >
                     <option value="">{t('admin.users.selectDepartment')}</option>
                     {departments.map(dept => (
@@ -572,13 +567,13 @@ export const ProjectManagement: React.FC = () => {
                   min="0"
                   value={formData.budget}
                   onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
-                  className="w-full rounded-lg border border-[#1B7A1E] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
+                  className="w-full rounded-xl border border-[#dbe5e0] bg-white px-4 py-2 text-[#111b38] focus:outline-none focus:ring-2 focus:ring-[#1B7A1E]"
                   placeholder="0"
                 />
               </div>
 
-              <div className="flex gap-3 border-t border-[#1B7A1E] p-6">
-                <Button onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 border border-[#1B7A1E] bg-white text-[#1B7A1E] hover:bg-[#edf7ee]">
+              <div className="flex gap-3 border-t border-[#dbe5e0] p-6">
+                <Button onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 border border-[#dbe5e0] bg-white text-[#1B7A1E] hover:bg-[#edf7ee]">
                   {t('common.cancel')}
                 </Button>
                 <Button type="submit" className="flex flex-1 items-center justify-center gap-2 border-none bg-[#1B7A1E] text-white shadow-[#1B7A1E]/25 hover:bg-[#156318]">

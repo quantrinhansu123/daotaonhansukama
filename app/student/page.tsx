@@ -254,7 +254,7 @@ export default function StudentPage() {
                 {t('student.academy.navCertificates')}
               </button>
               <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
-              <Link href="/admin/users" className={navBtn(false)}>
+              <Link href="/admin/courses" className={navBtn(false)}>
                 <LayoutDashboard className={navIconClass} />
                 {t('student.academy.openAdminConsole')}
               </Link>

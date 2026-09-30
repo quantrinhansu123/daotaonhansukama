@@ -205,7 +205,6 @@ export const student = {
     staffRole: 'Nhân viên',
     adminRole: 'Quản trị viên',
     manageContent: 'Up video & nội dung bài',
-    openAdminConsole: 'Bảng quản trị',
     navPrograms: 'Chương trình',
     navStudents: 'Học viên',
     navProjects: 'Dự án',
@@ -215,6 +214,7 @@ export const student = {
     navLibrary: 'Thư viện tài liệu',
     navReports: 'Báo cáo',
     navCertificates: 'Chứng nhận',
+    openAdminConsole: 'Bảng quản trị',
     navSystem: 'Quản trị hệ thống',
     navUsers: 'Người dùng',
     navPermissions: 'Phân quyền',
@@ -293,6 +293,7 @@ export const student = {
   },
   learners: {
     subtitle: 'Danh sách học viên và nhân sự đang theo học trên hệ thống.',
+    accountFormHint: 'Tạo tài khoản học viên hoặc nhân viên và gán phòng ban, chức vụ.',
     total: 'Tổng học viên',
     students: 'Học viên',
     staff: 'Nhân viên',

@@ -205,7 +205,6 @@ export const student = {
     staffRole: 'Staff',
     adminRole: 'Administrator',
     manageContent: 'Upload video & lesson content',
-    openAdminConsole: 'Admin console',
     navPrograms: 'Programs',
     navStudents: 'Learners',
     navProjects: 'Projects',
@@ -215,6 +214,7 @@ export const student = {
     navLibrary: 'Document library',
     navReports: 'Reports',
     navCertificates: 'Certificates',
+    openAdminConsole: 'Admin console',
     navSystem: 'System admin',
     navUsers: 'Users',
     navPermissions: 'Permissions',
@@ -293,6 +293,7 @@ export const student = {
   },
   learners: {
     subtitle: 'Learners and staff currently enrolled in the academy.',
+    accountFormHint: 'Create a learner or staff account and assign a department and position.',
     total: 'Total learners',
     students: 'Students',
     staff: 'Staff',
