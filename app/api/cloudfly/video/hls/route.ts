@@ -27,15 +27,16 @@ export async function GET(request: NextRequest) {
   try {
     const { client, bucket } = getCloudFlyStorage();
     if (!relative.endsWith('.m3u8')) {
-      // CloudFly's signed GET currently omits CORS response headers, so MSE
-      // cannot read redirected fMP4 segments. Stream them from our origin.
+      // Signed CloudFly GET responses still omit CORS headers, so a browser
+      // media-source player cannot read them. Keep this proxy for callers
+      // that still request HLS. Progressive MP4 playback uses the signed URL.
       const object = await client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }), {
         abortSignal: request.signal,
       });
       if (!object.Body) return NextResponse.json({ error: 'Đoạn video trống.' }, { status: 502 });
       const headers: Record<string, string> = {
         'Content-Type': relative.endsWith('.m4s') ? 'video/iso.segment' : 'video/mp4',
-        'Cache-Control': 'private, max-age=3600',
+        'Cache-Control': 'private, max-age=86400, immutable',
       };
       if (object.ContentLength !== undefined) headers['Content-Length'] = String(object.ContentLength);
       return new NextResponse(Readable.toWeb(object.Body as Readable) as ReadableStream, { headers });
@@ -45,9 +46,9 @@ export async function GET(request: NextRequest) {
     const body = await object.Body?.transformToString();
     if (!body) return NextResponse.json({ error: 'Danh sách phát trống.' }, { status: 502 });
     const withToken = (child: string) => {
-      const childPath = path.posix.normalize(path.posix.join(path.posix.dirname(relative), child));
-      if (!safePath(childPath)) throw new Error('Unsafe video playlist path.');
-      return `/api/cloudfly/video/hls?key=${encodeURIComponent(key)}&version=${version}&path=${encodeURIComponent(childPath)}&token=${encodeURIComponent(token)}`;
+      const next = path.posix.normalize(path.posix.join(path.posix.dirname(relative), child));
+      if (!safePath(next)) throw new Error('Unsafe video playlist path.');
+      return `/api/cloudfly/video/hls?key=${encodeURIComponent(key)}&version=${version}&path=${encodeURIComponent(next)}&token=${encodeURIComponent(token)}`;
     };
     const rewritten = body.split(/\r?\n/).map(line => {
       if (line.startsWith('#EXT-X-MAP:')) {

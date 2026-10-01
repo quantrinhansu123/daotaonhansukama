@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from '@/lib/data-store';
+import { collection, getDocs, listJsonText } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,10 +48,10 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
     try {
       setLoading(true);
 
-      const [deptSnapshot, coursesSnapshot, lessonsSnapshot] = await Promise.all([
+      const [deptSnapshot, coursesSnapshot, lessonCourseIds] = await Promise.all([
         getDocs(collection(db, 'departments')),
         getDocs(collection(db, 'courses')),
-        getDocs(collection(db, 'lessons')),
+        listJsonText('lessons', 'courseId'),
       ]);
 
       setDepartments(
@@ -78,9 +78,7 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
       }
 
       const counts: Record<string, number> = {};
-      lessonsSnapshot.docs.forEach(docSnap => {
-        const courseId = docSnap.data().courseId as string | undefined;
-        if (!courseId) return;
+      lessonCourseIds.forEach(courseId => {
         counts[courseId] = (counts[courseId] || 0) + 1;
       });
 

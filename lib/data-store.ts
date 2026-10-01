@@ -57,28 +57,62 @@ export function query(ref: any, ...clauses: any[]): any {
   return { kind: 'query', collection: ref.collection, clauses } as StoreRef;
 }
 
+const JSON_FIELD = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function comparable(value: any) {
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+function matchesWhere(row: Row, clause: Clause) {
+  const item = clause.field === '__name__' ? row.id : row.data?.[clause.field];
+  const actual = comparable(item);
+  const expected = comparable(clause.value);
+  if (clause.operator === '==') return actual === expected;
+  if (clause.operator === '>=') return actual >= expected;
+  if (clause.operator === '<=') return actual <= expected;
+  if (clause.operator === 'array-contains') return Array.isArray(item) && item.includes(expected);
+  throw new Error(`Bộ lọc Supabase chưa hỗ trợ: ${clause.operator}`);
+}
+
+function applyServerFilters(request: any, clauses: Clause[]) {
+  const equals: Record<string, unknown> = {};
+  for (const clause of clauses) {
+    if (clause.kind !== 'where') continue;
+    if (clause.field === '__name__') {
+      if (clause.operator !== '==') throw new Error(`Bộ lọc Supabase chưa hỗ trợ: ${clause.operator}`);
+      request = request.eq('id', String(clause.value ?? ''));
+      continue;
+    }
+    if (!JSON_FIELD.test(clause.field)) throw new Error(`Bộ lọc không hợp lệ: ${clause.field}`);
+    const expected = comparable(clause.value);
+    if (clause.operator === '==') equals[clause.field] = expected;
+    else if (clause.operator === 'array-contains') equals[clause.field] = [expected];
+    else if ((clause.operator === '>=' || clause.operator === '<=') && typeof expected === 'string') {
+      request = request.filter(`data->>${clause.field}`, clause.operator === '>=' ? 'gte' : 'lte', expected);
+    } else if (clause.operator !== '>=' && clause.operator !== '<=') {
+      throw new Error(`Bộ lọc Supabase chưa hỗ trợ: ${clause.operator}`);
+    }
+  }
+  if (Object.keys(equals).length > 0) request = request.contains('data', equals);
+  return request;
+}
+
 export async function getDocs(ref: any): Promise<QuerySnapshot> {
+  const target = ref as StoreRef;
   const client = getSupabaseClient();
+  const clauses = target.clauses || [];
   const rows: Row[] = [];
   for (let from = 0; ; from += 1000) {
-    const result = await client.from('app_documents')
-      .select('id,data,version').eq('collection', (ref as StoreRef).collection)
-      .order('id').range(from, from + 999);
+    const request = applyServerFilters(
+      client.from('app_documents').select('id,data,version').eq('collection', target.collection),
+      clauses,
+    );
+    const result = await request.order('id').range(from, from + 999);
     fail(result.error);
     rows.push(...(result.data || []) as Row[]);
     if (!result.data || result.data.length < 1000) break;
   }
-  const clauses = (ref as StoreRef).clauses || [];
-  let filtered = rows.filter(row => clauses.every(clause => {
-    if (clause.kind !== 'where') return true;
-    const item = clause.field === '__name__' ? row.id : row.data[clause.field];
-    const actual = item instanceof Date ? item.toISOString() : item;
-    const expected = clause.value instanceof Date ? clause.value.toISOString() : clause.value;
-    if (clause.operator === '==') return actual === expected;
-    if (clause.operator === '>=') return actual >= expected;
-    if (clause.operator === '<=') return actual <= expected;
-    throw new Error(`Bộ lọc Supabase chưa hỗ trợ: ${clause.operator}`);
-  }));
+  let filtered = rows.filter(row => clauses.every(clause => clause.kind !== 'where' || matchesWhere(row, clause)));
   for (const clause of clauses.filter(item => item.kind === 'order').reverse()) {
     filtered = filtered.sort((a, b) => {
       const left = clause.field === '__name__' ? a.id : a.data[clause.field];
@@ -88,6 +122,29 @@ export async function getDocs(ref: any): Promise<QuerySnapshot> {
   }
   const docs = filtered.map(row => snapshot({ kind: 'document', collection: ref.collection, id: row.id }, row));
   return { docs, empty: docs.length === 0, size: docs.length };
+}
+
+export async function listJsonText(collectionName: string, field: string): Promise<string[]> {
+  if (!JSON_FIELD.test(field)) throw new Error(`Bộ lọc không hợp lệ: ${field}`);
+  const client = getSupabaseClient();
+  const values: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const result = await client.from('app_documents')
+      .select(`id, value:data->>${field}`)
+      .eq('collection', collectionName)
+      .order('id')
+      .range(from, from + 999);
+    if (result.error) {
+      if (from > 0) fail(result.error);
+      const snapshot = await getDocs(collection(db, collectionName));
+      return snapshot.docs.map(item => String(item.data()?.[field] || '')).filter(Boolean);
+    }
+    for (const row of (result.data || []) as Array<{ value?: string | null }>) {
+      if (row.value) values.push(row.value);
+    }
+    if (!result.data || result.data.length < 1000) break;
+  }
+  return values;
 }
 
 export async function getDoc(ref: any): Promise<DocumentSnapshot> {

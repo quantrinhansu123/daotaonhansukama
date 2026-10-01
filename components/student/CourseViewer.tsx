@@ -267,7 +267,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
     try {
       const coursesRef = collection(db, 'courses');
-      const snapshot = await getDocs(coursesRef);
+      const snapshot = userProfile.role === 'admin'
+        ? await getDocs(coursesRef)
+        : await getDocs(query(coursesRef, where('students', 'array-contains', userProfile.uid)));
       const coursesData = snapshot.docs.map(doc => ({
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),

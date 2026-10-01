@@ -49,7 +49,11 @@ export async function attachVideoPlayback(
     hls = null;
   };
 
-  if (source.hlsUrl) {
+  // A signed MP4 plays in the video element without CORS. CloudFly omits CORS
+  // on signed GET responses, so HLS.js cannot fetch those segments directly
+  // and would otherwise pull every segment through the app server.
+  const directFile = /^https?:\/\//i.test(source.url) && !/\.m3u8(\?|$)/i.test(source.url);
+  if (source.hlsUrl && !directFile) {
     try {
       const { default: Hls } = await import('hls.js');
       if (disposed || options.signal?.aborted) return {
@@ -57,9 +61,10 @@ export async function attachVideoPlayback(
       };
       if (Hls.isSupported()) {
         hls = new Hls({
-          // Start conservatively for quick startup; ABR can climb to the source
-          // rendition. Do not cap levels to the CSS size of the player.
-          startLevel: -1,
+          // Start on the smallest rendition so the first segments clear the
+          // app proxy quickly, then let ABR climb. Do not cap levels to the
+          // CSS size of the player.
+          startLevel: 0,
           capLevelToPlayerSize: false,
           maxBufferLength: 20,
           maxMaxBufferLength: 30,

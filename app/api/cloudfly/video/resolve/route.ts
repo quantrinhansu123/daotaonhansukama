@@ -41,11 +41,8 @@ export async function GET(request: NextRequest) {
           : Promise.resolve(undefined),
       ]);
       const playlistVersion = asset.hls_master_key?.match(/\/(v[12])\/hls\/master\.m3u8$/)?.[1] || 'v2';
-      const hlsUrl = asset.hls_master_key
-        ? `/api/cloudfly/video/hls?key=${encodeURIComponent(key)}&version=${playlistVersion}&path=master.m3u8&token=${encodeURIComponent(token)}`
-        : undefined;
       return NextResponse.json({
-        status: 'ready', url, hlsUrl, posterUrl, sourceQualityAvailable: playlistVersion === 'v2',
+        status: 'ready', url, posterUrl, sourceQualityAvailable: playlistVersion === 'v2',
         expiresAt: Date.now() + URL_SECONDS * 1000,
         tokenExpiresAt,
       }, { headers });
