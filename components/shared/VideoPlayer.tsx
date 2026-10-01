@@ -58,6 +58,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     };
     video.addEventListener('loadedmetadata', setSourceQuality);
 
+    let startIfReady: (() => void) | null = null;
     const load = async (force = false) => {
       const at = video.currentTime;
       try {
@@ -100,12 +101,12 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
           return;
         }
         playbackRef.current = handle;
-        const startIfReady = () => {
-          if (!autoPlayRef.current || !activeRef.current || controller.signal.aborted) return;
+        startIfReady = () => {
+          if (!autoPlayRef.current || !activeRef.current || controller.signal.aborted || !video.paused) return;
           void video.play().catch(() => setMediaReady(true));
         };
+        video.addEventListener('canplay', startIfReady);
         if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) startIfReady();
-        else video.addEventListener('canplay', startIfReady, { once: true });
       } catch (cause) {
         if (!controller.signal.aborted) {
           setMediaReady(true);
@@ -118,6 +119,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     return () => {
       controller.abort();
       video.removeEventListener('loadedmetadata', setSourceQuality);
+      if (startIfReady) video.removeEventListener('canplay', startIfReady);
       handle?.destroy();
       playbackRef.current = null;
       video.pause();
@@ -140,8 +142,10 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     if (!video) return;
     if (active) {
       playbackRef.current?.resumeLoading();
-      if (autoPlay) void video.play().catch(() => {});
-    } else {
+      if (autoPlay && video.paused && video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+        void video.play().catch(() => {});
+      }
+    } else if (!video.paused) {
       video.pause();
     }
   }, [active, autoPlay]);
@@ -172,13 +176,10 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
       ) : <video
         ref={videoRef}
         data-intro-video={prewarm ? '' : undefined}
-        controls={active && mediaReady}
+        controls
         controlsList="nodownload"
         playsInline
-        onPlaying={() => setMediaReady(true)}
-        onCanPlay={() => {
-          if (!autoPlayRef.current) setMediaReady(true);
-        }}
+        onCanPlay={() => setMediaReady(true)}
         preload={prewarm ? 'auto' : 'metadata'}
         className={className}
         onPlay={() => playbackRef.current?.resumeLoading()}

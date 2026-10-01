@@ -1006,7 +1006,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <video
                         ref={videoRef}
                         className="h-full w-full"
-                        controls={!isStaff && playerOpen && videoReady}
+                        controls={!isStaff}
                         controlsList="nodownload"
                         onTimeUpdate={handleTimeUpdate}
                         onPause={handleVideoPause}

@@ -53,6 +53,16 @@ export async function attachVideoPlayback(
   // on signed GET responses, so HLS.js cannot fetch those segments directly
   // and would otherwise pull every segment through the app server.
   const directFile = /^https?:\/\//i.test(source.url) && !/\.m3u8(\?|$)/i.test(source.url);
+  const assignSource = (url: string) => {
+    const nextPath = url.split('?')[0];
+    const currentPath = (video.currentSrc || video.src || '').split('?')[0];
+    if (currentPath && currentPath === nextPath && video.readyState > 0) return;
+    const wasPlaying = !video.paused && !video.ended;
+    video.src = url;
+    video.load();
+    if (wasPlaying) video.addEventListener('canplay', () => { void video.play().catch(() => {}); }, { once: true });
+  };
+
   if (source.hlsUrl && !directFile) {
     try {
       const { default: Hls } = await import('hls.js');
@@ -99,19 +109,15 @@ export async function attachVideoPlayback(
         if (options.prewarm) hls.autoLevelCapping = 0;
         hls.attachMedia(video);
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = source.hlsUrl;
-        video.load();
+        assignSource(source.hlsUrl);
       } else {
-        video.src = source.url;
-        video.load();
+        assignSource(source.url);
       }
     } catch {
-      video.src = source.url;
-      video.load();
+      assignSource(source.url);
     }
   } else {
-    video.src = source.url;
-    video.load();
+    assignSource(source.url);
   }
 
   return {
