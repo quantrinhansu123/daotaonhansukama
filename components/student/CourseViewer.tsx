@@ -19,6 +19,7 @@ import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { resolveVideo } from '@/lib/video-resolve';
 import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from '@/lib/video-playback';
 import { VideoQualitySelect } from '@/components/shared/VideoQualitySelect';
+import { VideoLoadingBuddy } from '@/components/shared/VideoLoadingBuddy';
 import { getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
 import { LessonManagement } from '@/components/teacher/LessonManagement';
 
@@ -62,6 +63,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const lessonPlaybackRef = useRef<PlaybackHandle | null>(null);
   const hasOpenedLessonRef = useRef(false);
   const [videoLoadError, setVideoLoadError] = useState('');
+  const [videoReady, setVideoReady] = useState(false);
+  const [showVideoBuddy, setShowVideoBuddy] = useState(false);
   const [qualityLevels, setQualityLevels] = useState<VideoQualityLevel[]>([]);
   const [selectedQuality, setSelectedQuality] = useState(-1);
   const [qualityPlaceholder, setQualityPlaceholder] = useState('Đang tải mức chất lượng…');
@@ -139,6 +142,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     const startAt = latestProgressRef.current[selectedLessonId]?.watchedSeconds || 0;
     lastProgressSaveAt.current = 0;
     setVideoLoadError('');
+    setVideoReady(false);
+    setIsPlaying(false);
     setQualityLevels([]);
     setSelectedQuality(-1);
     setQualityPlaceholder('Đang tải mức chất lượng…');
@@ -187,6 +192,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   }, [selectedLessonId, cloudFlyLessonKey, progressLoaded, introOpen, viewMode]);
 
   useEffect(() => {
+    if (!playerOpen || videoReady || videoLoadError) {
+      setShowVideoBuddy(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setShowVideoBuddy(true), 350);
+    return () => window.clearTimeout(timer);
+  }, [playerOpen, videoReady, videoLoadError, selectedLesson?.id]);
+
+  useEffect(() => {
     if (playerOpen) {
       hasOpenedLessonRef.current = true;
       return;
@@ -218,7 +232,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Anti-cheat: Attention check every 30 seconds (staff only)
+  // Anti-cheat: Attention check every 3 minutes (staff only)
   useEffect(() => {
     if (!isStaff || !videoRef.current) return;
 
@@ -233,28 +247,26 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           setShowAttentionCheck(true);
           console.log('⚠️ Attention check triggered');
         }
-      }, 30000); // 30 seconds
+      }, 3 * 60 * 1000);
     };
 
     const video = videoRef.current;
 
     const handlePlay = () => {
-      setIsPlaying(true);
       startAttentionCheck();
     };
 
     const handlePause = () => {
-      setIsPlaying(false);
       if (attentionCheckTimer.current) {
         clearTimeout(attentionCheckTimer.current);
       }
     };
 
-    video.addEventListener('play', handlePlay);
+    video.addEventListener('playing', handlePlay);
     video.addEventListener('pause', handlePause);
 
     return () => {
-      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('playing', handlePlay);
       video.removeEventListener('pause', handlePause);
       if (attentionCheckTimer.current) {
         clearTimeout(attentionCheckTimer.current);
@@ -429,11 +441,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     if (!videoRef.current) return;
 
     if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
+      void videoRef.current.play().catch(() => setIsPlaying(false));
     } else {
       videoRef.current.pause();
-      setIsPlaying(false);
     }
   };
 
@@ -459,8 +469,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const handleRestart = () => {
     if (!videoRef.current) return;
     videoRef.current.currentTime = 0;
-    videoRef.current.play();
-    setIsPlaying(true);
+    void videoRef.current.play().catch(() => setIsPlaying(false));
   };
 
   const saveProgress = async (watchedSeconds: number, totalSeconds: number, playedRanges: WatchedRange[]) => {
@@ -996,7 +1005,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <video
                         ref={videoRef}
                         className="h-full w-full"
-                        controls={!isStaff && playerOpen}
+                        controls={!isStaff && playerOpen && videoReady}
                         controlsList="nodownload"
                         onTimeUpdate={handleTimeUpdate}
                         onPause={handleVideoPause}
@@ -1009,6 +1018,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           if (end - media.currentTime >= 4) lessonPlaybackRef.current?.pauseLoading();
                         }}
                         playsInline
+                        onCanPlay={() => setVideoReady(true)}
+                        onPlaying={() => setIsPlaying(true)}
+                        onPause={() => setIsPlaying(false)}
                         preload="auto"
                         onContextMenu={event => isStaff && event.preventDefault()}
                         onDoubleClick={handleFullscreen}
@@ -1016,6 +1028,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       >
                         {t('student.videoNotSupported')}
                       </video>
+                      {showVideoBuddy && <VideoLoadingBuddy />}
                       {playerOpen && (
                         <VideoQualitySelect
                           levels={qualityLevels}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from '@/lib/video-playback';
 import { resolveVideo } from '@/lib/video-resolve';
+import { VideoLoadingBuddy } from './VideoLoadingBuddy';
 import { VideoQualitySelect } from './VideoQualitySelect';
 
 interface VideoPlayerProps {
@@ -26,6 +27,8 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
   const [selectedQuality, setSelectedQuality] = useState(-1);
   const [qualityPlaceholder, setQualityPlaceholder] = useState('Đang tải mức chất lượng…');
   const [useProviderFallback, setUseProviderFallback] = useState(false);
+  const [mediaReady, setMediaReady] = useState(false);
+  const [showBuddy, setShowBuddy] = useState(false);
   activeRef.current = active;
   autoPlayRef.current = autoPlay;
 
@@ -37,6 +40,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     let refreshes = 0;
     let hasAdaptiveLevels = false;
     setUseProviderFallback(false);
+    setMediaReady(false);
     setError('');
     setQualityLevels([]);
     setSelectedQuality(-1);
@@ -96,9 +100,15 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
           return;
         }
         playbackRef.current = handle;
-        if (autoPlayRef.current && activeRef.current) void video.play().catch(() => {});
+        const startIfReady = () => {
+          if (!autoPlayRef.current || !activeRef.current || controller.signal.aborted) return;
+          void video.play().catch(() => setMediaReady(true));
+        };
+        if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) startIfReady();
+        else video.addEventListener('canplay', startIfReady, { once: true });
       } catch (cause) {
         if (!controller.signal.aborted) {
+          setMediaReady(true);
           if (providerFallbackUrl) setUseProviderFallback(true);
           else setError(cause instanceof Error ? cause.message : 'Không mở được video.');
         }
@@ -115,6 +125,15 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
       video.load();
     };
   }, [videoKey, mediaUrl, hlsUrl, providerFallbackUrl, prewarm]);
+
+  useEffect(() => {
+    if (!active || mediaReady || error || useProviderFallback) {
+      setShowBuddy(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setShowBuddy(true), 350);
+    return () => window.clearTimeout(timer);
+  }, [active, mediaReady, error, useProviderFallback, videoKey, mediaUrl, hlsUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -153,9 +172,13 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
       ) : <video
         ref={videoRef}
         data-intro-video={prewarm ? '' : undefined}
-        controls={active}
+        controls={active && mediaReady}
         controlsList="nodownload"
         playsInline
+        onPlaying={() => setMediaReady(true)}
+        onCanPlay={() => {
+          if (!autoPlayRef.current) setMediaReady(true);
+        }}
         preload={prewarm ? 'auto' : 'metadata'}
         className={className}
         onPlay={() => playbackRef.current?.resumeLoading()}
@@ -166,6 +189,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
           if (end - video.currentTime >= 4) playbackRef.current?.pauseLoading();
         }}
       />}
+      {showBuddy && <VideoLoadingBuddy />}
       {!useProviderFallback && <VideoQualitySelect
         levels={qualityLevels}
         selectedIndex={selectedQuality}
