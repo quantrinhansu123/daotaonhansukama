@@ -1,31 +1,51 @@
 'use client';
 
-import { resolveDemoVideo } from '@/lib/demo-video';
+import { bunnyStreamPlaylistUrl, resolveDemoVideo } from '@/lib/demo-video';
 import { VideoPlayer } from './VideoPlayer';
+import { VideoQualitySelect } from './VideoQualitySelect';
 
 interface DemoVideoViewProps {
   videoKey?: string | null;
   legacyId?: string | null;
   className?: string;
   autoPlay?: boolean;
+  active?: boolean;
+  prewarm?: boolean;
 }
 
-export function DemoVideoView({ videoKey, legacyId, className, autoPlay }: DemoVideoViewProps) {
+export function DemoVideoView({ videoKey, legacyId, className, autoPlay, active = true, prewarm = false }: DemoVideoViewProps) {
   const source = resolveDemoVideo(videoKey, legacyId);
   if (!source) {
-    return <p className="p-4 text-sm text-slate-400">Chưa có video giới thiệu.</p>;
+    return <div className={`relative grid h-full w-full place-items-center bg-black ${className || ''}`}>
+      <VideoQualitySelect levels={[]} selectedIndex={-1} onChange={() => {}} disabled placeholder="Chưa có video" />
+      <p className="p-4 text-sm text-slate-400">Chưa có video giới thiệu.</p>
+    </div>;
   }
   if (source.kind === 'cloudfly') {
-    return <VideoPlayer videoKey={source.key} autoPlay={autoPlay} className={className} />;
+    return <VideoPlayer videoKey={source.key} autoPlay={autoPlay} active={active} prewarm={prewarm} className={className} />;
   }
   if (source.kind === 'bunny') {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID;
+    const playlistUrl = bunnyStreamPlaylistUrl(source.id);
+    const embedUrl = libraryId
+      ? `https://iframe.mediadelivery.net/embed/${libraryId}/${source.id}?autoplay=${autoPlay ? 'true' : 'false'}`
+      : null;
+    if (playlistUrl) {
+      return <VideoPlayer
+        hlsUrl={playlistUrl}
+        providerFallbackUrl={embedUrl}
+        autoPlay={autoPlay}
+        active={active}
+        prewarm={prewarm}
+        className={className}
+      />;
+    }
     if (!libraryId) {
       return <p className="p-4 text-sm text-slate-400">Video Bunny chưa có mã thư viện để phát.</p>;
     }
     return (
       <iframe
-        src={`https://iframe.mediadelivery.net/embed/${libraryId}/${source.id}?autoplay=${autoPlay ? 'true' : 'false'}`}
+        src={embedUrl!}
         className={className}
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
@@ -33,5 +53,6 @@ export function DemoVideoView({ videoKey, legacyId, className, autoPlay }: DemoV
       />
     );
   }
-  return <video src={source.url} controls controlsList="nodownload" playsInline autoPlay={autoPlay} className={className} />;
+  const isHls = /\.m3u8(?:$|\?)/i.test(source.url);
+  return <VideoPlayer mediaUrl={source.url} hlsUrl={isHls ? source.url : undefined} autoPlay={autoPlay} active={active} prewarm={prewarm} className={className} />;
 }

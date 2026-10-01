@@ -4,7 +4,9 @@ import { fetchViaPublicDns, streamViaPublicDns } from '@/lib/bunny-dns';
 export const runtime = 'nodejs';
 
 function streamCdnHost() {
-  return (process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const configured = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || '';
+  const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID || '';
+  return (configured || (libraryId ? `vz-${libraryId}.b-cdn.net` : '')).replace(/^https?:\/\//, '').replace(/\/$/, '');
 }
 
 function rewritePlaylist(body: string, pathPrefix: string): string {
@@ -15,7 +17,12 @@ function rewritePlaylist(body: string, pathPrefix: string): string {
     out = out.replaceAll(`http://${cdn}/`, `${pathPrefix}/`);
   }
   // Absolute path segments under CDN root → keep relative to current proxy folder
-  return out;
+  return out.split(/\r?\n/).map(line => {
+    if (line.startsWith('#')) {
+      return line.replace(/URI="\/(?!\/)([^"]+)"/g, `URI="${pathPrefix}/$1"`);
+    }
+    return line.startsWith('/') ? `${pathPrefix}${line}` : line;
+  }).join('\n');
 }
 
 export async function GET(

@@ -5,6 +5,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { NextRequest, NextResponse } from 'next/server';
 import { CLOUDFLY_VIDEO_PREFIX, getCloudFlyStorage } from '@/lib/cloudfly-s3';
 import { authorizeRequest } from '@/lib/server-auth';
+import { queueVideoAsset } from '@/lib/video-assets-server';
 
 export const runtime = 'nodejs';
 const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024;
@@ -47,7 +48,11 @@ export async function POST(request: NextRequest) {
       leavePartsOnError: false,
     });
     await upload.done();
-    return NextResponse.json({ key });
+    const processingQueued = await queueVideoAsset(key).then(() => true).catch(error => {
+      console.error('[CloudFly] Could not queue completed video:', error instanceof Error ? error.message : error);
+      return false;
+    });
+    return NextResponse.json({ key, processingQueued });
   } catch (error) {
     console.error('[CloudFly] Video upload failed:', error);
     return NextResponse.json({

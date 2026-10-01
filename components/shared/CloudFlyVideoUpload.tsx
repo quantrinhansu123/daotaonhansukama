@@ -79,7 +79,7 @@ export function CloudFlyVideoUpload({ label, courseId, currentVideoKey, currentL
         if (file) handleFile(file);
       }} />
     </label>
-    <p className={`text-xs ${dark ? 'text-slate-400' : 'text-slate-500'}`}>Video tối đa 2 GB; thời lượng không giới hạn. Nên dùng MP4 H.264/AAC, 1080p để phát rõ và tua mượt.</p>
+    <p className={`text-xs ${dark ? 'text-slate-400' : 'text-slate-500'}`}>Video tối đa 2 GB. Không cần đổi định dạng hoặc nén trước khi tải; hệ thống giữ file gốc và tự tạo các mức phát đến đúng độ phân giải của video.</p>
     {loading && <p className="text-xs text-slate-400">Bạn có thể đóng cửa sổ và tiếp tục thao tác; tiến trình vẫn ở góc màn hình.</p>}
     {key && !loading && <button type="button" className="inline-flex items-center gap-1 text-xs text-rose-400 hover:underline" onClick={() => void handleRemove()}><X size={13} /> Gỡ khỏi khóa học (tệp vẫn lưu)</button>}
     {error && <p className="text-xs text-rose-400" role="alert">{error}</p>}

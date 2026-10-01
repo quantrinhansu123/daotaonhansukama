@@ -364,7 +364,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         </div>
                         <h4 className="font-semibold text-white text-xs">{t("teacher.video")}</h4>
                       </div>
-                      {canManage && <p className="mb-2 text-[11px] text-slate-400">Tối đa 2 GB · không giới hạn thời lượng · nên dùng MP4 H.264/AAC, 1080p</p>}
+                      {canManage && <p className="mb-2 text-[11px] text-slate-400">Tối đa 2 GB · nhận MP4, MOV, MKV, AVI, WebM · không cần đổi định dạng hoặc nén trước</p>}
 
                       {lesson.videoKey || lesson.videoId || lesson.videoUrl ? (
                         <div className="space-y-2">

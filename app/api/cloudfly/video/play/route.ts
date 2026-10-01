@@ -6,6 +6,8 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudFlyStorage, isCloudFlyVideoKey } from '@/lib/cloudfly-s3';
+import { getVideoAsset } from '@/lib/video-assets-server';
+import { verifyVideoToken } from '@/lib/video-token-server';
 
 export const runtime = 'nodejs';
 
@@ -24,13 +26,19 @@ export async function GET(request: NextRequest) {
   if (!isCloudFlyVideoKey(key)) {
     return NextResponse.json({ error: 'Mã video CloudFly không hợp lệ.' }, { status: 400 });
   }
+  if (!verifyVideoToken(key, request.nextUrl.searchParams.get('token') || '')) {
+    return NextResponse.json({ error: 'Bạn cần mở video từ khóa học của mình.' }, { status: 401 });
+  }
   try {
     const { client, bucket } = getCloudFlyStorage();
-    const signedUrl = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+    const asset = await getVideoAsset(key).catch(() => null);
+    const readyKey = asset?.status === 'ready' ? asset.optimized_key : null;
+    const playbackKey = readyKey || key;
+    const signedUrl = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: playbackKey }), {
       expiresIn: 60 * 60,
     });
 
-    if (browserCanPlay(key)) {
+    if (readyKey || browserCanPlay(key)) {
       const response = NextResponse.redirect(signedUrl, 307);
       response.headers.set('Cache-Control', 'private, no-store');
       return response;
@@ -53,6 +61,8 @@ export async function GET(request: NextRequest) {
       '-f', 'mp4',
       'pipe:1',
     ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+    request.signal.addEventListener('abort', () => ffmpeg.kill(), { once: true });
 
     ffmpeg.on('error', error => {
       console.error('[CloudFly] ffmpeg failed to start', error);

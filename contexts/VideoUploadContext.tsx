@@ -130,7 +130,7 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
                 <p className="truncate text-xs text-slate-500" title={job.fileName}>{job.fileName}</p>
                 <p className={`mt-1 text-xs ${job.status === 'error' ? 'text-rose-600' : 'text-slate-600'}`}>
                   {job.status === 'queued' && 'Đang chờ lượt tải lên…'}
-                  {job.status === 'preparing' && 'Đang chuẩn bị MP4 để phát nhanh…'}
+                  {job.status === 'preparing' && 'Đang chuẩn bị tải video lên CloudFly…'}
                   {job.status === 'uploading' && 'Đang tải lên CloudFly. Bạn có thể tiếp tục làm việc.'}
                   {job.status === 'finalizing' && 'Đang hoàn tất lưu tệp trên CloudFly…'}
                   {job.status === 'saving' && 'Đã gửi tệp, đang lưu vào khóa học…'}

@@ -5,7 +5,9 @@
 export function proxyBunnyUrl(url?: string | null): string {
   if (!url) return '';
 
-  const streamCdn = (process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const configuredStreamCdn = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || '';
+  const streamLibraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID || '';
+  const streamCdn = (configuredStreamCdn || (streamLibraryId ? `vz-${streamLibraryId}.b-cdn.net` : '')).replace(/^https?:\/\//, '').replace(/\/$/, '');
   const storageCdn = (process.env.NEXT_PUBLIC_BUNNY_STORAGE_CDN_URL || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   try {

@@ -16,7 +16,9 @@ import { resolveDemoVideo } from '@/lib/demo-video';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
-import { cloudflyVideoUrl } from '@/lib/cloudfly-video';
+import { resolveVideo } from '@/lib/video-resolve';
+import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from '@/lib/video-playback';
+import { VideoQualitySelect } from '@/components/shared/VideoQualitySelect';
 import { getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
 import { LessonManagement } from '@/components/teacher/LessonManagement';
 
@@ -57,10 +59,23 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [managingContent, setManagingContent] = useState(false);
   const toastTimer = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lessonPlaybackRef = useRef<PlaybackHandle | null>(null);
+  const hasOpenedLessonRef = useRef(false);
+  const [videoLoadError, setVideoLoadError] = useState('');
+  const [qualityLevels, setQualityLevels] = useState<VideoQualityLevel[]>([]);
+  const [selectedQuality, setSelectedQuality] = useState(-1);
+  const [qualityPlaceholder, setQualityPlaceholder] = useState('Đang tải mức chất lượng…');
   const lastProgressSaveAt = useRef(0);
   const attentionCheckTimer = useRef<NodeJS.Timeout | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const latestProgressRef = useRef(progress);
+  latestProgressRef.current = progress;
+  const selectedLessonId = selectedLesson?.id;
+  const selectedLessonVideo = selectedLesson
+    ? resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl)
+    : null;
+  const cloudFlyLessonKey = selectedLessonVideo?.kind === 'cloudfly' ? selectedLessonVideo.key : null;
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
@@ -115,26 +130,72 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   }, [lessons, selectedTag]);
 
   useEffect(() => {
-    const canPlayCloudFly = Boolean(selectedLesson && resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl)?.kind === 'cloudfly');
-    if (playerOpen && canPlayCloudFly && progressLoaded && viewMode === 'video') {
-      lastProgressSaveAt.current = 0;
-      const timer = window.setTimeout(() => {
-        void initializeVideo();
-      }, 60);
-      return () => {
-        window.clearTimeout(timer);
-        if (attentionCheckTimer.current) {
-          clearTimeout(attentionCheckTimer.current);
+    const video = videoRef.current;
+    if (introOpen || viewMode !== 'video' || !cloudFlyLessonKey || !progressLoaded || !video || !selectedLessonId) return;
+    const controller = new AbortController();
+    let handle: PlaybackHandle | null = null;
+    let refreshed = false;
+    const key = cloudFlyLessonKey;
+    const startAt = latestProgressRef.current[selectedLessonId]?.watchedSeconds || 0;
+    lastProgressSaveAt.current = 0;
+    setVideoLoadError('');
+    setQualityLevels([]);
+    setSelectedQuality(-1);
+    setQualityPlaceholder('Đang tải mức chất lượng…');
+    const initialize = async (force = false, position = startAt) => {
+      try {
+        const resolved = await resolveVideo(key, force);
+        if (controller.signal.aborted) return;
+        setQualityPlaceholder(resolved.processing
+          ? 'Đang xử lý các mức chất lượng…'
+          : 'Đang tải mức chất lượng…');
+        handle?.destroy();
+        handle = await attachVideoPlayback(video, resolved, {
+          signal: controller.signal,
+          startAt: position > 5 ? position : 0,
+          prewarm: true,
+          onQualityLevels: setQualityLevels,
+          sourceQualityAvailable: resolved.sourceQualityAvailable,
+          onPlaybackError: () => {
+            if (!refreshed && !controller.signal.aborted) {
+              refreshed = true;
+              void initialize(true, video.currentTime);
+            } else if (!controller.signal.aborted) setVideoLoadError('Không tải được video. Vui lòng thử lại.');
+          },
+        });
+        if (controller.signal.aborted) {
+          handle.destroy();
+          return;
         }
-      };
-    }
-
+        lessonPlaybackRef.current = handle;
+      } catch (cause) {
+        if (!controller.signal.aborted) {
+          setQualityPlaceholder('Chưa có mức chất lượng sẵn sàng');
+          setVideoLoadError(cause instanceof Error ? cause.message : 'Không tải được video.');
+        }
+      }
+    };
+    void initialize();
     return () => {
+      controller.abort();
+      handle?.destroy();
+      lessonPlaybackRef.current = null;
       if (attentionCheckTimer.current) {
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [selectedLesson?.id, selectedLesson?.videoKey, selectedLesson?.videoId, selectedLesson?.videoUrl, progressLoaded, playerOpen, viewMode, playSession]);
+  }, [selectedLessonId, cloudFlyLessonKey, progressLoaded, introOpen, viewMode]);
+
+  useEffect(() => {
+    if (playerOpen) {
+      hasOpenedLessonRef.current = true;
+      return;
+    }
+    if (hasOpenedLessonRef.current) {
+      videoRef.current?.pause();
+      lessonPlaybackRef.current?.pauseLoading();
+    }
+  }, [playerOpen]);
 
   // Pause whenever the browser tab is hidden (all roles).
   useEffect(() => {
@@ -143,6 +204,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         videoRef.current.pause();
         setIsPlaying(false);
       }
+      lessonPlaybackRef.current?.pauseLoading();
       heroRef.current?.querySelectorAll('video').forEach(video => {
         if (!video.paused) video.pause();
       });
@@ -199,26 +261,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       }
     };
   }, [isStaff, selectedLesson?.id, playerOpen]);
-
-  const initializeVideo = () => {
-    if (!selectedLesson || !videoRef.current) return;
-    const source = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
-    if (source?.kind !== 'cloudfly') return;
-    const video = videoRef.current;
-    const nextSrc = cloudflyVideoUrl(source.key);
-    // Avoid reloading the same stream (looks like the page keeps refreshing).
-    if (video.getAttribute('src') === nextSrc || video.src.endsWith(nextSrc)) {
-      return;
-    }
-    const savedProgress = progress[selectedLesson.id];
-    if (savedProgress && savedProgress.watchedSeconds > 5) {
-      video.addEventListener('loadedmetadata', () => {
-        video.currentTime = savedProgress.watchedSeconds;
-      }, { once: true });
-    }
-    video.src = nextSrc;
-    video.load();
-  };
 
   const loadUserCourses = async () => {
     if (!userProfile) return;
@@ -557,6 +599,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   const handleIntro = () => {
     if (resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)) {
+      const prewarmed = heroRef.current?.querySelector<HTMLVideoElement>('video[data-intro-video]');
+      if (prewarmed?.readyState && prewarmed.paused) void prewarmed.play().catch(() => {});
       setPlayerOpen(false);
       setIntroOpen(true);
       window.setTimeout(() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -880,19 +924,36 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
             <div className="min-w-0">
               <div ref={heroRef} className="relative aspect-[636/355] overflow-hidden rounded bg-[#113e30] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId) ? (
-                  <DemoVideoView
-                    key={`${currentCourse.demoVideoKey || ''}:${currentCourse.demoVideoId || ''}`}
-                    videoKey={currentCourse.demoVideoKey}
-                    legacyId={currentCourse.demoVideoId}
-                    autoPlay
-                    className="h-full w-full bg-black object-contain"
-                  />
-                ) : playerOpen && selectedLesson ? (() => {
+                {!playerOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)?.kind === 'cloudfly' && (
+                  <div className={`absolute inset-0 ${introOpen ? '' : 'invisible'}`}>
+                    <DemoVideoView
+                      key={`${currentCourse.demoVideoKey || ''}:${currentCourse.demoVideoId || ''}`}
+                      videoKey={currentCourse.demoVideoKey}
+                      legacyId={currentCourse.demoVideoId}
+                      autoPlay
+                      active={introOpen}
+                      prewarm
+                      className="h-full w-full bg-black object-contain"
+                    />
+                  </div>
+                )}
+                {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)?.kind !== 'cloudfly' && (
+                  <div className="absolute inset-0">
+                    <DemoVideoView
+                      videoKey={currentCourse.demoVideoKey}
+                      legacyId={currentCourse.demoVideoId}
+                      autoPlay
+                      className="h-full w-full bg-black object-contain"
+                    />
+                  </div>
+                )}
+                {selectedLesson ? (() => {
                   const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
                   if (!lessonVideo) {
+                    if (!playerOpen) return null;
                     return (
-                      <div key={`empty-${selectedLesson.id}-${playSession}`} className="grid h-full place-items-center bg-[#0b1424] text-white">
+                      <div key={`empty-${selectedLesson.id}-${playSession}`} className="relative grid h-full place-items-center bg-[#0b1424] text-white">
+                        <VideoQualitySelect levels={[]} selectedIndex={-1} onChange={() => {}} disabled placeholder="Chưa có video" />
                         <div className="text-center">
                           <Play className="mx-auto mb-2 opacity-60" />
                           <p className="mb-1 text-[14px] font-semibold">{selectedLesson.title}</p>
@@ -912,6 +973,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     );
                   }
                   if (lessonVideo.kind !== 'cloudfly') {
+                    if (!playerOpen) return null;
                     return (
                       <DemoVideoView
                         key={`legacy-${selectedLesson.id}-${playSession}`}
@@ -923,23 +985,48 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     );
                   }
                   return (
-                    <div key={`cf-${selectedLesson.id}-${playSession}`} ref={videoContainerRef} className="relative h-full w-full bg-black">
+                    <div
+                      key={`cf-${selectedLesson.id}`}
+                      ref={videoContainerRef}
+                      aria-hidden={!playerOpen}
+                      className={`relative h-full w-full bg-black ${playerOpen ? '' : 'invisible pointer-events-none absolute inset-0'}`}
+                    >
                       <video
                         ref={videoRef}
                         className="h-full w-full"
-                        controls={!isStaff}
+                        controls={!isStaff && playerOpen}
                         controlsList="nodownload"
                         onTimeUpdate={handleTimeUpdate}
                         onPause={handleVideoPause}
                         onEnded={handleVideoEnded}
+                        onPlay={() => lessonPlaybackRef.current?.resumeLoading()}
+                        onProgress={event => {
+                          const media = event.currentTarget;
+                          if (!media.paused) return;
+                          const end = media.buffered.length ? media.buffered.end(media.buffered.length - 1) : 0;
+                          if (end - media.currentTime >= 4) lessonPlaybackRef.current?.pauseLoading();
+                        }}
                         playsInline
+                        preload="auto"
                         onContextMenu={event => isStaff && event.preventDefault()}
                         onDoubleClick={handleFullscreen}
                         style={isStaff ? { pointerEvents: 'none' } : undefined}
                       >
                         {t('student.videoNotSupported')}
                       </video>
-                      {isStaff && (
+                      {playerOpen && (
+                        <VideoQualitySelect
+                          levels={qualityLevels}
+                          selectedIndex={selectedQuality}
+                          placeholder={qualityPlaceholder}
+                          onChange={index => {
+                            setSelectedQuality(index);
+                            lessonPlaybackRef.current?.setQuality(index);
+                          }}
+                        />
+                      )}
+                      {videoLoadError && <div className="absolute inset-0 grid place-items-center bg-black/80 p-4 text-center text-sm text-white">{videoLoadError}</div>}
+                      {isStaff && playerOpen && (
                         <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3" style={{ pointerEvents: 'auto' }}>
                           <div className="flex items-center gap-2">
                             <button onClick={handleRestart} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white" title={t('student.replayFromStart')}><RotateCcw size={16} /></button>
@@ -949,15 +1036,16 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           <button onClick={handleFullscreen} className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white"><Maximize size={16} /></button>
                         </div>
                       )}
-                      {!isStaff && (
+                      {!isStaff && playerOpen && (
                         <button onClick={handleFullscreen} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded bg-black/50 text-white">
                           <Maximize size={16} />
                         </button>
                       )}
                     </div>
                   );
-                })() : (
-                  <>
+                })() : null}
+                {!introOpen && !playerOpen && (
+                  <div className="absolute inset-0">
                     {bannerSrc ? (
                       <img
                         src={bannerSrc}
@@ -978,7 +1066,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         {t('student.academy.watchIntro')}
                       </span>
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -1016,11 +1104,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     onClick={() => {
                       setPlayerOpen(false);
                       setIntroOpen(false);
-                      if (videoRef.current) {
-                        videoRef.current.pause();
-                        videoRef.current.removeAttribute('src');
-                        videoRef.current.load();
-                      }
                     }}
                     className="rounded border border-[#dbe5f0] px-3 py-1.5 text-[11px] text-[#52617c]"
                   >

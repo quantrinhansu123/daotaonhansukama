@@ -6,7 +6,9 @@
 
 1. Tạo bucket riêng tư trong CloudFly Object Storage và lấy S3 access key/secret key.
 2. Điền `CLOUDFLY_S3_BUCKET`, `CLOUDFLY_S3_ACCESS_KEY_ID`, `CLOUDFLY_S3_SECRET_ACCESS_KEY` và các biến Supabase trong `.env.local`. Bật `NEXT_PUBLIC_SUPABASE_ENABLED=true` để dùng đăng nhập và dữ liệu Supabase.
-3. Chạy `npm install` rồi `npm run dev`. Giáo viên tải video bài học và quản trị viên tải video giới thiệu tối đa 2 GB, không giới hạn thời lượng. Trình duyệt tải từng phần trực tiếp lên CloudFly và hiển thị tiến độ ở góc màn hình. Nên dùng MP4 H.264/AAC để phát trực tiếp và tua ổn định.
+3. Chạy `npm install` rồi `npm run dev`. Video giới thiệu và video bài học ở mọi khóa học đều dùng chung một luồng tải CloudFly tối đa 2 GB; trình duyệt tải từng phần trực tiếp lên CloudFly và hiển thị tiến độ. Không cần giáo viên đổi định dạng, nén hay giới hạn ở 1080p: worker chuyển mã sang H.264/AAC, tạo các mức HLS đến đúng độ phân giải nguồn và giữ nguyên file gốc. Các video CloudFly đã có cũng được đưa vào cùng pipeline khi xử lý lại. Video cũ chỉ có mã Bunny cần tải lại lên CloudFly để dùng đúng pipeline này.
+
+Sau khi triển khai web/API lên production, chạy `npm run video:worker` trên một máy worker nền riêng với biến môi trường CloudFly; một tiến trình riêng trên cùng máy web vẫn có thể tranh CPU và mạng với học viên. Chỉ chạy một worker trên mỗi bucket. Nếu worker chưa chạy hoặc video còn đang xử lý, HLS chưa sẵn sàng; lúc đó trình duyệt thử phát file gốc và khả năng tương thích phụ thuộc codec của file.
 
 Video cũ chỉ có mã Bunny chưa được chuyển. Cần tải lại file gốc lên CloudFly cho từng bài học/khóa học. Ảnh và tài liệu cũ vẫn dùng Bunny Storage theo cấu hình hiện tại.
 

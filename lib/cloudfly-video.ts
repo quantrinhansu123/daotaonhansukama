@@ -1,5 +1,4 @@
 import { authenticatedJson } from '@/lib/authenticated-fetch';
-import { prepareFastStartMp4 } from '@/lib/mp4-faststart';
 
 export function cloudflyVideoUrl(key: string): string {
   return `/api/cloudfly/video/play?key=${encodeURIComponent(key)}`;
@@ -139,7 +138,6 @@ export async function uploadVideoToCloudFly(
   if (file.size > 2 * 1024 * 1024 * 1024) {
     throw new Error('Video vượt quá giới hạn 2 GB.');
   }
-  const uploadFile = mime === 'video/mp4' ? await prepareFastStartMp4(file) : file;
   onPrepared?.();
-  return uploadMultipart(uploadFile, mime, onProgress, onTransferComplete);
+  return uploadMultipart(file, mime, onProgress, onTransferComplete);
 }

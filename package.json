@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "video:worker": "node --env-file-if-exists=.env.local --import tsx worker/index.ts",
+    "video:backfill": "node --env-file-if-exists=.env.local --import tsx scripts/backfillVideoAssets.ts",
     "test:mp4-faststart": "tsx scripts/testMp4Faststart.ts"
   },
   "engines": {
@@ -19,13 +21,16 @@
     "@google/genai": "^1.30.0",
     "@supabase/supabase-js": "^2.117.2",
     "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0",
     "framer-motion": "^12.23.24",
+    "hls.js": "^1.7.3",
     "lucide-react": "^0.554.0",
     "next": "16.1.6",
     "postgres": "^3.4.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.5.0",
+    "tsx": "^4.23.15",
     "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
@@ -36,7 +41,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

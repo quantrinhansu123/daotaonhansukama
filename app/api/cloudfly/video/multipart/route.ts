@@ -11,6 +11,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { NextRequest, NextResponse } from 'next/server';
 import { CLOUDFLY_VIDEO_PREFIX, getCloudFlyStorage, isCloudFlyVideoKey } from '@/lib/cloudfly-s3';
 import { authorizeRequest } from '@/lib/server-auth';
+import { queueVideoAsset } from '@/lib/video-assets-server';
 
 export const runtime = 'nodejs';
 const MAX_BYTES = 2 * 1024 * 1024 * 1024;
@@ -76,6 +77,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Danh sách phần video không hợp lệ.' }, { status: 400 });
   }
   const { client, bucket } = getCloudFlyStorage();
+  const queueCompletedVideo = async () => {
+    try {
+      await queueVideoAsset(target.key);
+      return true;
+    } catch (error) {
+      // The source upload succeeded. A later resolve/backfill can retry queuing it.
+      console.error('[CloudFly] Could not queue completed video:', error instanceof Error ? error.message : error);
+      return false;
+    }
+  };
   try {
     await client.send(new CompleteMultipartUploadCommand({
       Bucket: bucket, Key: target.key, UploadId: target.uploadId,
@@ -86,13 +97,15 @@ export async function PATCH(request: NextRequest) {
       await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: target.key }));
       throw new Error('CloudFly returned an unexpected object size');
     }
-    return NextResponse.json({ key: target.key, size: object.ContentLength });
+    const processingQueued = await queueCompletedVideo();
+    return NextResponse.json({ key: target.key, size: object.ContentLength, processingQueued });
   } catch (error) {
     // CloudFly may finish assembling the object even if the completion response is lost.
     const existing = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: target.key })).catch(() => null);
     const existingSize = existing?.ContentLength;
     if (existingSize === expectedSize) {
-      return NextResponse.json({ key: target.key, size: existingSize });
+      const processingQueued = await queueCompletedVideo();
+      return NextResponse.json({ key: target.key, size: existingSize, processingQueued });
     }
     console.error('[CloudFly] Multipart complete failed:', error);
     return NextResponse.json({ error: 'CloudFly chưa ghép xong video. Vui lòng thử tải lại.' }, { status: 502 });
