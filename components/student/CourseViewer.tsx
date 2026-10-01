@@ -417,6 +417,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   };
 
   const handleVideoPause = () => {
+    setIsPlaying(false);
     const video = videoRef.current;
     if (video && !video.ended) {
       void saveProgress(video.currentTime, video.duration, getPlayedRanges(video));
@@ -1020,7 +1021,6 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         playsInline
                         onCanPlay={() => setVideoReady(true)}
                         onPlaying={() => setIsPlaying(true)}
-                        onPause={() => setIsPlaying(false)}
                         preload="auto"
                         onContextMenu={event => isStaff && event.preventDefault()}
                         onDoubleClick={handleFullscreen}
