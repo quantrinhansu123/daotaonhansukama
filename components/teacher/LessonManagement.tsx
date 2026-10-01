@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef,useMemo } from 'react';
 import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, deleteField } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useVideoUploads } from '@/contexts/VideoUploadContext';
 import { VideoPlayer } from '@/components/shared/VideoPlayer';
+import { useVideoBindings,lessonWithBinding,removeBoundVideo,notifyVideoBindings } from '@/lib/video-bindings-client';
+import { VideoProcessingStatus } from '@/components/shared/VideoProcessingStatus';
 
 interface LessonManagementProps {
   course: Course;
@@ -22,7 +24,9 @@ interface LessonManagementProps {
 export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBack }) => {
   const { userProfile: currentUser } = useAuth();
   const { t } = useLanguage();
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [storedLessons, setLessons] = useState<Lesson[]>([]);
+  const pipeline=useVideoBindings(course.id);
+  const lessons=useMemo(()=>storedLessons.map(l=>lessonWithBinding(l,pipeline.bindings)),[storedLessons,pipeline.bindings]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
@@ -123,8 +127,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
 
       if (editingLesson) {
         const lessonRef = doc(db, 'lessons', editingLesson.id);
-        await setDoc(lessonRef, {
-          ...editingLesson,
+        await updateDoc(lessonRef, {
           ...formData,
           updatedAt: new Date()
         });
@@ -155,7 +158,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     }
 
     try {
-      // Delete lesson from Firestore
+      if(pipeline.enabled) await removeBoundVideo({targetType:'lesson',targetId:lesson.id});
       await deleteDoc(doc(db, 'lessons', lesson.id));
       alert(t('teacher.deleteLessonSuccess'));
       loadLessons();
@@ -169,8 +172,10 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     startUpload({
       file,
       targetId: `lesson:${lesson.id}`,
+      target:{targetType:'lesson',targetId:lesson.id},
       label: `${course.title} · ${lesson.title}`,
-      save: async uploadedKey => {
+      save: async (uploadedKey,result) => {
+        if(result.pipeline){notifyVideoBindings();return;}
         try {
           await updateDoc(doc(db, 'lessons', lesson.id), {
             videoKey: uploadedKey,
@@ -195,6 +200,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
     try {
       setLoading(true);
       // Update lesson in Firestore to remove video info
+      if(pipeline.enabled) {await removeBoundVideo({targetType:'lesson',targetId:lesson.id});return;}
       const lessonRef = doc(db, 'lessons', lesson.id);
       await updateDoc(lessonRef, {
         videoKey: deleteField(),
@@ -217,8 +223,9 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
   const handleDocumentUploadComplete = async (lesson: Lesson, url: string, name: string) => {
     try {
       const lessonRef = doc(db, 'lessons', lesson.id);
-      await setDoc(lessonRef, {
-        ...lesson,
+      // Video fields displayed here may belong to the development binding.
+      // Persist only the document fields so a local edit cannot publish them.
+      await updateDoc(lessonRef, {
         documentUrl: url,
         documentName: name,
         updatedAt: new Date()
@@ -365,6 +372,8 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                         <h4 className="font-semibold text-white text-xs">{t("teacher.video")}</h4>
                       </div>
                       {canManage && <p className="mb-2 text-[11px] text-slate-400">Tối đa 2 GB · nhận MP4, MOV, MKV, AVI, WebM · không cần đổi định dạng hoặc nén trước</p>}
+                      <VideoProcessingStatus binding={pipeline.bindings.find(b=>b.targetType==='lesson' && b.targetId===lesson.id)} canRetry={canManage}/>
+                      {pipeline.error && <p className="text-xs text-rose-400">{pipeline.error}</p>}
 
                       {lesson.videoKey || lesson.videoId || lesson.videoUrl ? (
                         <div className="space-y-2">
@@ -643,6 +652,7 @@ export const LessonManagement: React.FC<LessonManagementProps> = ({ course, onBa
                 <div className="bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
                   <VideoPlayer
                     videoKey={previewingLesson.videoKey}
+                    target={{targetType:'lesson',targetId:previewingLesson.id}}
                     autoPlay
                     className="w-full h-full"
                   />

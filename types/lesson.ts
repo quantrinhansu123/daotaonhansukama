@@ -7,6 +7,9 @@ export interface Lesson {
   videoId?: string; // Mã video cũ, giữ để biết video nào cần tải lại
   videoUrl?: string; // URL video cũ
   videoKey?: string; // Object key của video trên CloudFly
+  videoAssetId?: string;
+  videoPendingAssetId?: string;
+  videoStatus?: import('@/lib/video-pipeline-types').PipelineAssetStatus;
   duration?: number; // seconds
   documentUrl?: string; // URL tài liệu (PDF, DOC, etc)
   documentName?: string;

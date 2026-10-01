@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from '@/lib/video-playback';
-import { resolveVideo } from '@/lib/video-resolve';
+import { resolveVideo,resolvePlaybackSource } from '@/lib/video-resolve';
+import type { VideoTarget } from '@/lib/video-pipeline-types';
 import { VideoLoadingBuddy } from './VideoLoadingBuddy';
 import { VideoQualitySelect } from './VideoQualitySelect';
 
 interface VideoPlayerProps {
   videoKey?: string | null;
+  target?:VideoTarget;
   mediaUrl?: string | null;
   hlsUrl?: string | null;
   providerFallbackUrl?: string | null;
@@ -17,7 +19,7 @@ interface VideoPlayerProps {
   className?: string;
 }
 
-export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, autoPlay, active = true, prewarm = false, className }: VideoPlayerProps) {
+export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbackUrl, autoPlay, active = true, prewarm = false, className }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playbackRef = useRef<PlaybackHandle | null>(null);
   const activeRef = useRef(active);
@@ -31,6 +33,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
   const [showBuddy, setShowBuddy] = useState(false);
   activeRef.current = active;
   autoPlayRef.current = autoPlay;
+  const targetType=target?.targetType,targetId=target?.targetId;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -38,6 +41,8 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     const controller = new AbortController();
     let handle: PlaybackHandle | null = null;
     let refreshes = 0;
+    let refreshTimer:ReturnType<typeof setTimeout>;
+    let pinned:{assetId:string;version:string}|undefined;
     let hasAdaptiveLevels = false;
     setUseProviderFallback(false);
     setMediaReady(false);
@@ -62,19 +67,22 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     const load = async (force = false) => {
       const at = video.currentTime;
       try {
-        const resolved = videoKey
+        const wasPlaying=!video.paused;
+        const resolved = await resolvePlaybackSource(targetType && targetId?{targetType,targetId}:undefined,async()=>videoKey
           ? await resolveVideo(videoKey, force)
           : {
               status: 'ready' as const,
               url: mediaUrl || hlsUrl || '',
               hlsUrl: hlsUrl || undefined,
               expiresAt: Date.now() + 60 * 60_000,
-            };
+            },force?pinned:undefined);
+        if(resolved.assetId && resolved.version && !pinned) pinned={assetId:resolved.assetId,version:resolved.version};
         if (controller.signal.aborted) return;
         setQualityPlaceholder(resolved.processing
           ? 'Đang xử lý các mức chất lượng…'
           : 'Đang tải mức chất lượng…');
         handle?.destroy();
+        if(startIfReady) video.removeEventListener('canplay',startIfReady);
         handle = await attachVideoPlayback(video, resolved, {
           signal: controller.signal,
           startAt: at,
@@ -102,11 +110,13 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
         }
         playbackRef.current = handle;
         startIfReady = () => {
-          if (!autoPlayRef.current || !activeRef.current || controller.signal.aborted || !video.paused) return;
+          if ((!autoPlayRef.current && !wasPlaying) || !activeRef.current || controller.signal.aborted || !video.paused) return;
           void video.play().catch(() => setMediaReady(true));
         };
         video.addEventListener('canplay', startIfReady);
         if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) startIfReady();
+        clearTimeout(refreshTimer);
+        if(resolved.assetId) refreshTimer=setTimeout(()=>void load(true),Math.max(10_000,resolved.expiresAt-Date.now()-300_000));
       } catch (cause) {
         if (!controller.signal.aborted) {
           setMediaReady(true);
@@ -118,6 +128,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
     void load();
     return () => {
       controller.abort();
+      clearTimeout(refreshTimer);
       video.removeEventListener('loadedmetadata', setSourceQuality);
       if (startIfReady) video.removeEventListener('canplay', startIfReady);
       handle?.destroy();
@@ -126,7 +137,7 @@ export function VideoPlayer({ videoKey, mediaUrl, hlsUrl, providerFallbackUrl, a
       video.removeAttribute('src');
       video.load();
     };
-  }, [videoKey, mediaUrl, hlsUrl, providerFallbackUrl, prewarm]);
+  }, [videoKey,targetType,targetId, mediaUrl, hlsUrl, providerFallbackUrl, prewarm]);
 
   useEffect(() => {
     if (!active || mediaReady || error || useProviderFallback) {

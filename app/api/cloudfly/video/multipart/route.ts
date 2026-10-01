@@ -12,6 +12,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CLOUDFLY_VIDEO_PREFIX, getCloudFlyStorage, isCloudFlyVideoKey } from '@/lib/cloudfly-s3';
 import { authorizeRequest } from '@/lib/server-auth';
 import { queueVideoAsset } from '@/lib/video-assets-server';
+import { pipelineEnvironment } from '@/lib/video-pipeline-config';
+import { pipelineMultipart } from '@/lib/video-pipeline-upload';
 
 export const runtime = 'nodejs';
 const MAX_BYTES = 2 * 1024 * 1024 * 1024;
@@ -31,6 +33,7 @@ function uploadParams(body: unknown): { key: string; uploadId: string } | null {
 }
 
 export async function POST(request: NextRequest) {
+  if (pipelineEnvironment()) return pipelineMultipart(request);
   const actor = await authorizeRequest(request, ['admin', 'teacher']);
   if (actor instanceof NextResponse) return actor;
   const body = await request.json().catch(() => null) as { mime?: unknown; size?: unknown } | null;
@@ -64,6 +67,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  if (pipelineEnvironment()) return pipelineMultipart(request);
   const actor = await authorizeRequest(request, ['admin', 'teacher']);
   if (actor instanceof NextResponse) return actor;
   const body = await request.json().catch(() => null);
@@ -113,6 +117,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  if (pipelineEnvironment()) return pipelineMultipart(request);
   const actor = await authorizeRequest(request, ['admin', 'teacher']);
   if (actor instanceof NextResponse) return actor;
   const target = uploadParams(await request.json().catch(() => null));

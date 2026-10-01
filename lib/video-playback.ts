@@ -25,6 +25,7 @@ export async function attachVideoPlayback(
     onQualityLevels?: (levels: VideoQualityLevel[]) => void;
     sourceQualityAvailable?: boolean;
     prewarm?: boolean;
+    onCdnResponse?: (url:string,cache:string|null)=>void;
   } = {},
 ): Promise<PlaybackHandle> {
   let disposed = false;
@@ -37,7 +38,7 @@ export async function attachVideoPlayback(
   };
   video.addEventListener('loadedmetadata', restorePosition, { once: true });
   if (source.posterUrl) video.poster = source.posterUrl;
-  video.preload = 'auto';
+  video.preload = options.prewarm ? 'metadata' : 'auto';
 
   const onError = () => options.onPlaybackError?.();
   video.addEventListener('error', onError);
@@ -47,12 +48,11 @@ export async function attachVideoPlayback(
     video.removeEventListener('error', onError);
     hls?.destroy();
     hls = null;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
   };
 
-  // A signed MP4 plays in the video element without CORS. CloudFly omits CORS
-  // on signed GET responses, so HLS.js cannot fetch those segments directly
-  // and would otherwise pull every segment through the app server.
-  const directFile = /^https?:\/\//i.test(source.url) && !/\.m3u8(\?|$)/i.test(source.url);
   const assignSource = (url: string) => {
     const nextPath = url.split('?')[0];
     const currentPath = (video.currentSrc || video.src || '').split('?')[0];
@@ -63,7 +63,9 @@ export async function attachVideoPlayback(
     if (wasPlaying) video.addEventListener('canplay', () => { void video.play().catch(() => {}); }, { once: true });
   };
 
-  if (source.hlsUrl && !directFile) {
+  // Preserve the legacy production path while only pipeline assets prefer HLS.
+  const legacyDirectFile=!source.assetId && /^https?:\/\//i.test(source.url) && !/\.m3u8(\?|$)/i.test(source.url);
+  if (source.hlsUrl && !legacyDirectFile) {
     try {
       const { default: Hls } = await import('hls.js');
       if (disposed || options.signal?.aborted) return {
@@ -71,17 +73,19 @@ export async function attachVideoPlayback(
       };
       if (Hls.isSupported()) {
         hls = new Hls({
-          // Start on the smallest rendition so the first segments clear the
-          // app proxy quickly, then let ABR climb. Do not cap levels to the
-          // CSS size of the player.
-          startLevel: 0,
+          autoStartLoad:false,
           capLevelToPlayerSize: false,
           maxBufferLength: 20,
           maxMaxBufferLength: 30,
           backBufferLength: 10,
           enableWorker: true,
+          xhrSetup:options.onCdnResponse?(xhr,url)=>{xhr.addEventListener('load',()=>options.onCdnResponse?.(url,xhr.getResponseHeader('CDN-Cache')));}:undefined,
         });
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          const available=hls?.levels || [];
+          const eligible=available.map((level,index)=>({level,index})).filter(x=>x.level.height<=480);
+          const initial=source.assetId && eligible.length?eligible.reduce((a,b)=>a.level.height>b.level.height?a:b).index:0;
+          if(hls){hls.startLevel=initial;hls.autoLevelCapping=options.prewarm?initial:-1;hls.startLoad(startAt);}
           const sourceHeight = Math.max(0, ...(hls?.levels.map(level => level.height) || []));
           const levels = hls?.levels.map((level, index) => ({
             index,
@@ -97,16 +101,16 @@ export async function attachVideoPlayback(
         hls.on(Hls.Events.ERROR, (_event, details) => {
           if (details.fatal) {
             options.onQualityLevels?.([]);
+            const position=video.currentTime,wasPlaying=!video.paused;
             hls?.destroy();
             hls = null;
             video.src = source.url;
+            video.addEventListener('loadedmetadata',()=>{video.currentTime=Math.min(position,Math.max(0,video.duration-.5));if(wasPlaying)void video.play().catch(()=>{});},{once:true});
             video.load();
+            if(details.response?.code===403) options.onPlaybackError?.();
           }
         });
         hls.loadSource(source.hlsUrl);
-        // loadSource resets Hls.js' level cap. Prewarm only the lowest rendition
-        // while paused, then uncap on play to avoid downloading HD in the background.
-        if (options.prewarm) hls.autoLevelCapping = 0;
         hls.attachMedia(video);
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         assignSource(source.hlsUrl);
@@ -122,10 +126,11 @@ export async function attachVideoPlayback(
 
   return {
     resumeLoading: () => {
+      video.preload='auto';
       if (options.prewarm && hls) hls.autoLevelCapping = -1;
       hls?.startLoad(-1);
     },
-    pauseLoading: () => hls?.stopLoad(),
+    pauseLoading: () => {hls?.stopLoad();if(!hls)video.preload='metadata';},
     setQuality: index => {
       if (!hls) return;
       hls.autoLevelCapping = -1;

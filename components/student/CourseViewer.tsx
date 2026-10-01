@@ -12,11 +12,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Play, Pause, Lock, Clock, FileText, HelpCircle, Maximize, RotateCcw, Rewind, Menu, ChevronDown, Bookmark, Search, Bell, Award, Lightbulb, Headphones, Home, BookOpen, Users, Calendar, Clapperboard, GraduationCap, FolderKanban, Building2, ClipboardCheck, Folder, BarChart3, BadgeCheck, Shield, List, Settings, Layers, Signal, UserRound, CheckCircle2, CirclePlay, Square, CheckSquare, Upload } from 'lucide-react';
 import { QuizTaker } from './QuizTaker';
 import { DemoVideoView } from '@/components/shared/DemoVideoView';
-import { resolveDemoVideo } from '@/lib/demo-video';
+import { resolveDemoVideo,bunnyStreamPlaylistUrl } from '@/lib/demo-video';
 import { ProfileModal } from '@/components/ProfileModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { proxyBunnyUrl } from '@/lib/bunny-media';
-import { resolveVideo } from '@/lib/video-resolve';
+import { resolveVideo,resolvePlaybackSource } from '@/lib/video-resolve';
+import { useVideoBindings,lessonWithBinding,courseWithBinding } from '@/lib/video-bindings-client';
 import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from '@/lib/video-playback';
 import { VideoQualitySelect } from '@/components/shared/VideoQualitySelect';
 import { VideoLoadingBuddy } from '@/components/shared/VideoLoadingBuddy';
@@ -31,9 +32,9 @@ interface CourseViewerProps {
 export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) => {
   const { userProfile } = useAuth();
   const { t, dateLocale } = useLanguage();
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [storedLessons, setLessons] = useState<Lesson[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [selectedRecord, setSelectedLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<Record<string, LessonProgress>>({});
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -43,12 +44,16 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [selectedCourseId, setSelectedCourseId] = useState<string>(course.id);
+  const pipeline=useVideoBindings(selectedCourseId);
+  const lessons=useMemo(()=>storedLessons.map(l=>lessonWithBinding(l,pipeline.bindings)),[storedLessons,pipeline.bindings]);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [quizResults, setQuizResults] = useState<Record<string, QuizResult>>({});
   const [bannerError, setBannerError] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'docs' | 'qa' | 'reviews' | 'news'>('info');
   const [playerOpen, setPlayerOpen] = useState(false);
+  const selectedLesson=selectedRecord?(playerOpen?selectedRecord:lessonWithBinding(selectedRecord,pipeline.bindings)):null;
   const [introOpen, setIntroOpen] = useState(false);
+  const [introSnapshot,setIntroSnapshot]=useState<Course|null>(null);
   const [playSession, setPlaySession] = useState(0);
   const [certOpen, setCertOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -78,7 +83,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const selectedLessonVideo = selectedLesson
     ? resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl)
     : null;
-  const cloudFlyLessonKey = selectedLessonVideo?.kind === 'cloudfly' ? selectedLessonVideo.key : null;
+  const pipelineLessonPlayer=process.env.NEXT_PUBLIC_VIDEO_PIPELINE_ENABLED==='true';
+  const legacyLessonUrl=selectedLessonVideo?.kind==='bunny'?bunnyStreamPlaylistUrl(selectedLessonVideo.id) || '':selectedLessonVideo?.kind==='file'?selectedLessonVideo.url:'';
+  const legacyLessonHls=selectedLessonVideo?.kind==='bunny';
+  const cloudFlyLessonKey = selectedLesson?.videoAssetId || (pipelineLessonPlayer && selectedLessonVideo) ? selectedLesson?.videoKey || 'pipeline' : selectedLessonVideo?.kind === 'cloudfly' ? selectedLessonVideo.key : null;
 
   // Check if user is staff (needs anti-cheat features)
   const isStaff = userProfile?.role === 'staff';
@@ -86,9 +94,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   // Prefer fresh course prop from the page so admin updates (demo video) are not overwritten by a stale allCourses cache.
   const listedCourse = allCourses.find(c => c.id === selectedCourseId);
-  const currentCourse = selectedCourseId === course.id
+  const currentCourse = introOpen && introSnapshot?.id===selectedCourseId?introSnapshot:courseWithBinding(selectedCourseId === course.id
     ? { ...(listedCourse || {}), ...course, id: course.id }
-    : (listedCourse || course);
+    : (listedCourse || course),pipeline.bindings);
 
   useEffect(() => {
     setSelectedCourseId(course.id);
@@ -134,10 +142,13 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   useEffect(() => {
     const video = videoRef.current;
-    if (introOpen || viewMode !== 'video' || !cloudFlyLessonKey || !progressLoaded || !video || !selectedLessonId) return;
+    if (!playerOpen || introOpen || viewMode !== 'video' || !cloudFlyLessonKey || !progressLoaded || !video || !selectedLessonId) return;
     const controller = new AbortController();
     let handle: PlaybackHandle | null = null;
     let refreshed = false;
+    let refreshTimer:ReturnType<typeof setTimeout>;
+    let pinned:{assetId:string;version:string}|undefined;
+    let resumeAfterRefresh:(()=>void)|undefined;
     const key = cloudFlyLessonKey;
     const startAt = latestProgressRef.current[selectedLessonId]?.watchedSeconds || 0;
     lastProgressSaveAt.current = 0;
@@ -149,16 +160,21 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     setQualityPlaceholder('Đang tải mức chất lượng…');
     const initialize = async (force = false, position = startAt) => {
       try {
-        const resolved = await resolveVideo(key, force);
+        const wasPlaying=!video.paused;
+        const resolved = await resolvePlaybackSource({targetType:'lesson',targetId:selectedLessonId},()=>key!=='pipeline'?resolveVideo(key,force):{
+          status:'legacy',url:legacyLessonUrl,hlsUrl:legacyLessonHls?legacyLessonUrl:undefined,expiresAt:Date.now()+3600_000,
+        },force?pinned:undefined);
+        if(resolved.assetId && resolved.version && !pinned) pinned={assetId:resolved.assetId,version:resolved.version};
         if (controller.signal.aborted) return;
         setQualityPlaceholder(resolved.processing
           ? 'Đang xử lý các mức chất lượng…'
           : 'Đang tải mức chất lượng…');
         handle?.destroy();
+        if(resumeAfterRefresh) video.removeEventListener('canplay',resumeAfterRefresh);
         handle = await attachVideoPlayback(video, resolved, {
           signal: controller.signal,
           startAt: position > 5 ? position : 0,
-          prewarm: true,
+          prewarm: false,
           onQualityLevels: setQualityLevels,
           sourceQualityAvailable: resolved.sourceQualityAvailable,
           onPlaybackError: () => {
@@ -173,6 +189,9 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           return;
         }
         lessonPlaybackRef.current = handle;
+        if(wasPlaying) {resumeAfterRefresh=()=>void video.play().catch(()=>{});video.addEventListener('canplay',resumeAfterRefresh,{once:true});}
+        clearTimeout(refreshTimer);
+        if(resolved.assetId) refreshTimer=setTimeout(()=>void initialize(true,video.currentTime),Math.max(10_000,resolved.expiresAt-Date.now()-300_000));
       } catch (cause) {
         if (!controller.signal.aborted) {
           setQualityPlaceholder('Chưa có mức chất lượng sẵn sàng');
@@ -183,13 +202,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     void initialize();
     return () => {
       controller.abort();
+      clearTimeout(refreshTimer);
+      if(resumeAfterRefresh) video.removeEventListener('canplay',resumeAfterRefresh);
       handle?.destroy();
       lessonPlaybackRef.current = null;
       if (attentionCheckTimer.current) {
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [selectedLessonId, cloudFlyLessonKey, progressLoaded, introOpen, viewMode]);
+  }, [selectedLessonId, cloudFlyLessonKey, legacyLessonUrl,legacyLessonHls,progressLoaded, introOpen, viewMode,playerOpen]);
 
   useEffect(() => {
     if (!playerOpen || videoReady || videoLoadError) {
@@ -611,6 +632,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
   const handleIntro = () => {
     if (resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)) {
+      setIntroSnapshot(currentCourse);
       const prewarmed = heroRef.current?.querySelector<HTMLVideoElement>('video[data-intro-video]');
       if (prewarmed?.readyState && prewarmed.paused) void prewarmed.play().catch(() => {});
       setPlayerOpen(false);
@@ -637,6 +659,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     }
     const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
     if (lessonVideo) {
+      setSelectedLesson(selectedLesson);
       setViewMode('video');
       setPlayerOpen(true);
     }
@@ -936,15 +959,15 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
             <div className="min-w-0">
               <div ref={heroRef} className="relative aspect-[636/355] overflow-hidden rounded bg-[#113e30] shadow-[0_4px_16px_rgba(24,48,93,0.045)]">
-                {!playerOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)?.kind === 'cloudfly' && (
+                {introOpen && resolveDemoVideo(currentCourse.demoVideoKey, currentCourse.demoVideoId)?.kind === 'cloudfly' && (
                   <div className={`absolute inset-0 ${introOpen ? '' : 'invisible'}`}>
                     <DemoVideoView
                       key={`${currentCourse.demoVideoKey || ''}:${currentCourse.demoVideoId || ''}`}
                       videoKey={currentCourse.demoVideoKey}
                       legacyId={currentCourse.demoVideoId}
+                      target={{targetType:'course_intro',targetId:currentCourse.id}}
                       autoPlay
                       active={introOpen}
-                      prewarm
                       className="h-full w-full bg-black object-contain"
                     />
                   </div>
@@ -954,6 +977,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                     <DemoVideoView
                       videoKey={currentCourse.demoVideoKey}
                       legacyId={currentCourse.demoVideoId}
+                      target={{targetType:'course_intro',targetId:currentCourse.id}}
                       autoPlay
                       className="h-full w-full bg-black object-contain"
                     />
@@ -984,13 +1008,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       </div>
                     );
                   }
-                  if (lessonVideo.kind !== 'cloudfly') {
+                  if (lessonVideo.kind !== 'cloudfly' && !selectedLesson.videoAssetId && !pipelineLessonPlayer) {
                     if (!playerOpen) return null;
                     return (
                       <DemoVideoView
                         key={`legacy-${selectedLesson.id}-${playSession}`}
                         videoKey={selectedLesson.videoKey}
                         legacyId={selectedLesson.videoId || selectedLesson.videoUrl}
+                        target={{targetType:'lesson',targetId:selectedLesson.id}}
                         autoPlay
                         className="h-full w-full bg-black object-contain"
                       />

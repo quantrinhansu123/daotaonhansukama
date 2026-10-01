@@ -3,9 +3,11 @@
 import { bunnyStreamPlaylistUrl, resolveDemoVideo } from '@/lib/demo-video';
 import { VideoPlayer } from './VideoPlayer';
 import { VideoQualitySelect } from './VideoQualitySelect';
+import type { VideoTarget } from '@/lib/video-pipeline-types';
 
 interface DemoVideoViewProps {
   videoKey?: string | null;
+  target?:VideoTarget;
   legacyId?: string | null;
   className?: string;
   autoPlay?: boolean;
@@ -13,7 +15,7 @@ interface DemoVideoViewProps {
   prewarm?: boolean;
 }
 
-export function DemoVideoView({ videoKey, legacyId, className, autoPlay, active = true, prewarm = false }: DemoVideoViewProps) {
+export function DemoVideoView({ videoKey,target, legacyId, className, autoPlay, active = true, prewarm = false }: DemoVideoViewProps) {
   const source = resolveDemoVideo(videoKey, legacyId);
   if (!source) {
     return <div className={`relative grid h-full w-full place-items-center bg-black ${className || ''}`}>
@@ -22,7 +24,7 @@ export function DemoVideoView({ videoKey, legacyId, className, autoPlay, active 
     </div>;
   }
   if (source.kind === 'cloudfly') {
-    return <VideoPlayer videoKey={source.key} autoPlay={autoPlay} active={active} prewarm={prewarm} className={className} />;
+    return <VideoPlayer videoKey={source.key} target={target} autoPlay={autoPlay} active={active} prewarm={prewarm} className={className} />;
   }
   if (source.kind === 'bunny') {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID;
@@ -32,6 +34,7 @@ export function DemoVideoView({ videoKey, legacyId, className, autoPlay, active 
       : null;
     if (playlistUrl) {
       return <VideoPlayer
+        target={target}
         hlsUrl={playlistUrl}
         providerFallbackUrl={embedUrl}
         autoPlay={autoPlay}
@@ -54,5 +57,5 @@ export function DemoVideoView({ videoKey, legacyId, className, autoPlay, active 
     );
   }
   const isHls = /\.m3u8(?:$|\?)/i.test(source.url);
-  return <VideoPlayer mediaUrl={source.url} hlsUrl={isHls ? source.url : undefined} autoPlay={autoPlay} active={active} prewarm={prewarm} className={className} />;
+  return <VideoPlayer target={target} mediaUrl={source.url} hlsUrl={isHls ? source.url : undefined} autoPlay={autoPlay} active={active} prewarm={prewarm} className={className} />;
 }

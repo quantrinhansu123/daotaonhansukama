@@ -1,4 +1,5 @@
 import { authenticatedJson } from '@/lib/authenticated-fetch';
+import type { VideoTarget,VideoUploadResult } from './video-pipeline-types';
 
 export function cloudflyVideoUrl(key: string): string {
   return `/api/cloudfly/video/play?key=${encodeURIComponent(key)}`;
@@ -25,7 +26,7 @@ export function videoUploadMime(file: File): string | null {
   return null;
 }
 
-type MultipartStart = { key: string; uploadId: string; partSize: number; urls: string[] };
+type MultipartStart = { key: string; uploadId: string; partSize: number; urls: string[];assetId?:string;pipeline?:boolean };
 
 function uploadPart(
   url: string,
@@ -62,9 +63,10 @@ async function uploadMultipart(
   mime: string,
   onProgress?: (percent: number) => void,
   onTransferComplete?: () => void,
-): Promise<string> {
+  target?:VideoTarget,
+): Promise<VideoUploadResult> {
   const session = await authenticatedJson('/api/cloudfly/video/multipart', 'POST', {
-    mime, size: file.size,
+    mime, size: file.size,...target,
   }) as MultipartStart;
   if (!session.key || !session.uploadId || !Number.isInteger(session.partSize)
       || !Array.isArray(session.urls) || session.urls.length !== Math.ceil(file.size / session.partSize)) {
@@ -110,16 +112,18 @@ async function uploadMultipart(
       key: session.key,
       uploadId: session.uploadId,
       size: file.size,
+      assetId:session.assetId,...target,
       parts: etags.map((etag, index) => ({ partNumber: index + 1, etag })),
-    }) as { key: string };
+    }) as VideoUploadResult;
     if (result.key !== session.key) throw new Error('CloudFly trả về sai mã video.');
     onProgress?.(100);
-    return result.key;
+    if(!result.pipeline && result.processingQueued===false) throw new Error('Video đã tải lên nhưng chưa tạo được job xử lý. Cần thử lại.');
+    return result;
   } catch (error) {
     for (const xhr of active) xhr.abort();
     await Promise.allSettled(workers);
     await authenticatedJson('/api/cloudfly/video/multipart', 'DELETE', {
-      key: session.key, uploadId: session.uploadId,
+      key: session.key, uploadId: session.uploadId,assetId:session.assetId,...target,
     }).catch(() => {});
     throw error;
   }
@@ -130,7 +134,8 @@ export async function uploadVideoToCloudFly(
   onProgress?: (percent: number) => void,
   onTransferComplete?: () => void,
   onPrepared?: () => void,
-): Promise<string> {
+  target?:VideoTarget,
+): Promise<VideoUploadResult> {
   const mime = videoUploadMime(file);
   if (!mime || !file.size) {
     throw new Error('Không nhận được file video. Hãy chọn MP4, MOV, MKV, AVI hoặc WebM.');
@@ -139,5 +144,5 @@ export async function uploadVideoToCloudFly(
     throw new Error('Video vượt quá giới hạn 2 GB.');
   }
   onPrepared?.();
-  return uploadMultipart(file, mime, onProgress, onTransferComplete);
+  return uploadMultipart(file, mime, onProgress, onTransferComplete,target);
 }

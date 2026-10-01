@@ -6,11 +6,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CLOUDFLY_VIDEO_PREFIX, getCloudFlyStorage } from '@/lib/cloudfly-s3';
 import { authorizeRequest } from '@/lib/server-auth';
 import { queueVideoAsset } from '@/lib/video-assets-server';
+import { pipelineEnvironment } from '@/lib/video-pipeline-config';
 
 export const runtime = 'nodejs';
 const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  if(pipelineEnvironment()) return NextResponse.json({error:'Hãy dùng multipart upload kèm bài học/video giới thiệu để tạo job xử lý.'},{status:405});
   const authorized = await authorizeRequest(request, ['admin', 'teacher']);
   if (authorized instanceof NextResponse) return authorized;
   const mime = request.headers.get('content-type')?.split(';')[0].toLowerCase();

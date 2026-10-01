@@ -9,7 +9,18 @@
     "lint": "eslint",
     "video:worker": "node --env-file-if-exists=.env.local --import tsx worker/index.ts",
     "video:backfill": "node --env-file-if-exists=.env.local --import tsx scripts/backfillVideoAssets.ts",
-    "test:mp4-faststart": "tsx scripts/testMp4Faststart.ts"
+    "test:mp4-faststart": "tsx scripts/testMp4Faststart.ts",
+    "video:pipeline:check": "node --env-file-if-exists=.env.local --import tsx scripts/checkVideoPipeline.mts",
+    "video:pipeline:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/applyVideoPipelineSchema.mts --apply",
+    "video:pipeline:bunny": "node --env-file-if-exists=.env.local --import tsx scripts/setupVideoPipelineBunny.mts",
+    "video:pipeline:inventory": "node --env-file-if-exists=.env.local --import tsx scripts/inventoryVideoPipeline.mts",
+    "video:pipeline:backfill": "node --env-file-if-exists=.env.local --import tsx scripts/inventoryVideoPipeline.mts --queue",
+    "video:pipeline:worker": "node --env-file-if-exists=.env.local --import tsx worker/pipeline-main.ts",
+    "test:video-pipeline:database": "node --import tsx scripts/testVideoPipelineDatabase.mts",
+    "test:video-pipeline:media": "node --import tsx scripts/testVideoPipelineMedia.mts",
+    "test:video-pipeline:signing": "node --import tsx scripts/testVideoPipelineSigning.mts",
+    "test:video-pipeline:sources": "node --env-file-if-exists=.env.local --import tsx scripts/testVideoPipelineSources.mts",
+    "test:video-pipeline:bunny-source": "node --env-file-if-exists=.env.local --import tsx scripts/testVideoPipelineBunnySource.mts"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -34,6 +45,7 @@
     "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

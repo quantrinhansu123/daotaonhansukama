@@ -3,6 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { uploadVideoToCloudFly } from '@/lib/cloudfly-video';
+import type { VideoTarget,VideoUploadResult } from '@/lib/video-pipeline-types';
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+import { notifyVideoBindings } from '@/lib/video-bindings-client';
 
 export type VideoUploadJob = {
   id: string;
@@ -10,7 +13,8 @@ export type VideoUploadJob = {
   label: string;
   fileName: string;
   percent: number;
-  status: 'queued' | 'preparing' | 'uploading' | 'finalizing' | 'saving' | 'done' | 'error';
+  status: 'queued' | 'preparing' | 'uploading' | 'finalizing' | 'saving' | 'processing' | 'playable' | 'done' | 'error';
+  assetId?:string;
   error?: string;
 };
 
@@ -18,7 +22,8 @@ type StartVideoUpload = {
   file: File;
   targetId: string;
   label: string;
-  save: (key: string) => Promise<void>;
+  save: (key: string,result:VideoUploadResult) => Promise<void>;
+  target?:VideoTarget;
 };
 
 type VideoUploadContextValue = {
@@ -73,7 +78,7 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
     setJobs(previous => previous.map(job => job.id === id ? { ...job, ...patch } : job));
   }, []);
 
-  const startUpload = useCallback(({ file, targetId, label, save }: StartVideoUpload) => {
+  const startUpload = useCallback(({ file, targetId, label, save,target }: StartVideoUpload) => {
     if (activeTargets.current.has(targetId)) return false;
     activeTargets.current.add(targetId);
     const id = crypto.randomUUID();
@@ -82,16 +87,18 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
     const run = async () => {
       try {
         updateJob(id, { status: 'preparing' });
-        const key = await uploadVideoToCloudFly(
+        const result = await uploadVideoToCloudFly(
           file,
           percent => updateJob(id, { percent: Math.min(percent, 99) }),
           () => updateJob(id, { status: 'finalizing', percent: 99 }),
           () => updateJob(id, { status: 'uploading' }),
+          target,
         );
         updateJob(id, { status: 'saving', percent: 99 });
-        await save(key);
-        updateJob(id, { status: 'done', percent: 100 });
-        window.setTimeout(() => setJobs(previous => previous.filter(job => job.id !== id)), 20000);
+        await save(result.key,result);
+        updateJob(id, { status: result.pipeline ? 'processing' : 'done', percent: 100,assetId:result.assetId });
+        notifyVideoBindings();
+        if(!result.pipeline) window.setTimeout(() => setJobs(previous => previous.filter(job => job.id !== id)), 20000);
       } catch (cause) {
         updateJob(id, {
           status: 'error',
@@ -106,6 +113,27 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
     queue.current = queue.current.then(run, run);
     return true;
   }, [updateJob]);
+
+  useEffect(()=>{
+    const waiting=jobs.filter(j=>j.status==='processing' && j.assetId);
+    if(!waiting.length) return;
+    const controller=new AbortController();
+    const poll=async()=>{
+      for(const job of waiting) {
+        try {
+          const response=await authenticatedFetch(`/api/video/assets/${job.assetId}`,{signal:controller.signal});
+          if(!response.ok) continue;
+          const result=await response.json();
+          if(controller.signal.aborted) return;
+          if(['playable','complete'].includes(result.status)) {updateJob(job.id,{status:'playable'});notifyVideoBindings();window.setTimeout(()=>setJobs(p=>p.filter(j=>j.id!==job.id)),20_000);}
+          else if(['failed','cancelled','source_unavailable'].includes(result.status)) {updateJob(job.id,{status:'error',error:result.status==='cancelled'?'Video đã bị hủy.':'Đã tải tệp; xử lý video lỗi. Có thể thử lại ở bài học.'});notifyVideoBindings();}
+        }catch{}
+      }
+    };
+    const timer=setInterval(()=>void poll(),3000);
+    void poll();
+    return ()=>{controller.abort();clearInterval(timer);};
+  },[jobs,updateJob]);
 
   useEffect(() => {
     if (!jobs.some(job => activeStatuses.has(job.status))) return;
@@ -135,6 +163,8 @@ export function VideoUploadProvider({ children }: { children: React.ReactNode })
                   {job.status === 'finalizing' && 'Đang hoàn tất lưu tệp trên CloudFly…'}
                   {job.status === 'saving' && 'Đã gửi tệp, đang lưu vào khóa học…'}
                   {job.status === 'done' && 'Đã tải lên và lưu thành công.'}
+                  {job.status === 'processing' && 'Đã tải lên. Video đang chờ xử lý; bạn có thể đóng trang.'}
+                  {job.status === 'playable' && 'Video đã có thể xem. Hệ thống tiếp tục bổ sung chất lượng cao.'}
                   {job.status === 'error' && job.error}
                 </p>
               </div>

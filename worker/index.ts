@@ -6,6 +6,8 @@ import {
   type VideoAsset,
 } from '../lib/video-assets-server';
 import { processVideo } from './transcode';
+import { pipelineEnvironment } from '../lib/video-pipeline-config';
+import { runPipelineWorker } from './pipeline-worker';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const selectedKey = process.argv.find(arg => arg.startsWith('--key='))?.slice('--key='.length);
@@ -68,7 +70,7 @@ async function loop() {
   }
 }
 
-void Promise.all(Array.from({ length: once ? 1 : concurrency }, () => loop())).catch(error => {
+void (pipelineEnvironment() ? runPipelineWorker() : Promise.all(Array.from({ length: once ? 1 : concurrency }, () => loop()))).catch(error => {
   console.error('[video-worker] stopped', { code: failureCode(error) });
   process.exitCode = 1;
 });
