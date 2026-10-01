@@ -28,7 +28,7 @@ const App: React.FC = () => {
           router.push('/student');
           break;
         default:
-          router.push('/admin');
+          router.push('/student');
       }
     }
   }, [userProfile, loading, router]);

@@ -37,14 +37,14 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
   const [lessonCounts, setLessonCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
   const [filterLevel, setFilterLevel] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
-    void loadCourses();
-  }, [userProfile?.departmentId]);
-
-  const loadCourses = async () => {
+    if (!userProfile) return;
+    let active = true;
+    const loadCourses = async () => {
     try {
       setLoading(true);
 
@@ -53,6 +53,8 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
         getDocs(collection(db, 'courses')),
         listJsonText('lessons', 'courseId'),
       ]);
+
+      if (!active) return;
 
       setDepartments(
         deptSnapshot.docs.map(docSnap => ({
@@ -63,6 +65,7 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
 
       let coursesData = coursesSnapshot.docs.map(docSnap => ({
         ...docSnap.data(),
+        id: docSnap.id,
         createdAt: docSnap.data().createdAt?.toDate(),
         updatedAt: docSnap.data().updatedAt?.toDate(),
       })) as Course[];
@@ -87,12 +90,23 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
     } catch (error) {
       console.error('Error loading courses:', error);
     } finally {
-      setLoading(false);
+      if (active) setLoading(false);
     }
-  };
+    };
+    void loadCourses();
+    return () => { active = false; };
+  }, [userProfile]);
+
+  const categories = useMemo(
+    () => Array.from(new Set(courses.map(course => course.category).filter(Boolean))).sort(),
+    [courses]
+  );
 
   const filteredCourses = useMemo(() => {
     let filtered = courses;
+    if (filterCategory) {
+      filtered = filtered.filter(course => course.category === filterCategory);
+    }
     if (filterLevel !== 'all') {
       filtered = filtered.filter(course => course.level === filterLevel);
     }
@@ -107,7 +121,7 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
       );
     }
     return filtered;
-  }, [courses, searchTerm, filterLevel]);
+  }, [courses, searchTerm, filterLevel, filterCategory]);
 
   const handleViewCourse = (courseId: string) => {
     router.push(`/student/courses/${courseId}`);
@@ -194,6 +208,15 @@ export const CourseEnrollment: React.FC<CourseEnrollmentProps> = ({
             className="w-full rounded-xl border border-[#e7edf5] bg-[#f8fafc] py-3 pl-11 pr-4 text-[14px] text-[#111b38] outline-none placeholder:text-[#99a4b5] focus:border-[#18701C] focus:bg-white"
           />
         </div>
+        <select
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+          aria-label={t('admin.courses.filterByCategory')}
+          className="min-w-[160px] rounded-xl border border-[#e7edf5] bg-white px-3 py-3 text-[13px] font-semibold text-[#111b38] outline-none focus:border-[#18701C]"
+        >
+          <option value="">{t('admin.courses.allCategories')}</option>
+          {categories.map(category => <option key={category} value={category}>{category}</option>)}
+        </select>
         <div className="relative">
           <Filter className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63708a]" size={15} />
           <select

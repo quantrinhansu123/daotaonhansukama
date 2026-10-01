@@ -2,11 +2,32 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { Award, BadgeCheck, BarChart3, BookOpen, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Folder, FolderKanban, Headphones, Home, LayoutDashboard, List, LogOut, PlayCircle, Settings, Shield, Sparkles, Users } from 'lucide-react';
-import Link from 'next/link';
+import {
+  Award,
+  BadgeCheck,
+  BarChart3,
+  BookOpen,
+  Building2,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
+  Folder,
+  FolderKanban,
+  Headphones,
+  Home,
+  List,
+  LogOut,
+  PlayCircle,
+  Settings,
+  Shield,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { CourseEnrollment } from '@/components/student/CourseEnrollment';
+import { CourseManagement } from '@/components/admin/CourseManagement';
 import { StudentCertificates } from '@/components/student/StudentCertificates';
 import { StudentSettings } from '@/components/student/StudentSettings';
 import { StudentLibrary } from '@/components/student/StudentLibrary';
@@ -56,13 +77,18 @@ type Section =
 
 export default function StudentPage() {
   const { userProfile, loading, signOut } = useAuth();
+  const { hasPermission } = usePermissions();
   const { t } = useLanguage();
   const router = useRouter();
   const [stats, setStats] = useState<LearningStats>(emptyStats);
   const [loadingStats, setLoadingStats] = useState(true);
   const [accountOpen, setAccountOpen] = useState(false);
   const [section, setSection] = useState<Section>('overview');
+  const [courseViewMode, setCourseViewMode] = useState<'learning' | 'manage'>('learning');
   const accountRef = useRef<HTMLDivElement>(null);
+
+  const isAdmin = userProfile?.role === 'admin';
+  const canManageCourses = isAdmin || hasPermission('manage_courses');
 
   useEffect(() => {
     if (loading) return;
@@ -127,12 +153,20 @@ export default function StudentPage() {
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    const isAdmin = userProfile?.role === 'admin';
-    if (hash === 'course-list') setSection('courses');
+    if (hash === 'course-list' || hash === 'courses') {
+      setSection('courses');
+      setCourseViewMode('learning');
+    }
+    if (hash === 'courses-manage') {
+      setSection('courses');
+      setCourseViewMode('manage');
+    }
+
     if (!isAdmin) {
-      if (hash && !['course-list', ''].includes(hash)) setSection('overview');
+      if (hash && !['course-list', 'courses', ''].includes(hash)) setSection('overview');
       return;
     }
+
     if (hash === 'learners' || hash === 'students') setSection('learners');
     if (hash === 'projects') setSection('projects');
     if (hash === 'departments') setSection('departments');
@@ -145,14 +179,14 @@ export default function StudentPage() {
     if (hash === 'library') setSection('library');
     if (hash === 'reports') setSection('reports');
     if (hash === 'settings') setSection('settings');
-  }, [userProfile?.role]);
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (!userProfile || userProfile.role === 'admin') return;
+    if (!userProfile || isAdmin) return;
     if (section !== 'overview' && section !== 'courses') {
       setSection('overview');
     }
-  }, [userProfile, section]);
+  }, [userProfile, isAdmin, section]);
 
   if (loading) {
     return (
@@ -184,9 +218,10 @@ export default function StudentPage() {
     .slice(-2)
     .map(part => part[0]?.toUpperCase() || '')
     .join('');
+
   const statCards = [
     { label: t('student.videoPoints'), value: stats.points, icon: Sparkles, iconBg: 'bg-[#eff6ff] text-[#1B7A1E]' },
-    { label: t('student.completedVideos'), value: stats.completedVideos, icon: CheckCircle2, iconBg: 'bg-[#edfbf8] text-[#07965f]' },
+    { label: t('student.completedVideos'), value: stats.completedVideos, icon: CheckCircle2, iconBg: 'bg-[#edfbf4] text-[#07965f]' },
     { label: t('student.inProgressVideos'), value: stats.inProgressVideos, icon: PlayCircle, iconBg: 'bg-[#eff6ff] text-[#1B7A1E]' },
     { label: t('student.passedQuizzes'), value: stats.passedQuizzes, icon: ClipboardCheck, iconBg: 'bg-[#fff6e9] text-[#df8b00]' },
   ];
@@ -219,7 +254,7 @@ export default function StudentPage() {
             <BookOpen className={navIconClass} />
             {t('student.academy.courses')}
           </button>
-          {userProfile.role === 'admin' && (
+          {isAdmin && (
             <>
               <button type="button" onClick={() => setSection('learners')} className={navBtn(section === 'learners')}>
                 <Users className={navIconClass} />
@@ -253,11 +288,11 @@ export default function StudentPage() {
                 <BadgeCheck className={navIconClass} />
                 {t('student.academy.navCertificates')}
               </button>
-              <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">{t('student.academy.navSystem')}</p>
-              <Link href="/admin/courses" className={navBtn(false)}>
-                <LayoutDashboard className={navIconClass} />
-                {t('student.academy.openAdminConsole')}
-              </Link>
+
+              <p className="mx-2 mb-1 mt-3 border-t border-white/15 pt-3 text-[13px] font-bold uppercase tracking-wide text-[#c5e6cc]">
+                {t('student.academy.navSystem')}
+              </p>
+
               <button type="button" onClick={() => setSection('account')} className={navBtn(section === 'account')}>
                 <Users className={navIconClass} />
                 {t('student.academy.navUsers')}
@@ -312,7 +347,7 @@ export default function StudentPage() {
               <span className="hidden min-w-0 sm:block">
                 <b className="block max-w-[160px] truncate text-[12px] leading-tight text-[#111b38]">{userProfile.displayName}</b>
                 <small className="block text-[10px] leading-tight text-[#66718b]">
-                  {userProfile.role === 'staff' ? t('student.academy.staffRole') : t('student.academy.studentRole')}
+                  {userProfile.role === 'admin' ? 'Quản trị viên' : userProfile.role === 'staff' ? t('student.academy.staffRole') : t('student.academy.studentRole')}
                 </small>
               </span>
               <ChevronDown size={14} className={`hidden text-[#63708a] sm:block ${accountOpen ? 'rotate-180' : ''}`} />
@@ -369,22 +404,60 @@ export default function StudentPage() {
 
           {section === 'courses' && (
             <div id="course-list">
-              <CourseEnrollment showHero />
+              {canManageCourses ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-[#e5eaf0] bg-white p-2 rounded-2xl shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setCourseViewMode('learning')}
+                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition ${
+                        courseViewMode === 'learning'
+                          ? 'bg-[#18701C] text-white shadow-sm'
+                          : 'text-[#63708a] hover:bg-slate-100 hover:text-[#111b38]'
+                      }`}
+                    >
+                      <BookOpen size={16} />
+                      {t('student.academy.courses') || 'Giao diện học tập'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCourseViewMode('manage')}
+                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition ${
+                        courseViewMode === 'manage'
+                          ? 'bg-[#18701C] text-white shadow-sm'
+                          : 'text-[#63708a] hover:bg-slate-100 hover:text-[#111b38]'
+                      }`}
+                    >
+                      <Settings size={16} />
+                      {t('admin.courses.title') || 'Quản lý khóa học'}
+                    </button>
+                  </div>
+                  {courseViewMode === 'learning' ? (
+                    <CourseEnrollment showHero />
+                  ) : (
+                    <div className="rounded-2xl border border-[#e7edf5] bg-white overflow-hidden shadow-sm">
+                      <CourseManagement />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <CourseEnrollment showHero />
+              )}
             </div>
           )}
 
-          {userProfile.role === 'admin' && section === 'learners' && <StudentLearners />}
-          {userProfile.role === 'admin' && section === 'projects' && <StudentProjects />}
-          {userProfile.role === 'admin' && section === 'departments' && <StudentDepartments />}
-          {userProfile.role === 'admin' && section === 'positions' && <StudentPositions />}
-          {userProfile.role === 'admin' && section === 'assessment' && <StudentAssessment />}
-          {userProfile.role === 'admin' && section === 'account' && <StudentAccountUser />}
-          {userProfile.role === 'admin' && section === 'permissions' && <StudentPermissions />}
-          {userProfile.role === 'admin' && section === 'activity' && <StudentActivityLog />}
-          {userProfile.role === 'admin' && section === 'certificates' && <StudentCertificates />}
-          {userProfile.role === 'admin' && section === 'library' && <StudentLibrary />}
-          {userProfile.role === 'admin' && section === 'reports' && <DashboardSimple />}
-          {userProfile.role === 'admin' && section === 'settings' && <StudentSettings />}
+          {isAdmin && section === 'learners' && <StudentLearners />}
+          {isAdmin && section === 'projects' && <StudentProjects />}
+          {isAdmin && section === 'departments' && <StudentDepartments />}
+          {isAdmin && section === 'positions' && <StudentPositions />}
+          {isAdmin && section === 'assessment' && <StudentAssessment />}
+          {isAdmin && section === 'account' && <StudentAccountUser />}
+          {isAdmin && section === 'permissions' && <StudentPermissions />}
+          {isAdmin && section === 'activity' && <StudentActivityLog />}
+          {isAdmin && section === 'certificates' && <StudentCertificates />}
+          {isAdmin && section === 'library' && <StudentLibrary />}
+          {isAdmin && section === 'reports' && <DashboardSimple />}
+          {isAdmin && section === 'settings' && <StudentSettings />}
         </main>
       </div>
     </div>

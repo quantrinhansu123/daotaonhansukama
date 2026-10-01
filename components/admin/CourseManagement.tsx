@@ -79,6 +79,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = () => {
       const coursesSnapshot = await getDocs(coursesRef);
       const coursesData = coursesSnapshot.docs.map(doc => ({
         ...doc.data(),
+        id: doc.id,
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate()
       })) as Course[];
