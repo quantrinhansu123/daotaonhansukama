@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, db } from '@/lib/data-store';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LessonRetake } from '@/types/lesson';
 import { ClipboardCheck, Search } from 'lucide-react';
 
 type QuizRow = {
@@ -23,6 +24,7 @@ type QuizRow = {
 export function StudentAssessment() {
   const { t, dateLocale } = useLanguage();
   const [rows, setRows] = useState<QuizRow[]>([]);
+  const [retakes, setRetakes] = useState<Array<LessonRetake & { courseTitle: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -31,10 +33,11 @@ export function StudentAssessment() {
     void (async () => {
       try {
         setLoading(true);
-        const [quizSnap, lessonSnap, courseSnap] = await Promise.all([
+        const [quizSnap, lessonSnap, courseSnap, retakeSnap] = await Promise.all([
           getDocs(collection(db, 'quizResults')),
           getDocs(collection(db, 'lessons')),
           getDocs(collection(db, 'courses')),
+          getDocs(collection(db, 'lessonRetakes')),
         ]);
         const lessons: Record<string, string> = {};
         lessonSnap.docs.forEach(d => { lessons[d.id] = d.data().title || d.id; });
@@ -61,6 +64,19 @@ export function StudentAssessment() {
         }).sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0));
 
         setRows(data);
+        const history = retakeSnap.docs.map(item => {
+          const row = item.data() as LessonRetake;
+          const startedAt = row.startedAt as { toDate?: () => Date } | Date | string;
+          return {
+            ...row,
+            lessonTitle: row.lessonTitle || lessons[row.lessonId] || row.lessonId,
+            courseTitle: courses[row.courseId] || row.courseId,
+            startedAt: startedAt && typeof startedAt === 'object' && 'toDate' in startedAt && startedAt.toDate
+              ? startedAt.toDate()
+              : new Date(startedAt),
+          };
+        }).sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+        setRetakes(history);
         if (data[0]) setSelectedId(data[0].id);
       } finally {
         setLoading(false);
@@ -75,6 +91,14 @@ export function StudentAssessment() {
       [row.userName, row.lessonTitle, row.courseTitle].join(' ').toLowerCase().includes(keyword)
     );
   }, [rows, query]);
+
+  const filteredRetakes = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    if (!keyword) return retakes;
+    return retakes.filter(item =>
+      [item.userName, item.lessonTitle, item.courseTitle].join(' ').toLowerCase().includes(keyword)
+    );
+  }, [retakes, query]);
 
   const selected = filtered.find(r => r.id === selectedId) || filtered[0] || null;
   const passed = rows.filter(r => r.score >= 70).length;
@@ -163,6 +187,42 @@ export function StudentAssessment() {
           ) : <p className="py-8 text-center text-[#63708a]">{t('student.assessment.empty')}</p>}
         </aside>
       </div>
+
+      <section className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white shadow-[0_8px_24px_rgba(24,48,93,0.06)]">
+        <div className="border-b border-[#eef2f7] px-4 py-3">
+          <h2 className="m-0 text-[15px] font-bold text-[#111b38]">{t('student.assessment.retakeTitle')}</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-[13px]">
+            <thead className="bg-[#fff9ec] text-[11px] font-bold uppercase tracking-wide text-[#8a6508]">
+              <tr>
+                <th className="px-3 py-3 font-bold">#</th>
+                <th className="px-3 py-3 font-bold">{t('student.assessment.colLearner')}</th>
+                <th className="px-3 py-3 font-bold">{t('student.assessment.colCourse')}</th>
+                <th className="px-3 py-3 font-bold">{t('student.assessment.colLesson')}</th>
+                <th className="px-3 py-3 font-bold">{t('student.assessment.retakeAttempt')}</th>
+                <th className="px-3 py-3 font-bold">{t('student.assessment.retakePrevious')}</th>
+                <th className="px-3 py-3 font-bold">{t('student.assessment.retakeWhen')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRetakes.length === 0 ? (
+                <tr><td colSpan={7} className="px-3 py-8 text-center text-[#63708a]">{t('student.retakeHistoryEmpty')}</td></tr>
+              ) : filteredRetakes.map((item, index) => (
+                <tr key={item.id} className="border-t border-[#eef2f7]">
+                  <td className="px-3 py-3 text-[12px] font-bold text-[#9a6b08]">{index + 1}</td>
+                  <td className="px-3 py-3 font-semibold text-[#111b38]">{item.userName}</td>
+                  <td className="px-3 py-3 text-[#243552]">{item.courseTitle}</td>
+                  <td className="px-3 py-3 text-[#243552]">{item.lessonTitle}</td>
+                  <td className="px-3 py-3 text-[#243552]">{item.attempt}</td>
+                  <td className="px-3 py-3 text-[#b42318]">{item.previousScore}%</td>
+                  <td className="px-3 py-3 text-[#52617c]">{item.startedAt.toLocaleString(dateLocale)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

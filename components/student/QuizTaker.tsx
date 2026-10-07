@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, doc, setDoc, deleteDoc } from '@/lib/data-store';
+import { collection, getDocs, query, where, doc, setDoc } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
 import { Question, QuizResult } from '@/types/lesson';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,8 @@ interface QuizTakerProps {
   quizDocumentUrl?: string;
   quizDocumentName?: string;
   onComplete: () => void;
+  onStudyAgain?: () => void;
+  freshAttempt?: boolean;
 }
 
 const PASS_SCORE = 70;
@@ -76,6 +78,8 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({
   quizDocumentUrl,
   quizDocumentName,
   onComplete,
+  onStudyAgain,
+  freshAttempt = false,
 }) => {
   const { t, dateLocale } = useLanguage();
   const { userProfile } = useAuth();
@@ -93,7 +97,7 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({
   useEffect(() => {
     void loadQuestions();
     void checkExistingResult();
-  }, [lessonId]);
+  }, [lessonId, freshAttempt]);
 
   useEffect(() => {
     if (quizDuration && timeLeft > 0 && !showResult) {
@@ -121,13 +125,23 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({
         where('lessonId', '==', lessonId)
       );
       const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const resultData = snapshot.docs[0].data() as QuizResult;
-        const completedAt = resultData.completedAt as any;
+      if (!snapshot.empty && !freshAttempt) {
+        const latest = snapshot.docs
+          .map(item => item.data() as QuizResult)
+          .sort((a, b) => {
+            const left = new Date((a.completedAt as { toDate?: () => Date })?.toDate?.() || a.completedAt).getTime();
+            const right = new Date((b.completedAt as { toDate?: () => Date })?.toDate?.() || b.completedAt).getTime();
+            return right - left;
+          })[0];
+        const completedAt = latest.completedAt as { toDate?: () => Date } | Date;
         setExistingResult({
-          ...resultData,
-          completedAt: completedAt?.toDate ? completedAt.toDate() : new Date(completedAt),
+          ...latest,
+          completedAt: typeof (completedAt as { toDate?: () => Date })?.toDate === 'function'
+            ? (completedAt as { toDate: () => Date }).toDate()
+            : new Date(completedAt as Date),
         });
+      } else {
+        setExistingResult(null);
       }
     } catch (error) {
       console.error('Error checking existing result:', error);
@@ -173,20 +187,11 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({
     if (quizDuration) setTimeLeft(quizDuration * 60);
   };
 
-  const handleRetake = async (quizResult: QuizResult, confirmKey: string) => {
+  const handleRetake = async (_quizResult: QuizResult, confirmKey: string) => {
     if (!confirm(t(confirmKey))) return;
-    try {
-      setRetaking(true);
-      if (userProfile) {
-        await deleteDoc(doc(db, 'quizResults', quizResult.id));
-      }
-      resetQuizState();
-    } catch (error) {
-      console.error('Error deleting result:', error);
-      alert(t('student.deleteResultError'));
-    } finally {
-      setRetaking(false);
-    }
+    setRetaking(true);
+    resetQuizState();
+    setRetaking(false);
   };
 
   const handleSubmit = async () => {
@@ -348,6 +353,16 @@ export const QuizTaker: React.FC<QuizTakerProps> = ({
               <RotateCcw size={16} />
               {retaking ? '...' : t('student.retakeQuiz')}
             </button>
+            {!passed && onStudyAgain && (
+              <button
+                type="button"
+                onClick={onStudyAgain}
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#c99212] px-4 text-[13px] font-bold text-white transition hover:bg-[#a87a0c]"
+              >
+                <RotateCcw size={16} />
+                {t('student.studyAgain')}
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { collection, getDocs, query, where, doc, runTransaction } from '@/lib/data-store';
+import { collection, getDocs, query, where, doc, runTransaction, setDoc } from '@/lib/data-store';
 import { db } from '@/lib/data-store';
 import { Course } from '@/types/course';
-import { Lesson, QuizResult } from '@/types/lesson';
+import { Lesson, QuizResult, LessonRetake } from '@/types/lesson';
 import { LessonProgress } from '@/types/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -22,6 +22,7 @@ import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from
 import { VideoQualitySelect } from '@/components/shared/VideoQualitySelect';
 import { VideoLoadingBuddy } from '@/components/shared/VideoLoadingBuddy';
 import { getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
+import { recordLessonRetake, PASS_SCORE } from '@/lib/lesson-retakes';
 import { LessonManagement } from '@/components/teacher/LessonManagement';
 
 interface CourseViewerProps {
@@ -48,6 +49,8 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const lessons=useMemo(()=>storedLessons.map(l=>lessonWithBinding(l,pipeline.bindings)),[storedLessons,pipeline.bindings]);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [quizResults, setQuizResults] = useState<Record<string, QuizResult>>({});
+  const [retakes, setRetakes] = useState<LessonRetake[]>([]);
+  const [relearnIds, setRelearnIds] = useState<Set<string>>(new Set());
   const [bannerError, setBannerError] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'docs' | 'qa' | 'reviews' | 'news'>('info');
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -393,13 +396,38 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       );
       const snapshot = await getDocs(q);
       const resultsMap: Record<string, QuizResult> = {};
+      const resultTime = (value: QuizResult['completedAt']) => {
+        const raw = value as { toDate?: () => Date } | Date | string | undefined;
+        if (raw && typeof raw === 'object' && 'toDate' in raw && raw.toDate) return raw.toDate().getTime();
+        const time = new Date(raw || 0).getTime();
+        return Number.isFinite(time) ? time : 0;
+      };
 
-      snapshot.docs.forEach(doc => {
-        const data = doc.data() as QuizResult;
-        resultsMap[data.lessonId] = data;
+      snapshot.docs.forEach(docSnap => {
+        const data = docSnap.data() as QuizResult;
+        const current = resultsMap[data.lessonId];
+        if (!current || resultTime(data.completedAt) >= resultTime(current.completedAt)) {
+          resultsMap[data.lessonId] = data;
+        }
       });
 
       setQuizResults(resultsMap);
+      const retakeSnapshot = await getDocs(query(
+        collection(db, 'lessonRetakes'),
+        where('userId', '==', userProfile.uid),
+        where('courseId', '==', selectedCourseId),
+      ));
+      const history = retakeSnapshot.docs.map(item => {
+        const data = item.data() as LessonRetake;
+        const startedAt = data.startedAt as { toDate?: () => Date } | Date | string;
+        return {
+          ...data,
+          startedAt: startedAt && typeof startedAt === 'object' && 'toDate' in startedAt && startedAt.toDate
+            ? startedAt.toDate()
+            : new Date(startedAt),
+        };
+      }).sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+      setRetakes(history);
     } catch (error) {
       console.error('Error loading quiz results:', error);
     }
@@ -619,6 +647,53 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         setTakingQuiz(true);
       }
       showToast(t('student.noVideoYet'));
+    }
+  };
+
+  const studyAgain = async (lesson: Lesson) => {
+    if (!userProfile?.uid) return;
+    const previous = quizResults[lesson.id];
+    if (!previous || previous.score >= PASS_SCORE) return;
+    if (!window.confirm(t('student.studyAgainConfirm'))) return;
+    try {
+      const row = await recordLessonRetake({
+        userId: userProfile.uid,
+        userName: userProfile.displayName || userProfile.email || '',
+        lessonId: lesson.id,
+        lessonTitle: lesson.title,
+        courseId: selectedCourseId,
+        previousScore: previous.score,
+      });
+      setRetakes(prev => [row, ...prev.filter(item => item.id !== row.id)]);
+      const reset: LessonProgress = {
+        id: `${userProfile.uid}_${lesson.id}`,
+        userId: userProfile.uid,
+        courseId: selectedCourseId,
+        lessonId: lesson.id,
+        watchedSeconds: 0,
+        viewedSeconds: 0,
+        watchedRanges: [],
+        completed: false,
+        totalSeconds: progress[lesson.id]?.totalSeconds || lesson.duration || 0,
+        lastWatchedAt: new Date(),
+      };
+      await setDoc(doc(db, 'progress', reset.id), {
+        ...reset,
+        lastWatchedAt: reset.lastWatchedAt.toISOString(),
+      }, { merge: true });
+      latestProgressRef.current = { ...latestProgressRef.current, [lesson.id]: reset };
+      setProgress(prev => ({ ...prev, [lesson.id]: reset }));
+      setRelearnIds(prev => new Set(prev).add(lesson.id));
+      setTakingQuiz(false);
+      setViewMode('video');
+      openLesson(lesson, lessonIndex(lesson));
+      if (videoRef.current && selectedLesson?.id === lesson.id) {
+        videoRef.current.currentTime = 0;
+        void videoRef.current.play().catch(() => setIsPlaying(false));
+      }
+    } catch (error) {
+      console.error('Error recording lesson retake:', error);
+      alert(t('student.studyAgainError'));
     }
   };
 
@@ -1318,13 +1393,21 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       {selectedLesson?.hasQuiz && takingQuiz && (
                         <div className="pt-3">
                           <QuizTaker
+                            key={`${selectedLesson.id}-${relearnIds.has(selectedLesson.id) ? 'relearn' : 'review'}`}
                             lessonId={selectedLesson.id}
                             courseId={selectedCourseId}
                             quizDuration={selectedLesson.quizDuration}
                             quizDocumentUrl={selectedLesson.quizDocumentUrl}
                             quizDocumentName={selectedLesson.quizDocumentName}
+                            freshAttempt={relearnIds.has(selectedLesson.id)}
+                            onStudyAgain={() => void studyAgain(selectedLesson)}
                             onComplete={() => {
                               setTakingQuiz(false);
+                              setRelearnIds(prev => {
+                                const next = new Set(prev);
+                                next.delete(selectedLesson.id);
+                                return next;
+                              });
                               void loadQuizResults();
                             }}
                           />
@@ -1434,10 +1517,18 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                         const locked = isLessonLocked(lesson, index);
                         const done = Boolean(progress[lesson.id]?.completed);
                         const selected = selectedLesson?.id === lesson.id;
+                        const latestQuiz = quizResults[lesson.id];
+                        const failed = Boolean(latestQuiz && latestQuiz.score < PASS_SCORE);
+                        const retakeCount = retakes.filter(item => item.lessonId === lesson.id).length;
                         return (
-                          <button
+                          <div
                             key={lesson.id}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => openLesson(lesson, index)}
+                            onKeyDown={event => {
+                              if (event.key === 'Enter' || event.key === ' ') openLesson(lesson, index);
+                            }}
                             className={`relative grid min-h-[48px] w-full grid-cols-[24px_30px_minmax(0,1fr)_auto_20px] items-center gap-1.5 border-t border-[#eef2f7] px-3 py-2.5 text-left transition ${
                               selected
                                 ? 'bg-[#eff8f0] shadow-[inset_0_0_0_1px_rgba(24,112,28,0.14)]'
@@ -1457,20 +1548,54 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                               )}
                             </span>
                             <span className="text-[12px] font-semibold text-[#5e6880]">{lesson.order || index + 1}</span>
-                            <span className={`truncate text-[14px] leading-snug ${selected || done ? 'font-semibold text-[#18701C]' : 'font-medium text-[#243552]'}`}>{lesson.title}</span>
+                            <span className="min-w-0">
+                              <span className={`block truncate text-[14px] leading-snug ${selected || done ? 'font-semibold text-[#18701C]' : 'font-medium text-[#243552]'}`}>{lesson.title}</span>
+                              {failed && (
+                                <button
+                                  type="button"
+                                  onClick={event => {
+                                    event.stopPropagation();
+                                    void studyAgain(lesson);
+                                  }}
+                                  className="mt-1 inline-flex items-center rounded-full bg-[#fff4e5] px-2 py-0.5 text-[11px] font-bold text-[#9a6b08] hover:bg-[#ffe7c2]"
+                                >
+                                  {t('student.studyAgain')}{retakeCount > 0 ? ` · ${retakeCount}` : ''}
+                                </button>
+                              )}
+                            </span>
                             <span className="whitespace-nowrap text-right text-[11px] font-semibold text-[#53617a]">
                               {lesson.duration ? formatDuration(lesson.duration) : ''}
                             </span>
                             <span className={`grid h-5 w-5 place-items-center justify-self-center rounded-full border ${done ? 'border-[#13ab71] bg-[#13ab71] text-white shadow-sm' : 'border-[#a4b1c2] text-[#a4b1c2]'}`}>
                               {locked ? <Lock size={10} /> : done ? <CheckCircle2 size={12} strokeWidth={3} /> : null}
                             </span>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
                   );
                 })}
               </section>
+
+              {retakes.length > 0 && (
+                <section className="rounded-2xl border border-[#e7edf5] bg-white px-3.5 py-4 shadow-[0_8px_24px_rgba(24,48,93,0.07)]">
+                  <b className="text-[15px] font-bold text-[#111b38]">{t('student.retakeHistory')}</b>
+                  <div className="mt-3 space-y-2">
+                    {retakes.map(item => (
+                      <div key={item.id} className="rounded-xl border border-[#f0dfb0] bg-[#fff9ec] px-3 py-2.5">
+                        <p className="m-0 text-[13px] font-bold text-[#111b38]">{item.lessonTitle}</p>
+                        <p className="m-0 mt-1 text-[12px] text-[#7a6840]">
+                          {t('student.retakeAttempt', { n: item.attempt })}
+                          {' · '}
+                          {t('student.retakePreviousScore', { score: item.previousScore })}
+                          {' · '}
+                          {item.startedAt.toLocaleString(dateLocale)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               <section className="flex gap-3 rounded-2xl border border-[#f0dfb0] bg-[#fff9ec] p-4 text-[13px] shadow-[0_8px_24px_rgba(24,48,93,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(24,48,93,0.09)]">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#fff1d0] text-[#e2a020] shadow-sm">

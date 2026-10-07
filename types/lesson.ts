@@ -46,3 +46,15 @@ export interface QuizResult {
   timeSpent?: number; // Thời gian làm bài (giây)
   completedAt: Date;
 }
+
+export interface LessonRetake {
+  id: string;
+  userId: string;
+  userName: string;
+  lessonId: string;
+  lessonTitle: string;
+  courseId: string;
+  previousScore: number;
+  attempt: number;
+  startedAt: Date;
+}
