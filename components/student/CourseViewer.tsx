@@ -19,6 +19,7 @@ import { proxyBunnyUrl } from '@/lib/bunny-media';
 import { resolveVideo,resolvePlaybackSource } from '@/lib/video-resolve';
 import { useVideoBindings,lessonWithBinding,courseWithBinding } from '@/lib/video-bindings-client';
 import { attachVideoPlayback, type PlaybackHandle, type VideoQualityLevel } from '@/lib/video-playback';
+import { videoErrorMessage } from '@/lib/video-errors';
 import { VideoQualitySelect } from '@/components/shared/VideoQualitySelect';
 import { VideoLoadingBuddy } from '@/components/shared/VideoLoadingBuddy';
 import { getViewedSeconds, mergeWatchedRanges, VIDEO_COMPLETION_RATIO, VIDEO_POINTS_PER_LESSON, WatchedRange } from '@/lib/learning-progress';
@@ -71,6 +72,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   const lessonPlaybackRef = useRef<PlaybackHandle | null>(null);
   const hasOpenedLessonRef = useRef(false);
   const [videoLoadError, setVideoLoadError] = useState('');
+  const [videoRetry, setVideoRetry] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
   const [showVideoBuddy, setShowVideoBuddy] = useState(false);
   const [qualityLevels, setQualityLevels] = useState<VideoQualityLevel[]>([]);
@@ -84,10 +86,10 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
   latestProgressRef.current = progress;
   const selectedLessonId = selectedLesson?.id;
   const selectedLessonVideo = selectedLesson
-    ? resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl)
+    ? resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoUrl || selectedLesson.videoId)
     : null;
   const pipelineLessonPlayer=process.env.NEXT_PUBLIC_VIDEO_PIPELINE_ENABLED==='true';
-  const legacyLessonUrl=selectedLessonVideo?.kind==='bunny'?bunnyStreamPlaylistUrl(selectedLessonVideo.id) || '':selectedLessonVideo?.kind==='file'?selectedLessonVideo.url:'';
+  const legacyLessonUrl=selectedLessonVideo?.kind==='bunny'?bunnyStreamPlaylistUrl(selectedLessonVideo.id, selectedLessonVideo.cdnHost) || '':selectedLessonVideo?.kind==='file'?selectedLessonVideo.url:'';
   const legacyLessonHls=selectedLessonVideo?.kind==='bunny';
   const cloudFlyLessonKey = selectedLesson?.videoAssetId || (pipelineLessonPlayer && selectedLessonVideo) ? selectedLesson?.videoKey || 'pipeline' : selectedLessonVideo?.kind === 'cloudfly' ? selectedLessonVideo.key : null;
 
@@ -180,11 +182,14 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           prewarm: false,
           onQualityLevels: setQualityLevels,
           sourceQualityAvailable: resolved.sourceQualityAvailable,
-          onPlaybackError: () => {
-            if (!refreshed && !controller.signal.aborted) {
+          onPlaybackError: issue => {
+            if (!refreshed && !controller.signal.aborted && issue?.kind !== 'timeout') {
               refreshed = true;
               void initialize(true, video.currentTime);
-            } else if (!controller.signal.aborted) setVideoLoadError('Không tải được video. Vui lòng thử lại.');
+            } else if (!controller.signal.aborted) {
+              handle?.destroy();
+              setVideoLoadError(videoErrorMessage(issue));
+            }
           },
         });
         if (controller.signal.aborted) {
@@ -213,7 +218,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
         clearTimeout(attentionCheckTimer.current);
       }
     };
-  }, [selectedLessonId, cloudFlyLessonKey, legacyLessonUrl,legacyLessonHls,progressLoaded, introOpen, viewMode,playerOpen]);
+  }, [selectedLessonId, cloudFlyLessonKey, legacyLessonUrl,legacyLessonHls,progressLoaded, introOpen, viewMode,playerOpen,videoRetry]);
 
   useEffect(() => {
     if (!playerOpen || videoReady || videoLoadError) {
@@ -399,7 +404,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       const resultTime = (value: QuizResult['completedAt']) => {
         const raw = value as { toDate?: () => Date } | Date | string | undefined;
         if (raw && typeof raw === 'object' && 'toDate' in raw && raw.toDate) return raw.toDate().getTime();
-        const time = new Date(raw || 0).getTime();
+        const time = raw instanceof Date ? raw.getTime() : typeof raw === 'string' ? Date.parse(raw) : 0;
         return Number.isFinite(time) ? time : 0;
       };
 
@@ -424,7 +429,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           ...data,
           startedAt: startedAt && typeof startedAt === 'object' && 'toDate' in startedAt && startedAt.toDate
             ? startedAt.toDate()
-            : new Date(startedAt),
+            : startedAt instanceof Date ? startedAt : new Date(typeof startedAt === 'string' ? startedAt : 0),
         };
       }).sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
       setRetakes(history);
@@ -641,7 +646,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
 
     window.setTimeout(() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 
-    if (!resolveDemoVideo(lesson.videoKey, lesson.videoId || lesson.videoUrl)) {
+    if (!resolveDemoVideo(lesson.videoKey, lesson.videoUrl || lesson.videoId)) {
       if (lesson.hasQuiz) {
         setActiveTab('qa');
         setTakingQuiz(true);
@@ -715,7 +720,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       window.setTimeout(() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
       return;
     }
-    const firstVideo = filteredLessons.find(lesson => resolveDemoVideo(lesson.videoKey, lesson.videoId || lesson.videoUrl));
+    const firstVideo = filteredLessons.find(lesson => resolveDemoVideo(lesson.videoKey, lesson.videoUrl || lesson.videoId));
     if (firstVideo) {
       openLesson(firstVideo, lessonIndex(firstVideo));
       return;
@@ -732,7 +737,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       showToast(t('student.academy.alreadyComplete'));
       return;
     }
-    const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
+    const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoUrl || selectedLesson.videoId);
     if (lessonVideo) {
       setSelectedLesson(selectedLesson);
       setViewMode('video');
@@ -1059,7 +1064,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                   </div>
                 )}
                 {selectedLesson ? (() => {
-                  const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoId || selectedLesson.videoUrl);
+                  const lessonVideo = resolveDemoVideo(selectedLesson.videoKey, selectedLesson.videoUrl || selectedLesson.videoId);
                   if (!lessonVideo) {
                     if (!playerOpen) return null;
                     return (
@@ -1089,7 +1094,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                       <DemoVideoView
                         key={`legacy-${selectedLesson.id}-${playSession}`}
                         videoKey={selectedLesson.videoKey}
-                        legacyId={selectedLesson.videoId || selectedLesson.videoUrl}
+                        legacyId={selectedLesson.videoUrl || selectedLesson.videoId}
                         target={{targetType:'lesson',targetId:selectedLesson.id}}
                         autoPlay
                         className="h-full w-full bg-black object-contain"
@@ -1140,7 +1145,12 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
                           }}
                         />
                       )}
-                      {videoLoadError && <div className="absolute inset-0 grid place-items-center bg-black/80 p-4 text-center text-sm text-white">{videoLoadError}</div>}
+                      {videoLoadError && <div role="alert" className="absolute inset-0 grid place-items-center bg-black/80 p-4 text-center text-sm text-white">
+                        <div>
+                          <p>{videoLoadError}</p>
+                          <button type="button" className="mt-4 rounded-lg bg-white px-4 py-2 font-semibold text-slate-900" onClick={() => setVideoRetry(value => value + 1)}>Thử lại</button>
+                        </div>
+                      </div>}
                       {isStaff && playerOpen && (
                         <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3" style={{ pointerEvents: 'auto' }}>
                           <div className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 import type { ResolvedVideo } from './video-resolve';
+import type { VideoPlaybackError } from './video-errors';
 
 export type VideoQualityLevel = {
   index: number;
@@ -21,7 +22,8 @@ export async function attachVideoPlayback(
   options: {
     startAt?: number;
     signal?: AbortSignal;
-    onPlaybackError?: () => void;
+    onPlaybackError?: (error?: VideoPlaybackError) => void;
+    startupTimeoutMs?: number;
     onQualityLevels?: (levels: VideoQualityLevel[]) => void;
     sourceQualityAvailable?: boolean;
     prewarm?: boolean;
@@ -29,7 +31,20 @@ export async function attachVideoPlayback(
   } = {},
 ): Promise<PlaybackHandle> {
   let disposed = false;
+  let failureReported = false;
+  let startupTimer: ReturnType<typeof setTimeout> | undefined;
   let hls: import('hls.js').default | null = null;
+  const fail = (error: VideoPlaybackError) => {
+    if (disposed || options.signal?.aborted || failureReported) return;
+    failureReported = true;
+    clearTimeout(startupTimer);
+    options.onPlaybackError?.(error);
+  };
+  const watchStartup = () => {
+    clearTimeout(startupTimer);
+    startupTimer = setTimeout(() => fail({ kind: 'timeout' }), options.startupTimeoutMs ?? 25_000);
+  };
+  const ready = () => clearTimeout(startupTimer);
   const startAt = Math.max(0, options.startAt || 0);
   const restorePosition = () => {
     if (startAt > 0 && Number.isFinite(video.duration)) {
@@ -40,11 +55,18 @@ export async function attachVideoPlayback(
   if (source.posterUrl) video.poster = source.posterUrl;
   video.preload = options.prewarm ? 'metadata' : 'auto';
 
-  const onError = () => options.onPlaybackError?.();
+  const onError = () => fail({ kind: 'media' });
   video.addEventListener('error', onError);
+  video.addEventListener('canplay', ready);
+  if (options.prewarm) video.addEventListener('loadedmetadata', ready);
   const cleanup = () => {
+    if (disposed) return;
     disposed = true;
+    clearTimeout(startupTimer);
+    options.signal?.removeEventListener('abort', cleanup);
     video.removeEventListener('loadedmetadata', restorePosition);
+    video.removeEventListener('loadedmetadata', ready);
+    video.removeEventListener('canplay', ready);
     video.removeEventListener('error', onError);
     hls?.destroy();
     hls = null;
@@ -52,11 +74,20 @@ export async function attachVideoPlayback(
     video.removeAttribute('src');
     video.load();
   };
+  options.signal?.addEventListener('abort', cleanup, { once: true });
+  if (options.signal?.aborted) {
+    cleanup();
+    return { resumeLoading: () => {}, pauseLoading: () => {}, setQuality: () => {}, destroy: cleanup };
+  }
+  watchStartup();
 
   const assignSource = (url: string) => {
     const nextPath = url.split('?')[0];
     const currentPath = (video.currentSrc || video.src || '').split('?')[0];
-    if (currentPath && currentPath === nextPath && video.readyState > 0) return;
+    if (currentPath && currentPath === nextPath && video.readyState > 0) {
+      if (video.readyState >= 3 || options.prewarm) ready();
+      return;
+    }
     const wasPlaying = !video.paused && !video.ended;
     video.src = url;
     video.load();
@@ -65,10 +96,11 @@ export async function attachVideoPlayback(
 
   // Preserve the legacy production path while only pipeline assets prefer HLS.
   const legacyDirectFile=!source.assetId && /^https?:\/\//i.test(source.url) && !/\.m3u8(\?|$)/i.test(source.url);
+  const hasFileFallback = Boolean(source.url && source.url !== source.hlsUrl && !/\.m3u8(?:\?|$)/i.test(source.url));
   if (source.hlsUrl && !legacyDirectFile) {
     try {
       const { default: Hls } = await import('hls.js');
-      if (disposed || options.signal?.aborted) return {
+      if (disposed || options.signal?.aborted || failureReported) return {
         resumeLoading: () => {}, pauseLoading: () => {}, setQuality: () => {}, destroy: cleanup,
       };
       if (Hls.isSupported()) {
@@ -99,15 +131,20 @@ export async function attachVideoPlayback(
           options.onQualityLevels?.(levels);
         });
         hls.on(Hls.Events.ERROR, (_event, details) => {
-          if (details.fatal) {
+          if (details.fatal && !disposed) {
             options.onQualityLevels?.([]);
             const position=video.currentTime,wasPlaying=!video.paused;
             hls?.destroy();
             hls = null;
+            const httpStatus = details.response?.code;
+            if (!hasFileFallback || httpStatus === 401 || httpStatus === 403) {
+              fail({ kind: 'network', httpStatus });
+              return;
+            }
+            watchStartup();
             video.src = source.url;
             video.addEventListener('loadedmetadata',()=>{video.currentTime=Math.min(position,Math.max(0,video.duration-.5));if(wasPlaying)void video.play().catch(()=>{});},{once:true});
             video.load();
-            if(details.response?.code===403) options.onPlaybackError?.();
           }
         });
         hls.loadSource(source.hlsUrl);
@@ -115,10 +152,14 @@ export async function attachVideoPlayback(
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         assignSource(source.hlsUrl);
       } else {
-        assignSource(source.url);
+        if (hasFileFallback) assignSource(source.url);
+        else fail({ kind: 'unsupported' });
       }
     } catch {
-      assignSource(source.url);
+      if (!disposed && !options.signal?.aborted) {
+        if (hasFileFallback) assignSource(source.url);
+        else fail({ kind: 'unsupported' });
+      }
     }
   } else {
     assignSource(source.url);

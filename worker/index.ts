@@ -12,6 +12,7 @@ import { runPipelineWorker } from './pipeline-worker';
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const selectedKey = process.argv.find(arg => arg.startsWith('--key='))?.slice('--key='.length);
 const once = process.argv.includes('--once') || Boolean(selectedKey);
+const mp4Only = process.argv.includes('--mp4-only');
 // The CloudFly object queue has one active consumer; run one worker replica.
 const concurrency = 1;
 let stopping = false;
@@ -37,13 +38,14 @@ async function runAsset(asset: VideoAsset) {
     });
   }, 5 * 60_000);
   try {
-    const result = await processVideo(asset.source_key);
+    const result = await processVideo(asset.source_key, { mp4Only });
     await markVideoAssetReady(asset, result);
     console.info('[video-worker] ready', { seconds: Math.round((Date.now() - startedAt) / 1000) });
   } catch (cause) {
     const code = failureCode(cause);
+    if (once) process.exitCode = 1;
     await markVideoAssetFailed(asset, code);
-    console.error('[video-worker] failed', { code, seconds: Math.round((Date.now() - startedAt) / 1000) });
+    console.error('[video-worker] failed', { code, type: cause instanceof Error ? cause.name : 'unknown', seconds: Math.round((Date.now() - startedAt) / 1000) });
   } finally {
     clearInterval(heartbeat);
   }
@@ -63,6 +65,7 @@ async function loop() {
     } catch (cause) {
       console.error('[video-worker] queue unavailable', {
         code: failureCode(cause),
+        type: cause instanceof Error ? cause.name : 'unknown',
       });
       if (once) throw cause;
       await sleep(10_000);

@@ -6,6 +6,7 @@ import { resolveVideo,resolvePlaybackSource } from '@/lib/video-resolve';
 import type { VideoTarget } from '@/lib/video-pipeline-types';
 import { VideoLoadingBuddy } from './VideoLoadingBuddy';
 import { VideoQualitySelect } from './VideoQualitySelect';
+import { videoErrorMessage, type VideoPlaybackError } from '@/lib/video-errors';
 
 interface VideoPlayerProps {
   videoKey?: string | null;
@@ -31,6 +32,7 @@ export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbac
   const [useProviderFallback, setUseProviderFallback] = useState(false);
   const [mediaReady, setMediaReady] = useState(false);
   const [showBuddy, setShowBuddy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   activeRef.current = active;
   autoPlayRef.current = autoPlay;
   const targetType=target?.targetType,targetId=target?.targetId;
@@ -64,8 +66,16 @@ export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbac
     video.addEventListener('loadedmetadata', setSourceQuality);
 
     let startIfReady: (() => void) | null = null;
+    const showError = (issue?: VideoPlaybackError) => {
+      if (controller.signal.aborted) return;
+      handle?.destroy();
+      setMediaReady(true);
+      setQualityPlaceholder('Không tải được video');
+      setError(videoErrorMessage(issue));
+    };
     const load = async (force = false) => {
       const at = video.currentTime;
+      let playbackFailed = false;
       try {
         const wasPlaying=!video.paused;
         const resolved = await resolvePlaybackSource(targetType && targetId?{targetType,targetId}:undefined,async()=>videoKey
@@ -93,18 +103,25 @@ export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbac
             if (levels.length) setSelectedQuality(-1);
           },
           sourceQualityAvailable: resolved.sourceQualityAvailable,
-          onPlaybackError: () => {
-            if (providerFallbackUrl && !controller.signal.aborted) {
+          onPlaybackError: issue => {
+            if (controller.signal.aborted) return;
+            const unavailable = issue?.httpStatus === 403 || issue?.httpStatus === 404;
+            if (providerFallbackUrl && !unavailable && issue?.kind !== 'timeout') {
+              playbackFailed = true;
               video.pause();
               handle?.destroy();
               handle = null;
               playbackRef.current = null;
               setUseProviderFallback(true);
             }
-            else if (refreshes++ < 1 && !controller.signal.aborted) void load(true);
+            else if (videoKey && refreshes++ < 1 && issue?.kind !== 'timeout') void load(true);
+            else {
+              playbackFailed = true;
+              showError(issue);
+            }
           },
         });
-        if (controller.signal.aborted) {
+        if (controller.signal.aborted || playbackFailed) {
           handle.destroy();
           return;
         }
@@ -120,8 +137,7 @@ export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbac
       } catch (cause) {
         if (!controller.signal.aborted) {
           setMediaReady(true);
-          if (providerFallbackUrl) setUseProviderFallback(true);
-          else setError(cause instanceof Error ? cause.message : 'Không mở được video.');
+          setError(cause instanceof Error ? cause.message : 'Không mở được video.');
         }
       }
     };
@@ -137,7 +153,7 @@ export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbac
       video.removeAttribute('src');
       video.load();
     };
-  }, [videoKey,targetType,targetId, mediaUrl, hlsUrl, providerFallbackUrl, prewarm]);
+  }, [videoKey,targetType,targetId, mediaUrl, hlsUrl, providerFallbackUrl, prewarm,reloadKey]);
 
   useEffect(() => {
     if (!active || mediaReady || error || useProviderFallback) {
@@ -211,7 +227,15 @@ export function VideoPlayer({ videoKey,target, mediaUrl, hlsUrl, providerFallbac
           playbackRef.current?.setQuality(index);
         }}
       />}
-      {error && <div className="absolute inset-0 grid place-items-center bg-black/80 p-4 text-center text-sm text-white">{error}</div>}
+      {error && <div role="alert" className="absolute inset-0 grid place-items-center bg-black/80 p-4 text-center text-sm text-white">
+        <div>
+          <p>{error}</p>
+          <button type="button" className="mt-4 rounded-lg bg-white px-4 py-2 font-semibold text-slate-900" onClick={() => {
+            setUseProviderFallback(false);
+            setReloadKey(value => value + 1);
+          }}>Thử lại</button>
+        </div>
+      </div>}
     </div>
   );
 }

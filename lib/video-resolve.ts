@@ -24,7 +24,7 @@ export async function resolveVideo(sourceKey: string, force = false): Promise<Re
   const hit = cache.get(cacheKey);
   if (!force && hit && hit.until > Date.now()) return hit.promise;
 
-  const promise = authenticatedFetch(`/api/cloudfly/video/resolve?key=${encodeURIComponent(sourceKey)}`)
+  const promise = authenticatedFetch(`/api/cloudfly/video/resolve?key=${encodeURIComponent(sourceKey)}`, { signal: AbortSignal.timeout(15_000) })
     .then(async response => {
       const payload = await response.json().catch(() => ({})) as ResolvedVideo & { error?: string };
       if (!response.ok || !payload.url) throw new Error(payload.error || `Không tải được video (HTTP ${response.status}).`);
@@ -34,6 +34,7 @@ export async function resolveVideo(sourceKey: string, force = false): Promise<Re
     })
     .catch(error => {
       cache.delete(cacheKey);
+      if (error instanceof Error && error.name === 'TimeoutError') throw new Error('Video tải quá lâu. Vui lòng kiểm tra kết nối và thử lại.');
       throw error;
     });
   cache.set(cacheKey, { promise, until: Date.now() + 10_000 });

@@ -204,7 +204,7 @@ async function uploadFile(key: string, file: string): Promise<void> {
   }).done();
 }
 
-export async function processVideo(sourceKey: string): Promise<ProcessedVideo> {
+export async function processVideo(sourceKey: string, options: { mp4Only?: boolean } = {}): Promise<ProcessedVideo> {
   if (!isCloudFlyVideoKey(sourceKey)) throw new Error('source_key_invalid');
   const id = sourceKey.match(/^videos\/([0-9a-f-]{36})\./i)?.[1];
   if (!id) throw new Error('source_key_invalid');
@@ -221,7 +221,7 @@ export async function processVideo(sourceKey: string): Promise<ProcessedVideo> {
     if (!object.Body) throw new Error('source_object_empty');
     await pipeline(object.Body as NodeJS.ReadableStream, createWriteStream(source));
 
-    const { info: outputInfo, variants } = await buildVideoFiles(source, temp);
+    const { info: outputInfo, variants } = await buildVideoFiles(source, temp, options);
 
     await uploadFile(`${prefix}/optimized.mp4`, normalized);
     await uploadFile(`${prefix}/poster.jpg`, poster);
@@ -244,7 +244,7 @@ export async function processVideo(sourceKey: string): Promise<ProcessedVideo> {
 
     return {
       optimized_key: `${prefix}/optimized.mp4`,
-      hls_master_key: `${prefix}/hls/master.m3u8`,
+      hls_master_key: options.mp4Only ? null : `${prefix}/hls/master.m3u8`,
       poster_key: `${prefix}/poster.jpg`,
       variants: variants.map(variant => ({ ...variant, playlistKey: `${prefix}/hls/${variant.playlistKey}` })),
       duration_sec: outputInfo.duration,
@@ -256,7 +256,7 @@ export async function processVideo(sourceKey: string): Promise<ProcessedVideo> {
   }
 }
 
-export async function buildVideoFiles(input: string, outputDir: string): Promise<{
+export async function buildVideoFiles(input: string, outputDir: string, options: { mp4Only?: boolean } = {}): Promise<{
   info: Awaited<ReturnType<typeof inspect>>;
   variants: VideoVariant[];
 }> {
@@ -268,6 +268,6 @@ export async function buildVideoFiles(input: string, outputDir: string): Promise
   await normalize(input, normalized, sourceInfo);
   const info = await inspect(normalized);
   await createPoster(normalized, poster, info.duration);
-  const variants = await createHls(normalized, hlsDir, info.video.width!, info.video.height!, Boolean(info.audio));
+  const variants = options.mp4Only ? [] : await createHls(normalized, hlsDir, info.video.width!, info.video.height!, Boolean(info.audio));
   return { info, variants };
 }

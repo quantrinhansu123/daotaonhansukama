@@ -4,6 +4,7 @@ import { bunnyStreamPlaylistUrl, resolveDemoVideo } from '@/lib/demo-video';
 import { VideoPlayer } from './VideoPlayer';
 import { VideoQualitySelect } from './VideoQualitySelect';
 import type { VideoTarget } from '@/lib/video-pipeline-types';
+import { configuredBunnyStreamHost } from '@/lib/bunny-stream-hosts';
 
 interface DemoVideoViewProps {
   videoKey?: string | null;
@@ -28,8 +29,8 @@ export function DemoVideoView({ videoKey,target, legacyId, className, autoPlay, 
   }
   if (source.kind === 'bunny') {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID;
-    const playlistUrl = bunnyStreamPlaylistUrl(source.id);
-    const embedUrl = libraryId
+    const playlistUrl = bunnyStreamPlaylistUrl(source.id, source.cdnHost);
+    const embedUrl = libraryId && (!source.cdnHost || source.cdnHost === configuredBunnyStreamHost())
       ? `https://iframe.mediadelivery.net/embed/${libraryId}/${source.id}?autoplay=${autoPlay ? 'true' : 'false'}`
       : null;
     if (playlistUrl) {

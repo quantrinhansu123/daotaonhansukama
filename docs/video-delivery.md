@@ -26,6 +26,22 @@ The worker converts queued objects and waits for more work:
 npm run video:worker
 ```
 
+For incident recovery, publish a browser-compatible MP4 and poster first,
+without waiting for the HLS quality ladder. Target one existing queued source:
+
+```powershell
+npm run video:worker -- --mp4-only --key=videos/<video-id>.<extension>
+```
+
+This preserves the uploaded original and publishes a ready MP4 with no HLS
+manifest. Use the normal worker for future uploads that need adaptive qualities.
+The command does not reprocess an already published asset.
+
+Legacy Bunny lessons can retain their own CDN hostname from `videoUrl`.
+The proxy accepts only the configured CDN and the project's known legacy
+origins; playlist and segment URLs stay on the same origin. A suspended Bunny
+account still requires recovery by Bunny or replacement from the original file.
+
 Run only one worker process for this bucket. The JSON queue uses an object-storage lease and is intended for one consumer; starting multiple workers can cause duplicate processing.
 
 For a local demo, target a single source key so the worker does not claim a different item from the shared bucket queue:

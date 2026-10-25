@@ -73,7 +73,7 @@ export function StudentAssessment() {
             courseTitle: courses[row.courseId] || row.courseId,
             startedAt: startedAt && typeof startedAt === 'object' && 'toDate' in startedAt && startedAt.toDate
               ? startedAt.toDate()
-              : new Date(startedAt),
+              : startedAt instanceof Date ? startedAt : new Date(typeof startedAt === 'string' ? startedAt : 0),
           };
         }).sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
         setRetakes(history);

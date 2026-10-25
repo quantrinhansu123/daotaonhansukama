@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchViaPublicDns, streamViaPublicDns } from '@/lib/bunny-dns';
+import { allowedBunnyStreamHost, configuredBunnyStreamHost } from '@/lib/bunny-stream-hosts';
 
 export const runtime = 'nodejs';
 
-function streamCdnHost() {
-  const configured = process.env.NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME || '';
-  const libraryId = process.env.NEXT_PUBLIC_BUNNY_STREAM_LIBRARY_ID || '';
-  return (configured || (libraryId ? `vz-${libraryId}.b-cdn.net` : '')).replace(/^https?:\/\//, '').replace(/\/$/, '');
-}
-
-function rewritePlaylist(body: string, pathPrefix: string): string {
-  const cdn = streamCdnHost();
+function rewritePlaylist(body: string, pathPrefix: string, cdn: string): string {
   let out = body;
   if (cdn) {
     out = out.replaceAll(`https://${cdn}/`, `${pathPrefix}/`);
@@ -29,17 +23,18 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> },
 ) {
-  const cdn = streamCdnHost();
-  if (!cdn) {
-    return NextResponse.json({ error: 'Thiếu NEXT_PUBLIC_BUNNY_STREAM_CDN_HOSTNAME' }, { status: 500 });
-  }
-
   const { path } = await context.params;
   if (!path?.length) {
     return NextResponse.json({ error: 'Missing path' }, { status: 400 });
   }
 
-  const objectPath = path.map(encodeURIComponent).join('/');
+  const explicitHost = path[0].includes('.');
+  const cdn = explicitHost ? path[0].toLowerCase() : configuredBunnyStreamHost();
+  if (!cdn || !allowedBunnyStreamHost(cdn)) {
+    return NextResponse.json({ error: 'Nguồn video không hợp lệ.' }, { status: 400 });
+  }
+  const objectPath = (explicitHost ? path.slice(1) : path).map(encodeURIComponent).join('/');
+  if (!objectPath) return NextResponse.json({ error: 'Missing path' }, { status: 400 });
   const target = `https://${cdn}/${objectPath}`;
 
   const isPlaylist = objectPath.endsWith('.m3u8');
@@ -76,8 +71,8 @@ export async function GET(
     }
 
     const buf = Buffer.from(await upstream.arrayBuffer());
-    const base = `/api/bunny/cdn`;
-    const text = rewritePlaylist(buf.toString('utf8'), base);
+    const base = explicitHost ? `/api/bunny/cdn/${cdn}` : '/api/bunny/cdn';
+    const text = rewritePlaylist(buf.toString('utf8'), base, cdn);
     return new NextResponse(text, {
       status: 200,
       headers: {
