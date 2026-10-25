@@ -154,6 +154,19 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
     let refreshTimer:ReturnType<typeof setTimeout>;
     let pinned:{assetId:string;version:string}|undefined;
     let resumeAfterRefresh:(()=>void)|undefined;
+    let hasAdaptiveLevels = false;
+    const setSourceQuality = () => {
+      if (hasAdaptiveLevels || video.videoWidth <= 0 || video.videoHeight <= 0) return;
+      setQualityLevels([{
+        index: 0,
+        width: video.videoWidth,
+        height: video.videoHeight,
+        name: `Gốc ${video.videoWidth}×${video.videoHeight}`,
+        bitrate: 0,
+      }]);
+      setSelectedQuality(0);
+    };
+    video.addEventListener('loadedmetadata', setSourceQuality);
     const key = cloudFlyLessonKey;
     const startAt = latestProgressRef.current[selectedLessonId]?.watchedSeconds || 0;
     lastProgressSaveAt.current = 0;
@@ -180,7 +193,11 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
           signal: controller.signal,
           startAt: position > 5 ? position : 0,
           prewarm: false,
-          onQualityLevels: setQualityLevels,
+          onQualityLevels: levels => {
+            hasAdaptiveLevels = levels.length > 0;
+            setQualityLevels(levels);
+            if (levels.length) setSelectedQuality(-1);
+          },
           sourceQualityAvailable: resolved.sourceQualityAvailable,
           onPlaybackError: issue => {
             if (!refreshed && !controller.signal.aborted && issue?.kind !== 'timeout') {
@@ -212,6 +229,7 @@ export const CourseViewer: React.FC<CourseViewerProps> = ({ course, onBack }) =>
       controller.abort();
       clearTimeout(refreshTimer);
       if(resumeAfterRefresh) video.removeEventListener('canplay',resumeAfterRefresh);
+      video.removeEventListener('loadedmetadata', setSourceQuality);
       handle?.destroy();
       lessonPlaybackRef.current = null;
       if (attentionCheckTimer.current) {
